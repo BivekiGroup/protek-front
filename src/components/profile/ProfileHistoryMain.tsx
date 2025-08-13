@@ -1,0 +1,539 @@
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation } from '@apollo/client';
+import ProfileHistoryItem from "./ProfileHistoryItem";
+import SearchInput from "./SearchInput";
+import ProfileHistoryTabs from "./ProfileHistoryTabs";
+import Pagination from '../Pagination';
+import { 
+  GET_PARTS_SEARCH_HISTORY, 
+  DELETE_SEARCH_HISTORY_ITEM,
+  CLEAR_SEARCH_HISTORY,
+  CREATE_SEARCH_HISTORY_ITEM,
+  PartsSearchHistoryItem,
+  PartsSearchHistoryResponse 
+} from '@/lib/graphql/search-history';
+
+const ProfileHistoryMain = () => {
+  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("Все");
+  const [selectedManufacturer, setSelectedManufacturer] = useState("Все");
+  const [sortField, setSortField] = useState<"date" | "manufacturer" | "name">("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [filteredItems, setFilteredItems] = useState<PartsSearchHistoryItem[]>([]);
+  
+  // Состояние пагинации
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10); // Количество элементов на странице
+
+  const tabOptions = ["Все", "Сегодня", "Вчера", "Эта неделя", "Этот месяц"];
+
+  // GraphQL запросы
+  const { data, loading, error, refetch } = useQuery<{ partsSearchHistory: PartsSearchHistoryResponse }>(
+    GET_PARTS_SEARCH_HISTORY,
+    {
+      variables: { 
+        limit: 1000, // Загружаем больше для клиентской пагинации с фильтрами
+        offset: 0 
+      },
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (data) => {
+        console.log('История поиска загружена:', data);
+      },
+      onError: (error) => {
+        console.error('Ошибка загрузки истории поиска:', error);
+      }
+    }
+  );
+
+  const [deleteItem] = useMutation(DELETE_SEARCH_HISTORY_ITEM, {
+    onCompleted: () => {
+      refetch();
+    },
+    onError: (error) => {
+      console.error('Ошибка удаления элемента истории:', error);
+    }
+  });
+
+  const [clearHistory] = useMutation(CLEAR_SEARCH_HISTORY, {
+    onCompleted: () => {
+      refetch();
+    },
+    onError: (error) => {
+      console.error('Ошибка очистки истории:', error);
+    }
+  });
+
+  const [createHistoryItem] = useMutation(CREATE_SEARCH_HISTORY_ITEM, {
+    onCompleted: () => {
+      refetch();
+    },
+    onError: (error) => {
+      console.error('Ошибка создания записи истории:', error);
+    }
+  });
+
+  const historyItems = data?.partsSearchHistory?.items || [];
+
+  // Отладочная информация
+  console.log('ProfileHistoryMain состояние:', {
+    loading,
+    error: error?.message,
+    data,
+    historyItemsCount: historyItems.length
+  });
+
+  // Фильтрация по времени
+  const getFilteredByTime = (items: PartsSearchHistoryItem[], timeFilter: string) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+    switch (timeFilter) {
+      case "Сегодня":
+        return items.filter(item => new Date(item.createdAt) >= today);
+      case "Вчера":
+        return items.filter(item => {
+          const itemDate = new Date(item.createdAt);
+          return itemDate >= yesterday && itemDate < today;
+        });
+      case "Эта неделя":
+        return items.filter(item => new Date(item.createdAt) >= weekAgo);
+      case "Этот месяц":
+        return items.filter(item => new Date(item.createdAt) >= monthAgo);
+      default:
+        return items;
+    }
+  };
+
+  // Фильтрация и сортировка
+  useEffect(() => {
+    let filtered = [...getFilteredByTime(historyItems, activeTab)];
+
+    // Фильтрация по производителю
+    if (selectedManufacturer !== "Все") {
+      filtered = filtered.filter(item =>
+        item.brand === selectedManufacturer || 
+        item.vehicleInfo?.brand === selectedManufacturer
+      );
+    }
+
+    // Поиск
+    if (search.trim()) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(item =>
+        item.searchQuery.toLowerCase().includes(searchLower) ||
+        item.brand?.toLowerCase().includes(searchLower) ||
+        item.articleNumber?.toLowerCase().includes(searchLower) ||
+        item.vehicleInfo?.brand?.toLowerCase().includes(searchLower) ||
+        item.vehicleInfo?.model?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Сортировка
+    if (sortField) {
+      filtered.sort((a, b) => {
+        let aValue: string | number = '';
+        let bValue: string | number = '';
+
+        switch (sortField) {
+          case 'date':
+            aValue = new Date(a.createdAt).getTime();
+            bValue = new Date(b.createdAt).getTime();
+            break;
+          case 'manufacturer':
+            aValue = a.brand || a.vehicleInfo?.brand || '';
+            bValue = b.brand || b.vehicleInfo?.brand || '';
+            break;
+          case 'name':
+            aValue = a.searchQuery;
+            bValue = b.searchQuery;
+            break;
+        }
+
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const comparison = aValue.localeCompare(bValue);
+          return sortOrder === 'asc' ? comparison : -comparison;
+        }
+
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+
+        return 0;
+      });
+    }
+
+    setFilteredItems(filtered);
+    // Сбрасываем страницу на первую при изменении фильтров
+    setCurrentPage(1);
+  }, [historyItems, search, activeTab, selectedManufacturer, sortField, sortOrder]);
+
+  // Вычисляем элементы для текущей страницы
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPageItems = filteredItems.slice(startIndex, endIndex);
+
+  // Обработчик изменения страницы
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Прокручиваем к началу списка при смене страницы
+    const historyContainer = document.querySelector('.flex.flex-col.mt-5.w-full.text-gray-400');
+    if (historyContainer) {
+      historyContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // Обработчик изменения количества элементов на странице
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Сбрасываем на первую страницу
+  };
+
+  const handleSort = (field: "date" | "manufacturer" | "name") => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("desc"); // По умолчанию сначала новые
+    }
+  };
+
+  const handleDeleteItem = async (id: string) => {
+    if (window.confirm('Удалить этот элемент из истории?')) {
+      try {
+        await deleteItem({ variables: { id } });
+      } catch (error) {
+        console.error('Ошибка удаления:', error);
+      }
+    }
+  };
+
+  const handleClearHistory = async () => {
+    if (window.confirm('Очистить всю историю поиска? Это действие нельзя отменить.')) {
+      try {
+        await clearHistory();
+      } catch (error) {
+        console.error('Ошибка очистки истории:', error);
+      }
+    }
+  };
+
+  const handleCreateTestData = async () => {
+    const testItems = [
+      {
+        searchQuery: "тормозные колодки",
+        searchType: "TEXT" as const,
+        brand: "BREMBO",
+        resultCount: 15,
+        vehicleBrand: "BMW",
+        vehicleModel: "X5",
+        vehicleYear: 2020
+      },
+      {
+        searchQuery: "0986424781",
+        searchType: "ARTICLE" as const,
+        brand: "BOSCH",
+        articleNumber: "0986424781",
+        resultCount: 3
+      },
+      {
+        searchQuery: "масляный фильтр",
+        searchType: "TEXT" as const,
+        brand: "MANN",
+        resultCount: 22,
+        vehicleBrand: "AUDI",
+        vehicleModel: "A4",
+        vehicleYear: 2018
+      },
+      {
+        searchQuery: "34116858652",
+        searchType: "OEM" as const,
+        brand: "BMW",
+        articleNumber: "34116858652",
+        resultCount: 8,
+        vehicleBrand: "BMW",
+        vehicleModel: "3 Series",
+        vehicleYear: 2019
+      },
+      {
+        searchQuery: "свечи зажигания",
+        searchType: "TEXT" as const,
+        brand: "NGK",
+        resultCount: 45
+      }
+    ];
+
+    try {
+      for (const item of testItems) {
+        await createHistoryItem({
+          variables: { input: item }
+        });
+        // Небольшая задержка между запросами
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+    } catch (error) {
+      console.error('Ошибка создания тестовых данных:', error);
+    }
+  };
+
+  if (loading && historyItems.length === 0) {
+    return (
+      <div className="flex flex-col flex-1 shrink justify-center basis-0 w-full max-md:max-w-full min-h-[526px] h-full">
+        <div className="flex justify-center items-center h-40">
+          <div className="text-gray-500">Загрузка истории поиска...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col flex-1 shrink justify-center basis-0 w-full max-md:max-w-full  min-h-[526px]">
+        <div className="flex justify-center items-center h-40">
+          <div className="text-red-500">Ошибка загрузки истории поиска</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col flex-1 shrink justify-center basis-0 w-full max-md:max-w-full min-h-[526px]">
+      <div className="flex gap-5 items-center px-8 py-3 w-full leading-snug text-gray-400 whitespace-nowrap bg-white rounded-lg max-md:px-5 max-md:max-w-full">
+        <div className="flex-1 shrink self-stretch my-auto text-gray-400 basis-0 text-ellipsis max-md:max-w-full max-md:w-full">
+          <SearchInput 
+            value={search} 
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Поиск в истории..."
+          />
+        </div>
+        <div className="flex gap-2 max-sm:hidden">
+          {(selectedManufacturer !== "Все" || search.trim() || activeTab !== "Все") && (
+            <button
+              onClick={() => {
+                setSelectedManufacturer("Все");
+                setSearch("");
+                setActiveTab("Все");
+                setCurrentPage(1);
+              }}
+              className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Сбросить фильтры
+            </button>
+          )}
+          {historyItems.length === 0 && (
+            <button
+              onClick={handleCreateTestData}
+              className="px-4 py-2 text-sm text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+            >
+              Создать тестовые данные
+            </button>
+          )}
+          {historyItems.length > 0 && (
+            <button
+              onClick={handleClearHistory}
+              className="px-4 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+            >
+              Очистить историю
+            </button>
+          )}
+        </div>
+        <img
+          loading="lazy"
+          src="https://cdn.builder.io/api/v1/image/assets/TEMP/02c9461c587bf477e8ee3187cb5faa1bccaf0900?placeholderIfAbsent=true&apiKey=f5bc5a2dc9b841d0aba1cc6c74a35920"
+          className="object-contain shrink-0 self-stretch my-auto w-5 rounded-sm aspect-square max-md:mt-2"
+        />
+      </div>
+
+      <div className="flex flex-col mt-5 w-full text-lg font-medium leading-tight whitespace-nowrap text-gray-950 max-md:max-w-full">
+        <ProfileHistoryTabs 
+          tabs={tabOptions} 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab}
+          historyItems={historyItems}
+          selectedManufacturer={selectedManufacturer}
+          onManufacturerChange={setSelectedManufacturer}
+        />
+      </div>
+
+      <div className="flex flex-col mt-5 w-full text-gray-400 max-md:max-w-full flex-1 h-full">
+        <div className="flex flex-col  p-2 w-full bg-white rounded-xl h-full max-md:max-w-full min-h-[250px] ">
+          <div className="hidden md:flex gap-10 items-center px-5 py-2 w-full text-sm max-md:max-w-full max-md:flex-col max-md:gap-2 max-md:px-2">
+            <div className="flex flex-wrap flex-1 shrink gap-5 items-center self-stretch pr-5 my-auto w-full basis-0 min-w-[240px] max-md:max-w-full max-md:flex-col max-md:gap-2 max-md:p-0 max-md:min-w-0">
+              <div className={`flex gap-1.5 items-center self-stretch my-auto w-40 max-md:w-full ${sortField === 'date' ? 'text-[#ec1c24] font-semibold' : ''}`}> 
+                <div 
+                  className="self-stretch my-auto cursor-pointer select-none hover:text-[#ec1c24] transition-colors" 
+                  onClick={() => handleSort('date')}
+                >
+                  Дата и время
+                </div>
+                <svg
+                  width="14"
+                  height="14"
+                  fill="none"
+                  viewBox="0 0 20 20"
+                  className="transition-transform duration-200"
+                  style={{ 
+                    transform: sortField === 'date' && sortOrder === 'asc' ? 'rotate(180deg)' : 'none',
+                    opacity: sortField === 'date' ? 1 : 0.5,
+                    stroke: sortField === 'date' ? '#ec1c24' : '#9CA3AF'
+                  }}
+                >
+                  <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div className={`flex gap-1.5 items-center self-stretch my-auto w-40 whitespace-nowrap max-md:w-full ${sortField === 'manufacturer' ? 'text-[#ec1c24] font-semibold' : ''}`}> 
+                <div 
+                  className="self-stretch my-auto cursor-pointer select-none hover:text-[#ec1c24] transition-colors" 
+                  onClick={() => handleSort('manufacturer')}
+                >
+                  Производитель
+                </div>
+                <svg
+                  width="14"
+                  height="14"
+                  fill="none"
+                  viewBox="0 0 20 20"
+                  className="transition-transform duration-200"
+                  style={{ 
+                    transform: sortField === 'manufacturer' && sortOrder === 'asc' ? 'rotate(180deg)' : 'none',
+                    opacity: sortField === 'manufacturer' ? 1 : 0.5,
+                    stroke: sortField === 'manufacturer' ? '#ec1c24' : '#9CA3AF'
+                  }}
+                >
+                  <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div className="gap-1.5 self-stretch my-auto whitespace-nowrap w-[180px] max-md:w-full">
+                Артикул/Тип
+              </div>
+              <div className={`flex flex-wrap flex-1 shrink gap-1.5 items-center self-stretch my-auto whitespace-nowrap basis-0  max-md:max-w-full max-md:w-full ${sortField === 'name' ? 'text-[#ec1c24] font-semibold' : ''}`}> 
+                <div 
+                  className="self-stretch my-auto cursor-pointer select-none hover:text-[#ec1c24] transition-colors" 
+                  onClick={() => handleSort('name')}
+                >
+                  Поисковый запрос
+                </div>
+                <svg
+                  width="14"
+                  height="14"
+                  fill="none"
+                  viewBox="0 0 20 20"
+                  className="transition-transform duration-200"
+                  style={{ 
+                    transform: sortField === 'name' && sortOrder === 'asc' ? 'rotate(180deg)' : 'none',
+                    opacity: sortField === 'name' ? 1 : 0.5,
+                    stroke: sortField === 'name' ? '#ec1c24' : '#9CA3AF'
+                  }}
+                >
+                  <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div className="w-16 text-center max-md:w-full">
+                Действия
+              </div>
+            </div>
+          </div>
+
+          {filteredItems.length === 0 ? (
+            <div className="flex justify-center items-center py-12 h-full  max-md:h-full">
+              <div className="text-center text-gray-500 h-full">
+                {historyItems.length === 0 ? (
+                  <>
+                    <div className="text-lg mb-2 " >История поиска пуста</div>
+                    <div className="text-sm">Ваши поисковые запросы будут отображаться здесь</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-lg mb-2">Ничего не найдено</div>
+                    <div className="text-sm">Попробуйте изменить фильтры или поисковый запрос</div>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            currentPageItems.map((item) => (
+              <ProfileHistoryItem
+                key={item.id}
+                id={item.id}
+                date={new Date(item.createdAt).toLocaleString('ru-RU', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+                manufacturer={item.brand || item.vehicleInfo?.brand || 'Не указан'}
+                article={item.articleNumber || `${item.searchType} поиск`}
+                name={item.searchQuery}
+                vehicleInfo={item.vehicleInfo}
+                resultCount={item.resultCount}
+                onDelete={handleDeleteItem}
+                searchType={item.searchType}
+                articleNumber={item.articleNumber}
+                brand={item.brand}
+              />
+            ))
+          )}
+        </div>
+
+        {/* Пагинация */}
+        {filteredItems.length > 0 && (
+          <div className="mt-6 space-y-4">
+            {/* Селектор количества элементов на странице */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <span>Показывать по:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="px-2 py-1 border border-gray-200 rounded text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#ec1c24] focus:border-transparent"
+                  style={{ cursor: 'pointer' }}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+                <span>записей</span>
+              </div>
+              
+              <div className="text-sm text-gray-500 text-center sm:text-right">
+                Показано {startIndex + 1}-{Math.min(endIndex, filteredItems.length)} из {filteredItems.length} записей
+                {filteredItems.length !== historyItems.length && (
+                  <span className="ml-1">
+                    (всего {historyItems.length})
+                  </span>
+                )}
+                {(selectedManufacturer !== "Все" || search.trim() || activeTab !== "Все") && (
+                  <span className="ml-2 text-blue-600">
+                    (применены фильтры)
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Компонент пагинации */}
+            {filteredItems.length > itemsPerPage && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                showPageInfo={true}
+              />
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ProfileHistoryMain;
+
+
