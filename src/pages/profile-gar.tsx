@@ -9,11 +9,20 @@ import ProfileInfo from '@/components/profile/ProfileInfo';
 import Head from "next/head";
 import MetaTags from "@/components/MetaTags";
 import { getMetaByPath } from "@/lib/meta-config";
+import { useRouter } from "next/router";
 
 
     
 const ProfileGaragePage = () => {
   const metaData = getMetaByPath('/profile-gar');
+  const router = useRouter();
+
+  React.useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+    if (!token) {
+      router.replace('/login-required');
+    }
+  }, [router]);
 
   return (
     <div className="page-wrapper">

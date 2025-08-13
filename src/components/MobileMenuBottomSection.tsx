@@ -32,11 +32,17 @@ const CabinetIcon = (
   </svg>
 );
 
-const MobileMenuBottomSection: React.FC<MobileMenuBottomSectionProps> = ({ 
-  onOpenAuthModal = () => console.log('Auth modal action not provided') 
+const MobileMenuBottomSection: React.FC<MobileMenuBottomSectionProps> = ({
+  onOpenAuthModal = () => console.log('Auth modal action not provided')
 }) => {
   const { favorites } = useFavorites();
   const { state: cartState } = useCart();
+  const [isAuth, setIsAuth] = React.useState(false);
+
+  React.useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+    setIsAuth(!!token);
+  }, []);
 
   const favoriteCounter = favorites.length > 0 ? (
     <div className="text-block-39">{favorites.length}</div>
@@ -50,11 +56,11 @@ const MobileMenuBottomSection: React.FC<MobileMenuBottomSectionProps> = ({
     <nav className="mobile-menu-buttom-section">
       <div className="w-layout-blockcontainer mobile-menu-bottom w-container">
         <div className="w-layout-hflex flex-block-87">
-          <MobileMenuButton icon={GarageIcon} label="Гараж" href="/profile-gar" />
+          <MobileMenuButton icon={GarageIcon} label="Гараж" href={isAuth ? "/profile-gar" : "/login-required"} />
           <MobileMenuButton 
             icon={FavoriteIcon} 
             label="Избранное" 
-            href="/favorite" 
+            href={isAuth ? "/favorite" : "/login-required"}
             counter={favoriteCounter}
             status={favorites.length > 0 ? "warning" : undefined}
           />

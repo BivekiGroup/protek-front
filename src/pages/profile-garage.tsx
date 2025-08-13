@@ -27,6 +27,13 @@ const ProfileGaragePage = () => {
   });
   const router = useRouter();
 
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+    if (!token) {
+      router.replace('/login-required');
+    }
+  }, [router]);
+
   // GraphQL queries
   const { data: vehiclesData, loading: vehiclesLoading, refetch: refetchVehicles } = useQuery(GET_USER_VEHICLES);
   const { data: historyData, loading: historyLoading, refetch: refetchHistory } = useQuery(GET_VEHICLE_SEARCH_HISTORY);

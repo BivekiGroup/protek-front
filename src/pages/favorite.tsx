@@ -1,26 +1,34 @@
 import MetaTags from "../components/MetaTags";
 import { getMetaByPath } from "../lib/meta-config";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CatalogSubscribe from "@/components/CatalogSubscribe";
 import MobileMenuBottomSection from "../components/MobileMenuBottomSection";
 import FavoriteInfo from "@/components/FavoriteInfo";
 import Filters, { FilterConfig } from "@/components/Filters";
 import FiltersPanelMobile from "@/components/FiltersPanelMobile";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import CartRecommended from "../components/CartRecommended";
 import FavoriteList from "../components/FavoriteList";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { useRouter } from "next/router";
 
 export default function Favorite() {
+  const router = useRouter();
   const { favorites } = useFavorites();
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterValues, setFilterValues] = useState<{[key: string]: any}>({});
   const [sortBy, setSortBy] = useState<'name' | 'brand' | 'date'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  
+
   const metaConfig = getMetaByPath('/favorite');
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+    if (!token) {
+      router.replace('/login-required');
+    }
+  }, [router]);
 
   // Создаем динамические фильтры на основе данных избранного
   const dynamicFilters: FilterConfig[] = useMemo(() => {

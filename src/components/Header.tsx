@@ -847,11 +847,11 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
     <img src="/images/union.svg" alt="История заказов" width={20} />
 
                 </Link>
-                <Link href="/profile-gar" className="button_h w-inline-block">
+                <Link href={currentUser ? "/profile-gar" : "/login-required"} className="button_h w-inline-block">
                     <div className="code-embed-7 w-embed"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M27 10.8V24H24.6V13.2H5.4V24H3V10.8L15 6L27 10.8ZM23.4 14.4H6.6V16.8H23.4V14.4ZM23.4 18H6.6V20.4H23.4V18Z" fill="currentColor" /><path d="M6.6 21.6H23.4V24H6.6V21.6Z" fill="currentColor" /></svg></div>
                     <div className="text-block-2">Добавить в гараж</div>
                 </Link>
-                <Link href="/favorite" className="button_h w-inline-block">
+                <Link href={currentUser ? "/favorite" : "/login-required"} className="button_h w-inline-block">
                   <div className="code-embed-7 w-embed"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 25L13.405 23.5613C7.74 18.4714 4 15.1035 4 10.9946C4 7.6267 6.662 5 10.05 5C11.964 5 13.801 5.88283 15 7.26703C16.199 5.88283 18.036 5 19.95 5C23.338 5 26 7.6267 26 10.9946C26 15.1035 22.26 18.4714 16.595 23.5613L15 25Z" fill="currentColor" /></svg></div>
                   <div className="text-block-2">Избранное</div>
                 </Link>
