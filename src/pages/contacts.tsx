@@ -12,9 +12,11 @@ import MetaTags from "@/components/MetaTags";
 import { getMetaByPath } from "@/lib/meta-config";
 import JsonLdScript from "@/components/JsonLdScript";
 import { generateLocalBusinessSchema, PROTEK_LOCAL_BUSINESS } from "@/lib/schema";
+import type { GetServerSideProps } from 'next';
+import { getServerMetaProps } from '@/lib/seo-ssr';
 
-const Contacts = () => {
-  const metaData = getMetaByPath('/contacts');
+const Contacts = ({ metaFromCms }: { metaFromCms?: any }) => {
+  const metaData = metaFromCms ?? getMetaByPath('/contacts');
   
   // Генерируем микроразметку LocalBusiness для страницы контактов
   const localBusinessSchema = generateLocalBusinessSchema(PROTEK_LOCAL_BUSINESS);
@@ -47,3 +49,5 @@ const Contacts = () => {
 };
 
 export default Contacts; 
+
+export const getServerSideProps: GetServerSideProps = getServerMetaProps;

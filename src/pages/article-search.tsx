@@ -9,6 +9,8 @@ import { DOC_FIND_OEM } from "@/lib/graphql";
 import { LaximoDocFindOEMResult } from "@/types/laximo";
 import MetaTags from "@/components/MetaTags";
 import { getMetaByPath } from "@/lib/meta-config";
+import type { GetServerSideProps } from 'next';
+import { getServerMetaProps } from '@/lib/seo-ssr';
 
 const InfoArticleSearch = () => (
   <section className="section-info">
@@ -33,7 +35,7 @@ const InfoArticleSearch = () => (
   </section>
 );
 
-const ArticleSearchPage = () => {
+const ArticleSearchPage = ({ metaFromCms }: { metaFromCms?: any }) => {
   const router = useRouter();
   const { article } = router.query;
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -59,7 +61,7 @@ const ArticleSearchPage = () => {
   const result: LaximoDocFindOEMResult | null = data?.laximoDocFindOEM || null;
   const hasResults = result && result.details && result.details.length > 0;
 
-  const metaData = getMetaByPath('/article-search');
+  const metaData = metaFromCms ?? getMetaByPath('/article-search');
 
   return (
     <>
@@ -139,3 +141,5 @@ const ArticleSearchPage = () => {
 };
 
 export default ArticleSearchPage;
+
+export const getServerSideProps: GetServerSideProps = getServerMetaProps;

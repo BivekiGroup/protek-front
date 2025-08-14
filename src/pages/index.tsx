@@ -18,9 +18,11 @@ import { getMetaByPath } from "@/lib/meta-config";
 import JsonLdScript from "@/components/JsonLdScript";
 import { generateOrganizationSchema, generateWebSiteSchema, PROTEK_ORGANIZATION } from "@/lib/schema";
 import HeroSlider from "@/components/index/HeroSlider";
+import type { GetServerSideProps } from 'next';
+import { getServerMetaProps } from '@/lib/seo-ssr';
 
-export default function Home() {
-  const metaData = getMetaByPath('/');
+export default function Home({ metaFromCms }: { metaFromCms?: any }) {
+  const metaData = metaFromCms ?? getMetaByPath('/');
   
   // Генерируем микроразметку для главной страницы
   const organizationSchema = generateOrganizationSchema(PROTEK_ORGANIZATION);
@@ -53,3 +55,5 @@ export default function Home() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = getServerMetaProps;

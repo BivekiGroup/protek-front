@@ -12,9 +12,11 @@ import MetaTags from "@/components/MetaTags";
 import { getMetaByPath } from "@/lib/meta-config";
 import JsonLdScript from "@/components/JsonLdScript";
 import { generateOrganizationSchema, generateBreadcrumbSchema, PROTEK_ORGANIZATION } from "@/lib/schema";
+import type { GetServerSideProps } from 'next';
+import { getServerMetaProps } from '@/lib/seo-ssr';
 
-export default function About() {
-  const metaData = getMetaByPath('/about');
+export default function About({ metaFromCms }: { metaFromCms?: any }) {
+  const metaData = metaFromCms ?? getMetaByPath('/about');
   
   // Генерируем микроразметку Organization для страницы "О компании"
   const organizationSchema = generateOrganizationSchema(PROTEK_ORGANIZATION);
@@ -63,4 +65,6 @@ export default function About() {
       `}</style>
     </>
   );
-} 
+}
+
+export const getServerSideProps: GetServerSideProps = getServerMetaProps;

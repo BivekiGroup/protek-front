@@ -5,8 +5,11 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
-export default function LoginRequired() {
-  const meta = getMetaByPath('/login-required');
+import type { GetServerSideProps } from 'next';
+import { getServerMetaProps } from '@/lib/seo-ssr';
+
+export default function LoginRequired({ metaFromCms }: { metaFromCms?: any }) {
+  const meta = metaFromCms ?? getMetaByPath('/login-required');
   const router = useRouter();
 
   const openAuth = () => {
@@ -65,6 +68,8 @@ export default function LoginRequired() {
     </div>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = getServerMetaProps;
 
 function FeatureItem({ title, subtitle }: { title: string; subtitle: string }) {
   return (

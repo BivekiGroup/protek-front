@@ -7,9 +7,11 @@ import MobileMenuBottomSection from "@/components/MobileMenuBottomSection";
 import Link from 'next/link';
 import MetaTags from "@/components/MetaTags";
 import { getMetaByPath } from "@/lib/meta-config";
+import type { GetServerSideProps } from 'next';
+import { getServerMetaProps } from '@/lib/seo-ssr';
 
-export default function ThankYouPage() {
-  const metaData = getMetaByPath('/thankyoupage');
+export default function ThankYouPage({ metaFromCms }: { metaFromCms?: any }) {
+  const metaData = metaFromCms ?? getMetaByPath('/thankyoupage');
 
   return (
     <>
@@ -63,3 +65,5 @@ export default function ThankYouPage() {
     </>
   );
 } 
+
+export const getServerSideProps: GetServerSideProps = getServerMetaProps;

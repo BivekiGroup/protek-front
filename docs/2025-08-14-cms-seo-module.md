@@ -54,4 +54,8 @@
   - Если CMS недоступен или конфигурация не найдена, остаются статические значения, переданные через пропсы/утилиты (`getMetaByPath`).
 
 - Примечание по SSR/SEO:
-  - Текущая реализация выполняет запрос на клиенте. Для SSR-рендера тегов в HTML (для ботов) можно прокинуть мета-данные через `getServerSideProps`/`getStaticProps` страниц и передать их в `MetaTags` — API CMS совместим.
+  - Поддержан SSR-вариант для ключевых страниц: `index`, `about`, `contacts`, `article-search`, `thankyoupage`, `login-required`.
+  - Хелпер: `protekauto-frontend/src/lib/seo-ssr.ts` — `getServerMetaProps` делает запрос к CMS на сервере и кладёт `metaFromCms` в `props`.
+  - Использование на странице:
+    - `export const getServerSideProps = getServerMetaProps;`
+    - В компоненте: `const meta = metaFromCms ?? getMetaByPath('/path'); <MetaTags {...meta} />`
