@@ -1,6 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+    || `${(req.headers['x-forwarded-proto'] || 'https') as string}://${req.headers.host}`
+
   const robotsTxt = `User-agent: *
 Allow: /
 
@@ -12,25 +15,23 @@ Disallow: /_next/
 Disallow: /static/
 Disallow: /test-auth/
 
+# Приватные и корзина/чекаут
+Disallow: /profile
+Disallow: /profile-
+Disallow: /favorite
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order-confirmation
+
 # Запрещаем индексацию страниц с параметрами
 Disallow: /*?*
 
-# Разрешаем основные страницы
-Allow: /
-Allow: /catalog
-Allow: /about
-Allow: /contacts
-Allow: /news
-Allow: /brands
-Allow: /delivery
-Allow: /payment
-Allow: /wholesale
-Allow: /vin
-
 # Указываем карту сайта
-Sitemap: https://protekauto.ru/sitemap.xml
+Sitemap: ${siteUrl.replace(/\/$/, '')}/sitemap.xml
+Host: ${siteUrl.replace(/\/$/, '')}
 `
 
   res.setHeader('Content-Type', 'text/plain')
   res.status(200).send(robotsTxt)
-} 
+}
+
