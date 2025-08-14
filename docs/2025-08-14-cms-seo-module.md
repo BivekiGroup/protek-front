@@ -36,6 +36,22 @@
   - Редактирование: `protekauto-cms/src/app/dashboard/seo/[id]/page.tsx`
 - Навигация: пункт добавлен в сайдбар (группа «Система»)
 
-### Интеграция на фронт (план)
-- Вынести meta-теги из `protekauto-frontend/src/lib/meta-config.ts` к запросу в CMS (по URL и приоритету совпадения), с кэшем.
-- Учесть порядок приоритета: `EXACT` > `PREFIX` > `REGEX`.
+### Интеграция на фронт (готово)
+- Публичный эндпоинт CMS: `GET /api/seo-meta?path=/about`
+  - Файл: `protekauto-cms/src/app/api/seo-meta/route.ts`
+  - Возвращает `{ meta: { title, description, keywords, ogTitle, ogDescription, ogImage, canonicalUrl, noIndex, noFollow, structuredData } }`
+  - Приоритет совпадений: `EXACT` > `PREFIX` (самый длинный) > `REGEX`.
+
+- Автоподхват на фронте в `MetaTags`:
+  - Файл: `protekauto-frontend/src/components/MetaTags.tsx`
+  - При наличии `process.env.NEXT_PUBLIC_CMS_BASE_URL`, компонент на клиенте запрашивает CMS по текущему пути и перекрывает переданные пропсы.
+  - `robots` формируется из `noIndex`/`noFollow`.
+
+- Переменные окружения:
+  - На фронте: `NEXT_PUBLIC_CMS_BASE_URL=https://cms.example.com`
+
+- Фолбэк:
+  - Если CMS недоступен или конфигурация не найдена, остаются статические значения, переданные через пропсы/утилиты (`getMetaByPath`).
+
+- Примечание по SSR/SEO:
+  - Текущая реализация выполняет запрос на клиенте. Для SSR-рендера тегов в HTML (для ботов) можно прокинуть мета-данные через `getServerSideProps`/`getStaticProps` страниц и передать их в `MetaTags` — API CMS совместим.

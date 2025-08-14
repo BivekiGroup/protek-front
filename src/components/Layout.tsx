@@ -21,6 +21,18 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     router.push('/profile-orders');
   };
 
+  // Открытие модалки авторизации через параметр ?openAuth=1
+  React.useEffect(() => {
+    if (!router.isReady) return;
+    const openAuth = router.query.openAuth;
+    if (openAuth === '1') {
+      setAuthModalOpen(true);
+      const nextQuery = { ...router.query } as Record<string, any>;
+      delete nextQuery.openAuth;
+      router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true });
+    }
+  }, [router.isReady, router.query.openAuth]);
+
   return (
     <>
     <header className="section-4">
