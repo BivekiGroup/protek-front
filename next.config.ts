@@ -9,9 +9,7 @@ const nextConfig: NextConfig = {
   images: {
     domains: [
       'localhost',
-      'images.partsapi.ru',
-      'media.partsapi.ru',
-      'static.partsapi.ru'
+      // PartsAPI domains removed
     ],
     unoptimized: true
   },

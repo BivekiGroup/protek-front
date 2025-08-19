@@ -1,101 +1,10 @@
-import { useState, useEffect } from 'react';
-import { partsIndexService } from '@/lib/partsindex-service';
 import { PartsIndexCatalog, PartsIndexGroup, PartsIndexTabData, PartsIndexEntityInfo } from '@/types/partsindex';
 
-export const usePartsIndexCatalogs = () => {
-  const [catalogs, setCatalogs] = useState<PartsIndexCatalog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+export const usePartsIndexCatalogs = () => ({ catalogs: [] as PartsIndexCatalog[], loading: false, error: null as Error | null });
 
-  useEffect(() => {
-    const fetchCatalogs = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await partsIndexService.getCatalogs('ru');
-        setCatalogs(response.list);
-      } catch (err) {
-        setError(err as Error);
-        console.error('Ошибка загрузки каталогов:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+export const usePartsIndexCatalogGroups = (_catalogId: string | null) => ({ group: null as PartsIndexGroup | null, loading: false, error: null as Error | null });
 
-    fetchCatalogs();
-  }, []);
-
-  return { catalogs, loading, error };
-};
-
-export const usePartsIndexCatalogGroups = (catalogId: string | null) => {
-  const [group, setGroup] = useState<PartsIndexGroup | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    if (!catalogId) {
-      setGroup(null);
-      return;
-    }
-
-    const fetchGroup = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const groupData = await partsIndexService.getCatalogGroups(catalogId, 'ru');
-        setGroup(groupData);
-      } catch (err) {
-        setError(err as Error);
-        console.error(`Ошибка загрузки группы каталога ${catalogId}:`, err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGroup();
-  }, [catalogId]);
-
-  return { group, loading, error };
-};
-
-export const usePartsIndexEntityInfo = (code: string | null, brand?: string | null) => {
-  const [entityInfo, setEntityInfo] = useState<PartsIndexEntityInfo | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    if (!code) {
-      setEntityInfo(null);
-      return;
-    }
-
-    const fetchEntityInfo = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await partsIndexService.getEntityInfo(code, brand || undefined, 'ru');
-        
-        // Берем первый элемент из списка, если он есть
-        if (response.list && response.list.length > 0) {
-          setEntityInfo(response.list[0]);
-        } else {
-          setEntityInfo(null);
-        }
-      } catch (err) {
-        setError(err as Error);
-        console.error(`Ошибка загрузки информации о детали ${code}:`, err);
-        setEntityInfo(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEntityInfo();
-  }, [code, brand]);
-
-  return { entityInfo, loading, error };
-};
+export const usePartsIndexEntityInfo = (_code: string | null, _brand?: string | null) => ({ entityInfo: null as PartsIndexEntityInfo | null, loading: false, error: null as Error | null });
 
 // Функция для преобразования данных Parts Index в формат меню
 export const transformPartsIndexToTabData = (
