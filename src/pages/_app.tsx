@@ -16,6 +16,7 @@ import Layout from "@/components/Layout";
 import { Toaster } from 'react-hot-toast';
 import CookieConsent from '@/components/CookieConsent';
 import GlobalPreloader from '@/components/GlobalPreloader';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default function App({ Component, pageProps }: AppProps) {
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
@@ -50,8 +51,10 @@ export default function App({ Component, pageProps }: AppProps) {
       <FavoritesProvider>
         <CartProvider>
           <Layout>
-            <GlobalPreloader />
-            <Component {...pageProps} />
+            <ErrorBoundary>
+              <GlobalPreloader />
+              <Component {...pageProps} />
+            </ErrorBoundary>
           </Layout>
           <Toaster
             position="top-center"
