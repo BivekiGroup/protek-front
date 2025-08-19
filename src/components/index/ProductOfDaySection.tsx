@@ -76,9 +76,9 @@ const ProductOfDaySection: React.FC = () => {
   // Функция для получения изображения товара (без обращений к PartsIndex на главной)
   const getProductImage = (product: DailyProduct['product']) => {
     // Сначала пытаемся использовать собственные изображения товара
-    const productImage = product.images
-      ?.sort((a, b) => a.order - b.order)
-      ?.[0];
+    const productImage = (product.images && product.images.length > 0)
+      ? [...product.images].sort((a, b) => a.order - b.order)[0]
+      : undefined;
     
     if (productImage) {
       return {

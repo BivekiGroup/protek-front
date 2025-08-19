@@ -15,6 +15,7 @@ import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import Layout from "@/components/Layout";
 import { Toaster } from 'react-hot-toast';
 import CookieConsent from '@/components/CookieConsent';
+import GlobalPreloader from '@/components/GlobalPreloader';
 
 export default function App({ Component, pageProps }: AppProps) {
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
@@ -49,6 +50,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <FavoritesProvider>
         <CartProvider>
           <Layout>
+            <GlobalPreloader />
             <Component {...pageProps} />
           </Layout>
           <Toaster
