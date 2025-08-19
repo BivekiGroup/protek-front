@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import LoadingSpinner from './LoadingSpinner'
+import { getNetworkCount, onNetworkChange } from '@/lib/networkActivity'
 
 export default function GlobalPreloader() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [netCount, setNetCount] = useState(0)
 
   useEffect(() => {
     const handleStart = () => setLoading(true)
@@ -21,8 +23,13 @@ export default function GlobalPreloader() {
       router.events.off('routeChangeError', handleStop)
     }
   }, [router.events])
+  useEffect(() => {
+    setNetCount(getNetworkCount())
+    const unsub = onNetworkChange((c) => setNetCount(c))
+    return () => { unsub() }
+  }, [])
 
-  if (!loading) return null
+  if (!loading && netCount === 0) return null
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/70 backdrop-blur-sm">
@@ -33,4 +40,3 @@ export default function GlobalPreloader() {
     </div>
   )
 }
-

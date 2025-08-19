@@ -1,11 +1,21 @@
-import { ApolloClient, InMemoryCache, createHttpLink, FetchPolicy } from '@apollo/client'
+import { ApolloClient, InMemoryCache, createHttpLink, ApolloLink } from '@apollo/client'
 import { setContext } from '@apollo/client/link/context'
+import { incNetwork, decNetwork } from '@/lib/networkActivity'
 
 const graphqlUri = process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL || 'http://localhost:3000/api/graphql';
 console.log('Apollo Client: используется GraphQL URI:', graphqlUri);
 
 const httpLink = createHttpLink({
   uri: graphqlUri,
+})
+
+const activityLink = new ApolloLink((operation, forward) => {
+  incNetwork()
+  const finalize = () => decNetwork()
+  return forward(operation).map((result) => {
+    finalize()
+    return result
+  })
 })
 
 const authLink = setContext((_, { headers }) => {
@@ -88,7 +98,7 @@ const cache = new InMemoryCache({
 });
 
 export const apolloClient = new ApolloClient({
-  link: authLink.concat(httpLink),
+  link: authLink.concat(activityLink).concat(httpLink),
   cache,
   defaultOptions: {
     watchQuery: {
