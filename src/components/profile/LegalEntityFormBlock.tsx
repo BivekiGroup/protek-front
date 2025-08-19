@@ -238,7 +238,40 @@ const LegalEntityFormBlock: React.FC<LegalEntityFormBlockProps> = ({
     } catch (error) {
       console.error('Ошибка сохранения:', error);
     }
-  };
+  
+
+  const handleFillFromInn = async () => {
+    try {
+      const q = inn.trim()
+      if (!q) return alert('Введите ИНН')
+      const resp = await fetch('/api/dadata/party', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q, branch_type: 'MAIN' })
+      })
+      const data = await resp.json()
+      if (!resp.ok) throw new Error(data?.error || 'DaData error')
+      const suggestion = data?.suggestions?.[0]
+      if (!suggestion) return alert('Не найдено по этому ИНН')
+      const d = suggestion.data || {}
+      const opfShort = d?.opf?.short as string | undefined
+      const nameShort = (d?.name?.short_with_opf || d?.name?.short || suggestion.value) as string
+      const nameFull = (d?.name?.full_with_opf || d?.name?.full || suggestion.value) as string
+      const addr = (d?.address?.unrestricted_value || d?.address?.value) as string | undefined
+      setShortName(nameShort || '')
+      setFullName(nameFull || '')
+      setOgrn(d?.ogrn || '')
+      setKpp(d?.kpp || '')
+      setJurAddress(addr || '')
+      setFactAddress(addr || '')
+      const mappedForm = opfShort && ["ООО","ИП","АО","ПАО"].includes(opfShort) ? opfShort : 'Другое'
+      setForm(mappedForm)
+      setValidationErrors({ inn: false, shortName: false, jurAddress: false, form: false, taxSystem: false })
+    } catch (e: any) {
+      alert(e?.message || 'Не удалось получить данные по ИНН')
+    }
+  }
+};
 
   return (
   <div className="flex overflow-hidden flex-col p-8 mt-5 w-full bg-white rounded-2xl max-md:px-5 max-md:max-w-full">
