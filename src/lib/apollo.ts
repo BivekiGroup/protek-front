@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache, createHttpLink, ApolloLink } from '@apollo/client'
+import { ApolloClient, InMemoryCache, createHttpLink, ApolloLink, Observable } from '@apollo/client'
 import { setContext } from '@apollo/client/link/context'
 import { incNetwork, decNetwork } from '@/lib/networkActivity'
 
@@ -10,11 +10,23 @@ const httpLink = createHttpLink({
 })
 
 const activityLink = new ApolloLink((operation, forward) => {
-  incNetwork()
-  const finalize = () => decNetwork()
-  return forward(operation).map((result) => {
-    finalize()
-    return result
+  return new Observable((observer) => {
+    incNetwork()
+    const subscription = forward(operation).subscribe({
+      next: (value) => observer.next(value),
+      error: (err) => {
+        decNetwork()
+        observer.error(err)
+      },
+      complete: () => {
+        decNetwork()
+        observer.complete()
+      },
+    })
+
+    return () => {
+      try { subscription.unsubscribe() } finally { decNetwork() }
+    }
   })
 })
 
