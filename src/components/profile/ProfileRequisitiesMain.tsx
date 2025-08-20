@@ -394,8 +394,18 @@ const ProfileRequisitiesMain = () => {
         )}
         {showAddForm && (
           <>
-            <div className="mt-8 text-gray-950">
-              {editingBankDetail ? 'Редактирование реквизитов' : 'Добавление реквизитов'}
+            <div className="mt-8 text-gray-950 text-2xl font-bold flex items-center gap-3">
+              <span>{editingBankDetail ? 'Редактирование реквизитов' : 'Добавление реквизитов'}</span>
+              {legalEntities.length === 1 && (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F5F8FB] border border-stone-200 text-gray-700">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 9L12 4L21 9V20H15V13H9V20H3V9Z" stroke="#424F60" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="font-medium">{legalEntities[0].shortName}</span>
+                  <span className="text-gray-400">·</span>
+                  <span className="text-xs font-mono">ИНН {legalEntities[0].inn}</span>
+                </div>
+              )}
             </div>
             
             {/* Выбор юридического лица */}
@@ -424,15 +434,7 @@ const ProfileRequisitiesMain = () => {
               </div>
             )}
             
-            {/* Если юридическое лицо одно, показываем его */}
-            {legalEntities.length === 1 && (
-              <div className="flex flex-col mt-4 w-full">
-                <div className="text-sm text-gray-950 mb-2">Юридическое лицо</div>
-                <div className="gap-2.5 px-6 py-4 w-full bg-gray-50 rounded border border-solid border-stone-300 min-h-[52px] text-gray-600 flex items-center">
-                  {legalEntities[0].shortName} (ИНН: {legalEntities[0].inn})
-                </div>
-              </div>
-            )}
+            {/* Если юридическое лицо одно, компактный бейдж уже показан в заголовке */}
 
             <div className="flex flex-col mt-8 w-full text-sm leading-snug max-md:max-w-full">
               <div className="flex flex-row flex-wrap gap-5 items-start w-full min-h-[78px] max-md:max-w-full">
@@ -518,5 +520,4 @@ const ProfileRequisitiesMain = () => {
 }
 
 export default ProfileRequisitiesMain;
-
 
