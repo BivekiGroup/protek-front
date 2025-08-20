@@ -1106,6 +1106,68 @@ a.link-block-2.w-inline-block  {
   width: 100%;
 }
 
+/* Improve Best Price horizontal scroll behavior */
+.carousel-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 8px;
+}
+
+/* Card sizing and snap for Best Price items */
+.w-layout-vflex.bestpriceitem {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  width: clamp(160px, 42vw, 220px);
+  min-width: clamp(160px, 42vw, 220px);
+  max-width: clamp(160px, 42vw, 220px);
+}
+
+/* Image container and image scaling */
+.imgitembp {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.imgitembp .image-5 {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Discount badge pinned to image corner for stability */
+.saletagbp {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+
+/* Actions/price block tighter on small screens */
+@media (max-width: 767px) {
+  .carousel-arrow {
+    display: none;
+  }
+  .w-layout-vflex.bestpriceitem {
+    width: clamp(150px, 60vw, 200px);
+    min-width: clamp(150px, 60vw, 200px);
+    max-width: clamp(150px, 60vw, 200px);
+  }
+  .imgitembp { height: 140px; }
+}
+
+@media (max-width: 479px) {
+  .w-layout-vflex.bestpriceitem {
+    width: clamp(150px, 80vw, 190px);
+    min-width: clamp(150px, 80vw, 190px);
+    max-width: clamp(150px, 80vw, 190px);
+  }
+  .imgitembp { height: 130px; }
+}
+
 .carousel-arrow {
   background: none;
   border: none;
