@@ -1119,9 +1119,9 @@ a.link-block-2.w-inline-block  {
 .w-layout-vflex.bestpriceitem {
   flex: 0 0 auto;
   scroll-snap-align: start;
-  width: clamp(160px, 42vw, 220px);
-  min-width: clamp(160px, 42vw, 220px);
-  max-width: clamp(160px, 42vw, 220px);
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
 }
 
 /* Image container and image scaling */
@@ -1148,24 +1148,34 @@ a.link-block-2.w-inline-block  {
 
 /* Actions/price block tighter on small screens */
 @media (max-width: 767px) {
-  .carousel-arrow {
-    display: none;
-  }
+  .carousel-arrow { display: none; }
+  .carousel-row { gap: 0; }
+  .carousel-scroll { padding-inline: 12px; }
+  /* Exactly 1 card per view */
   .w-layout-vflex.bestpriceitem {
-    width: clamp(150px, 60vw, 200px);
-    min-width: clamp(150px, 60vw, 200px);
-    max-width: clamp(150px, 60vw, 200px);
+    width: calc(100% - 24px);
+    min-width: calc(100% - 24px);
+    max-width: none;
   }
   .imgitembp { height: 140px; }
 }
 
 @media (max-width: 479px) {
-  .w-layout-vflex.bestpriceitem {
-    width: clamp(150px, 80vw, 190px);
-    min-width: clamp(150px, 80vw, 190px);
-    max-width: clamp(150px, 80vw, 190px);
-  }
+  .carousel-scroll { padding-inline: 10px; }
+  .w-layout-vflex.bestpriceitem { width: calc(100% - 20px); min-width: calc(100% - 20px); }
   .imgitembp { height: 130px; }
+}
+
+/* Tablets: 2 cards per view, no overflow */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .carousel-row { gap: 12px; }
+  .carousel-scroll { padding-inline: 16px; }
+  .w-layout-vflex.bestpriceitem {
+    width: calc(50% - 18px);
+    min-width: calc(50% - 18px);
+    max-width: none;
+  }
+  .imgitembp { height: 150px; }
 }
 
 .carousel-arrow {
