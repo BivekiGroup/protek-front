@@ -1,4 +1,5 @@
 import { ApolloClient, InMemoryCache, createHttpLink, ApolloLink, Observable } from '@apollo/client'
+import { onError } from '@apollo/client/link/error'
 import { setContext } from '@apollo/client/link/context'
 import { incNetwork, decNetwork } from '@/lib/networkActivity'
 
@@ -9,24 +10,43 @@ const httpLink = createHttpLink({
   uri: graphqlUri,
 })
 
+// Глобальный логгер ошибок Apollo для наглядной диагностики
+const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
+  if (graphQLErrors && graphQLErrors.length) {
+    graphQLErrors.forEach(({ message, locations, path, extensions }) => {
+      console.error('[Apollo GraphQL error]', {
+        operation: operation.operationName,
+        message,
+        locations,
+        path,
+        extensions,
+        variables: operation.variables,
+      })
+    })
+  }
+  if (networkError) {
+    console.error('[Apollo Network error]', {
+      operation: operation.operationName,
+      error: networkError,
+      uri: graphqlUri,
+      variables: operation.variables,
+    })
+  }
+})
+
 const activityLink = new ApolloLink((operation, forward) => {
   return new Observable((observer) => {
     incNetwork()
-    const subscription = forward(operation).subscribe({
-      next: (value) => observer.next(value),
-      error: (err) => {
-        decNetwork()
-        observer.error(err)
-      },
-      complete: () => {
-        decNetwork()
-        observer.complete()
-      },
-    })
-
-    return () => {
-      try { subscription.unsubscribe() } finally { decNetwork() }
+    let settled = false
+    const settle = () => {
+      if (!settled) { settled = true; decNetwork() }
     }
+    const sub = forward(operation).subscribe({
+      next: (value) => { settle(); observer.next(value) },
+      error: (err) => { settle(); observer.error(err) },
+      complete: () => { settle(); observer.complete() },
+    })
+    return () => { try { sub.unsubscribe() } finally { settle() } }
   })
 })
 
@@ -110,7 +130,7 @@ const cache = new InMemoryCache({
 });
 
 export const apolloClient = new ApolloClient({
-  link: authLink.concat(activityLink).concat(httpLink),
+  link: ApolloLink.from([errorLink, authLink, activityLink, httpLink]),
   cache,
   defaultOptions: {
     watchQuery: {

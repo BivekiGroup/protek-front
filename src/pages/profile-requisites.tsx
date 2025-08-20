@@ -104,6 +104,64 @@ const ProfileRequisites: React.FC = () => {
     correspondentAccount: ''
   });
 
+  // DaData авто‑заполнение по ИНН
+  const [autoFilled, setAutoFilled] = useState<Partial<Record<keyof NewLegalEntity, boolean>>>({})
+  const [daDataLoading, setDaDataLoading] = useState(false)
+  const [daDataError, setDaDataError] = useState<string | null>(null)
+
+  const fetchDaDataByInn = async () => {
+    const inn = (newEntity.inn || '').trim()
+    // ИНН юрлица = 10 знаков, ИП = 12; не вызываем слишком рано
+    if (inn.length < 10) return
+    try {
+      setDaDataLoading(true)
+      setDaDataError(null)
+      const cmsGraphql = process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL || 'http://localhost:3000/api/graphql'
+      const cmsDaDataUrl = cmsGraphql.replace(/\/api\/graphql.*/, '/api/dadata/party')
+      const resp = await fetch(cmsDaDataUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: inn, count: 1 }),
+      })
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}))
+        throw new Error(err?.error || `DaData error: ${resp.status}`)
+      }
+      const data = await resp.json()
+      const item = data?.suggestions?.[0]?.data
+      if (!item) return
+
+      const updated: Partial<NewLegalEntity> = {}
+      const autoflags: Partial<Record<keyof NewLegalEntity, boolean>> = {}
+
+      // Наименование (краткое/полное)
+      const shortName = item?.name?.short || item?.name?.short_with_opf
+      const fullName = item?.name?.full || item?.name?.full_with_opf
+      if (shortName) { updated.shortName = shortName; autoflags.shortName = true }
+      if (fullName) { updated.fullName = fullName; autoflags.fullName = true }
+
+      // Форма (ООО/ИП/АО)
+      const form = item?.opf?.short || item?.opf?.full
+      if (form) { updated.form = form; autoflags.form = true }
+
+      // ОГРН, КПП
+      if (item?.ogrn) { updated.ogrn = item.ogrn; autoflags.ogrn = true }
+      if (item?.kpp) { updated.registrationReasonCode = item.kpp; autoflags.registrationReasonCode = true }
+
+      // Юридический адрес
+      const legalAddress = item?.address?.value || item?.address?.unrestricted_value
+      if (legalAddress) { updated.legalAddress = legalAddress; autoflags.legalAddress = true }
+
+      // Применяем обновления и помечаем автозаполненные поля
+      setNewEntity(prev => ({ ...prev, ...updated }))
+      setAutoFilled(prev => ({ ...prev, ...autoflags }))
+    } catch (e: any) {
+      setDaDataError(e?.message || 'Не удалось получить данные по ИНН')
+    } finally {
+      setDaDataLoading(false)
+    }
+  }
+
   // GraphQL запросы и мутации
   const { data: clientData, loading: clientLoading, error: clientError, refetch } = useQuery(GET_CLIENT_ME, {
     skip: !isAuthenticated,
@@ -383,6 +441,10 @@ const ProfileRequisites: React.FC = () => {
       ...prev,
       [field]: value
     }));
+    if (field === 'inn') {
+      // При изменении ИНН убираем предыдущие автофлаги — новые данные подтянем по blur
+      setAutoFilled({})
+    }
   };
 
   const handleBankInputChange = (field: keyof NewBankDetail, value: string) => {
@@ -413,7 +475,7 @@ const ProfileRequisites: React.FC = () => {
           <div className="breadcrumb-wrapper">
             <a href="/" className="breadcrumb-link">Главная</a>
             <span className="breadcrumb-separator">→</span>
-            <a href="/profile-settings" className="breadcrumb-link">Личный кабинет</a>
+            <a href="/profile-set" className="breadcrumb-link">Личный кабинет</a>
             <span className="breadcrumb-separator">→</span>
             <span className="breadcrumb-current">Реквизиты</span>
           </div>
@@ -598,46 +660,52 @@ const ProfileRequisites: React.FC = () => {
             
             <div className="modal-form">
               <div className="form-row">
+                {!autoFilled.shortName && (
+                  <div className="form-field">
+                    <label className="form-label">Краткое наименование *</label>
+                    <input
+                      type="text"
+                      value={newEntity.shortName}
+                      onChange={(e) => handleInputChange('shortName', e.target.value)}
+                      className="form-input"
+                      placeholder="ООО «Компания»"
+                      required
+                    />
+                  </div>
+                )}
+                
+                {!autoFilled.form && (
+                  <div className="form-field">
+                    <label className="form-label">Форма *</label>
+                    <select
+                      value={newEntity.form}
+                      onChange={(e) => handleInputChange('form', e.target.value)}
+                      className="form-select"
+                      required
+                    >
+                      <option value="ООО">ООО</option>
+                      <option value="ИП">ИП</option>
+                      <option value="АО">АО</option>
+                      <option value="ПАО">ПАО</option>
+                      <option value="ЗАО">ЗАО</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {!autoFilled.fullName && (
                 <div className="form-field">
-                  <label className="form-label">Краткое наименование *</label>
+                  <label className="form-label">Полное наименование *</label>
                   <input
                     type="text"
-                    value={newEntity.shortName}
-                    onChange={(e) => handleInputChange('shortName', e.target.value)}
+                    value={newEntity.fullName}
+                    onChange={(e) => handleInputChange('fullName', e.target.value)}
                     className="form-input"
-                    placeholder="ООО «Компания»"
+                    placeholder="Общество с ограниченной ответственностью «Компания»"
                     required
                   />
                 </div>
-                
-                <div className="form-field">
-                  <label className="form-label">Форма *</label>
-                  <select
-                    value={newEntity.form}
-                    onChange={(e) => handleInputChange('form', e.target.value)}
-                    className="form-select"
-                    required
-                  >
-                    <option value="ООО">ООО</option>
-                    <option value="ИП">ИП</option>
-                    <option value="АО">АО</option>
-                    <option value="ПАО">ПАО</option>
-                    <option value="ЗАО">ЗАО</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-field">
-                <label className="form-label">Полное наименование *</label>
-                <input
-                  type="text"
-                  value={newEntity.fullName}
-                  onChange={(e) => handleInputChange('fullName', e.target.value)}
-                  className="form-input"
-                  placeholder="Общество с ограниченной ответственностью «Компания»"
-                  required
-                />
-              </div>
+              )}
 
               <div className="form-row">
                 <div className="form-field">
@@ -646,35 +714,46 @@ const ProfileRequisites: React.FC = () => {
                     type="text"
                     value={newEntity.inn}
                     onChange={(e) => handleInputChange('inn', e.target.value)}
+                    onBlur={fetchDaDataByInn}
                     className="form-input"
                     placeholder="1234567890"
                     required
                   />
+                  {daDataLoading && (
+                    <div className="form-hint">Автозаполнение по ИНН…</div>
+                  )}
+                  {daDataError && (
+                    <div className="form-error">{daDataError}</div>
+                  )}
                 </div>
                 
-                <div className="form-field">
-                  <label className="form-label">ОГРН</label>
-                  <input
-                    type="text"
-                    value={newEntity.ogrn}
-                    onChange={(e) => handleInputChange('ogrn', e.target.value)}
-                    className="form-input"
-                    placeholder="1234567890123"
-                  />
-                </div>
+                {!autoFilled.ogrn && (
+                  <div className="form-field">
+                    <label className="form-label">ОГРН</label>
+                    <input
+                      type="text"
+                      value={newEntity.ogrn}
+                      onChange={(e) => handleInputChange('ogrn', e.target.value)}
+                      className="form-input"
+                      placeholder="1234567890123"
+                    />
+                  </div>
+                )}
               </div>
 
-              <div className="form-field">
-                <label className="form-label">Юридический адрес *</label>
-                <input
-                  type="text"
-                  value={newEntity.legalAddress}
-                  onChange={(e) => handleInputChange('legalAddress', e.target.value)}
-                  className="form-input"
-                  placeholder="г. Москва, ул. Примерная, д. 1"
-                  required
-                />
-              </div>
+              {!autoFilled.legalAddress && (
+                <div className="form-field">
+                  <label className="form-label">Юридический адрес *</label>
+                  <input
+                    type="text"
+                    value={newEntity.legalAddress}
+                    onChange={(e) => handleInputChange('legalAddress', e.target.value)}
+                    className="form-input"
+                    placeholder="г. Москва, ул. Примерная, д. 1"
+                    required
+                  />
+                </div>
+              )}
 
               <div className="form-field">
                 <label className="form-label">Фактический адрес</label>
@@ -776,16 +855,18 @@ const ProfileRequisites: React.FC = () => {
                   />
                 </div>
                 
-                <div className="form-field">
-                  <label className="form-label">КПП</label>
-                  <input
-                    type="text"
-                    value={newEntity.registrationReasonCode}
-                    onChange={(e) => handleInputChange('registrationReasonCode', e.target.value)}
-                    className="form-input"
-                    placeholder="123456789"
-                  />
-                </div>
+                {!autoFilled.registrationReasonCode && (
+                  <div className="form-field">
+                    <label className="form-label">КПП</label>
+                    <input
+                      type="text"
+                      value={newEntity.registrationReasonCode}
+                      onChange={(e) => handleInputChange('registrationReasonCode', e.target.value)}
+                      className="form-input"
+                      placeholder="123456789"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

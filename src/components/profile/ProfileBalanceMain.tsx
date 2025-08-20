@@ -238,7 +238,7 @@ const ProfileBalanceMain = () => {
                 Для работы с балансами необходимо добавить юридическое лицо в настройках профиля
               </div>
               <a 
-                href="/profile-settings"
+                href="/profile-set"
                 className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
               >
                 Перейти к настройкам
@@ -344,5 +344,4 @@ const ProfileBalanceMain = () => {
 }
 
 export default ProfileBalanceMain;
-
 

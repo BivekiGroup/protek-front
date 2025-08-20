@@ -25,7 +25,7 @@ const ProfileActsPage = () => {
       // Проверяем есть ли у клиента юридические лица
       if (!data?.clientMe?.legalEntities?.length) {
         // Если нет юридических лиц, перенаправляем на настройки
-        router.push('/profile-settings?tab=legal');
+        router.push('/profile-set');
         return;
       }
     },

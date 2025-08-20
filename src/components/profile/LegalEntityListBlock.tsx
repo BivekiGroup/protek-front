@@ -113,7 +113,7 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({ legalEntiti
                   className="flex relative gap-1.5 items-center cursor-pointer group"
                   role="button"
                   tabIndex={0}
-                  onClick={() => router.push('/profile-requisites')}
+                  onClick={() => router.push('/profile-req')}
                 >
                   <div
                     layer-name="icon-wallet"

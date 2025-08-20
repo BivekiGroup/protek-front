@@ -24,7 +24,7 @@ const SetToken: React.FC = () => {
     
     // Перенаправляем на страницу реквизитов
     setTimeout(() => {
-      router.push('/profile-requisites');
+      router.push('/profile-set');
     }, 2000);
   }, [router]);
 

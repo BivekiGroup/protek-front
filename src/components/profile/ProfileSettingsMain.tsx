@@ -1,4 +1,5 @@
 import * as React from "react";
+import toast from 'react-hot-toast';
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_CLIENT_ME, UPDATE_CLIENT_PERSONAL_DATA } from '@/lib/graphql';
 import ProfilePersonalData from "./ProfilePersonalData";
@@ -105,10 +106,12 @@ const ProfileSettingsMain = () => {
     const [updatePersonalData] = useMutation(UPDATE_CLIENT_PERSONAL_DATA, {
       onCompleted: () => {
         console.log('Личные данные обновлены');
+        toast.success('Личные данные сохранены');
         refetch();
       },
       onError: (error) => {
         console.error('Ошибка обновления личных данных:', error);
+        toast.error('Ошибка сохранения личных данных');
       }
     });
 
@@ -139,11 +142,9 @@ const ProfileSettingsMain = () => {
             }
           }
         });
-
-        alert('Личные данные сохранены!');
       } catch (error) {
         console.error('Ошибка сохранения:', error);
-        alert('Ошибка сохранения данных');
+        toast.error('Ошибка сохранения данных');
       }
     };
 
@@ -296,7 +297,6 @@ const ProfileSettingsMain = () => {
     }
 
 export default ProfileSettingsMain;
-
 
 
 
