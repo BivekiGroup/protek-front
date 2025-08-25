@@ -210,7 +210,10 @@ export default function CardPage() {
       description: `${result.brand} ${result.articleNumber} - ${result.name}`,
       brand: result.brand,
       sku: result.articleNumber,
-      image: mainImageUrl || (result?.partsIndexImages && result.partsIndexImages.length > 0 ? result.partsIndexImages[0].url : undefined),
+      image:
+        (result?.images && result.images.length > 0 ? result.images[0].url : undefined)
+        || mainImageUrl
+        || (result?.partsIndexImages && result.partsIndexImages.length > 0 ? result.partsIndexImages[0].url : undefined),
       category: "Автозапчасти",
       offers: allOffers.map(offer => ({
         price: offer.sortPrice,
@@ -260,15 +263,34 @@ export default function CardPage() {
         productId={artId ? String(artId) : undefined}
         price={allOffers.length > 0 ? Math.min(...allOffers.map(offer => offer.sortPrice)) : 0}
         currency="RUB"
-        image={mainImageUrl || (result?.partsIndexImages && result.partsIndexImages.length > 0 ? result.partsIndexImages[0].url : undefined)}
+        image={(() => {
+          const isPlaceholder = (url?: string) => {
+            if (!url) return true;
+            const u = url.toLowerCase();
+            return (
+              u.includes('image-10') ||
+              u.includes('noimage') ||
+              u.includes('placeholder') ||
+              u.includes('mock') ||
+              u.includes('akum') ||
+              u.includes('akku')
+            );
+          };
+          const cms = (result?.images?.map((img: any) => img.url) || []).filter(Boolean);
+          const cmsReal = cms.find((u: string) => !isPlaceholder(u));
+          if (cmsReal) return cmsReal;
+          if (mainImageUrl && !isPlaceholder(mainImageUrl)) return mainImageUrl;
+          const pidx = (result?.partsIndexImages || []).map((img: any) => img.url).find((u: string) => !isPlaceholder(u));
+          return pidx || mainImageUrl || undefined;
+        })()}
       />
       <section className="main">
         <div className="w-layout-blockcontainer container w-container">
           <div className="w-layout-vflex flex-block-14">
             <div className="w-layout-hflex core-product-card-copy">
               <ProductImageGallery 
-                imageUrl={mainImageUrl} 
-                partsIndexImages={result?.partsIndexImages?.map((img: any) => img.url) || []}
+                imageUrl={mainImageUrl}
+                images={(result?.images?.map((img: any) => img.url)) || []}
               />
               <div className="w-layout-vflex flex-block-48">
                 <ProductSortHeader 

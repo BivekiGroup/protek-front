@@ -136,8 +136,23 @@ const BestPriceItem: React.FC<BestPriceItemProps> = ({
     }
   };
 
+  // URL карточки товара
+  const cardUrl = (article && brand)
+    ? `/card?article=${encodeURIComponent(article)}&brand=${encodeURIComponent(brand)}${productId ? `&artId=${encodeURIComponent(productId)}` : ''}`
+    : (productId ? `/card?artId=${encodeURIComponent(productId)}` : '/card');
+
+  const handleOpenCard = () => {
+    window.location.href = cardUrl;
+  };
+
   return (
-    <div className="w-layout-vflex bestpriceitem">
+    <div
+      className="w-layout-vflex bestpriceitem"
+      onClick={handleOpenCard}
+      role="link"
+      tabIndex={0}
+      style={{ cursor: 'pointer' }}
+    >
       <div 
         className="favcardcat"
         onClick={handleFavoriteClick}

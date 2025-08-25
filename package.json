@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "env:check": "bash scripts/sync-env.sh check",
+    "env:sync": "bash scripts/sync-env.sh sync"
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",

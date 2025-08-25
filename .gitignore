@@ -30,8 +30,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files
 .env*
+# Keep stack.env tracked (template without secrets)
+!stack.env
+# Local backup with real secrets
+stack.env.local
 
 # vercel
 .vercel

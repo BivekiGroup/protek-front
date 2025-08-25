@@ -7,6 +7,7 @@ import {
   DELETE_USER_VEHICLE, 
   ADD_VEHICLE_FROM_SEARCH, 
   DELETE_SEARCH_HISTORY_ITEM,
+  UPDATE_USER_VEHICLE,
   UserVehicle,
   VehicleSearchHistory 
 } from '@/lib/graphql/garage';
@@ -20,6 +21,10 @@ const ProfileGarageMain = () => {
   const [showAddCar, setShowAddCar] = React.useState(false);
   const [expandedVehicle, setExpandedVehicle] = React.useState<string | null>(null);
   const [isAddingVehicle, setIsAddingVehicle] = React.useState(false);
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [editingVehicle, setEditingVehicle] = React.useState<UserVehicle | null>(null);
+  const [editingComment, setEditingComment] = React.useState<string>("");
+  const [isSavingEdit, setIsSavingEdit] = React.useState(false);
 
   // GraphQL queries and mutations
   const { data: vehiclesData, loading: vehiclesLoading, refetch: refetchVehicles } = useQuery(GET_USER_VEHICLES);
@@ -47,6 +52,21 @@ const ProfileGarageMain = () => {
     onError: (error) => {
       console.error('Ошибка удаления автомобиля:', error);
       alert('Ошибка при удалении автомобиля');
+    }
+  });
+
+  const [updateVehicle] = useMutation(UPDATE_USER_VEHICLE, {
+    onCompleted: () => {
+      setIsSavingEdit(false);
+      setIsEditOpen(false);
+      setEditingVehicle(null);
+      setEditingComment("");
+      refetchVehicles();
+    },
+    onError: (error) => {
+      console.error('Ошибка обновления автомобиля:', error);
+      alert('Не удалось сохранить комментарий');
+      setIsSavingEdit(false);
     }
   });
 
@@ -142,6 +162,31 @@ const ProfileGarageMain = () => {
     setExpandedVehicle(expandedVehicle === vehicleId ? null : vehicleId);
   };
 
+  const openEditComment = (vehicle: UserVehicle) => {
+    setEditingVehicle(vehicle);
+    setEditingComment(vehicle.comment || '');
+    setIsEditOpen(true);
+  };
+
+  const saveEditComment = async () => {
+    if (!editingVehicle) return;
+    setIsSavingEdit(true);
+    try {
+      await updateVehicle({
+        variables: {
+          id: editingVehicle.id,
+          input: {
+            // Многие backend требуют name в input — передадим текущее имя
+            name: editingVehicle.name || `${editingVehicle.brand || ''} ${editingVehicle.model || ''}`.trim() || 'Автомобиль',
+            comment: editingComment || null,
+          }
+        }
+      });
+    } catch (e) {
+      setIsSavingEdit(false);
+    }
+  };
+
   return (
     <div className="flex flex-col flex-1 shrink justify-center basis-0 w-full max-md:max-w-full">
       <div className="flex flex-wrap gap-5 items-center px-8 py-3 w-full text-base leading-snug text-gray-400 whitespace-nowrap bg-white rounded-lg max-md:px-5 max-md:max-w-full">
@@ -189,9 +234,14 @@ const ProfileGarageMain = () => {
                     {vehicle.vin || 'VIN не указан'}
                   </div>
                 </div>
-                <div className="flex-1 shrink gap-2.5 self-stretch px-3.5 py-1.5 my-auto text-sm leading-snug whitespace-nowrap bg-white rounded border border-solid basis-3 border-zinc-100 min-h-[32px] min-w-[240px] text-stone-500 truncate overflow-hidden">
-                  {vehicle.comment || 'Комментарий не добавлен'}
-                </div>
+                <button
+                  type="button"
+                  className="flex-1 shrink gap-2.5 self-stretch px-3.5 py-2 my-auto text-sm leading-snug whitespace-nowrap bg-white rounded border border-solid basis-3 border-zinc-100 min-h-[36px] min-w-[240px] text-stone-700 text-left hover:border-red-300 transition-colors"
+                  onClick={() => openEditComment(vehicle)}
+                  title={vehicle.comment ? 'Изменить комментарий' : 'Добавить комментарий'}
+                >
+                  {vehicle.comment || 'Добавить комментарий'}
+                </button>
                 <div 
                   className="gap-2.5 self-stretch px-5 py-2 my-auto font-medium leading-tight text-center bg-red-600 rounded-lg min-h-[32px] cursor-pointer text-white hover:bg-red-700 transition-colors" 
                   role="button" 
@@ -382,6 +432,41 @@ const ProfileGarageMain = () => {
           </>
         )}
       </div>
+      {isEditOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b">
+              <div className="text-lg font-semibold">{editingVehicle?.name || 'Автомобиль'} — комментарий</div>
+            </div>
+            <div className="p-5 space-y-3">
+              <label className="block text-sm text-gray-600 mb-1">Комментарий</label>
+              <textarea
+                className="w-full rounded border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[120px]"
+                value={editingComment}
+                onChange={(e) => setEditingComment(e.target.value)}
+                placeholder="Например: пробег, номер двигателя, заметки по обслуживанию"
+              />
+            </div>
+            <div className="px-5 py-4 border-t flex gap-3 justify-end bg-gray-50">
+              <button
+                type="button"
+                className="px-4 py-2 rounded border border-gray-300 bg-white hover:bg-gray-100"
+                onClick={() => { setIsEditOpen(false); setEditingVehicle(null); setEditingComment(''); }}
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                className={`px-4 py-2 rounded text-white ${isSavingEdit ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
+                onClick={saveEditComment}
+                disabled={isSavingEdit}
+              >
+                {isSavingEdit ? 'Сохранение…' : 'Сохранить'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex overflow-hidden flex-col p-8 mt-5 w-full bg-white rounded-2xl max-md:px-5 max-md:max-w-full">
         <div className="text-3xl font-bold leading-none text-gray-950">
           Ранее вы искали
@@ -472,5 +557,4 @@ const ProfileGarageMain = () => {
 }
 
 export default ProfileGarageMain;
-
 

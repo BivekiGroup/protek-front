@@ -2,20 +2,47 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 
 interface ProductImageGalleryProps {
   imageUrl?: string;
-  images?: string[]; // если появятся несколько картинок
-  partsIndexImages?: string[]; // изображения из Parts Index
+  images?: string[]; // изображения из CMS/внутреннего источника
+  partsIndexImages?: string[]; // устаревший источник (Parts Index), используем как последний фолбэк
 }
 
 export default function ProductImageGallery({ imageUrl, images, partsIndexImages }: ProductImageGalleryProps) {
   // Убираем defaultImage - больше не используем заглушку
   // const defaultImage = "/images/image-10.png";
   
-  // Объединяем все доступные изображения
-  const allImages = [
-    ...(partsIndexImages && partsIndexImages.length > 0 ? partsIndexImages : []),
+  // Функция определения мокап/плейсхолдер изображения
+  const isPlaceholder = (url?: string) => {
+    if (!url) return true;
+    const u = url.toLowerCase();
+    return (
+      u.includes('image-10') ||
+      u.includes('noimage') ||
+      u.includes('placeholder') ||
+      u.includes('mock') ||
+      u.includes('mockup') ||
+      u.includes('akum') ||
+      u.includes('akkum') ||
+      u.includes('akku') ||
+      u.includes('accum') ||
+      u.includes('accumulator') ||
+      u.includes('battery') ||
+      u.includes('/akb')
+    );
+  };
+
+  // Объединяем все доступные изображения, приоритет: CMS images -> imageUrl -> PartsIndex
+  const rawImages = [
     ...(images && images.length > 0 ? images : []),
-    ...(imageUrl ? [imageUrl] : [])
-  ];
+    ...(imageUrl ? [imageUrl] : []),
+    ...(partsIndexImages && partsIndexImages.length > 0 ? partsIndexImages : [])
+  ].filter(Boolean) as string[];
+
+  // Удаляем дубликаты и откладываем плейсхолдеры в конец (или исключаем, если есть реальные)
+  const unique = Array.from(new Set(rawImages));
+  const real = unique.filter(u => !isPlaceholder(u));
+  const placeholders = unique.filter(u => isPlaceholder(u));
+  // Если есть реальные изображения — показываем только их. Плейсхолдеры скрываем.
+  const allImages = real.length > 0 ? real : placeholders;
   
   // Если нет изображений, показываем заглушку с текстом
   const galleryImages = allImages.length > 0 ? allImages : [];

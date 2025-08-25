@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useRouter } from 'next/router';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CatalogSubscribe from '@/components/CatalogSubscribe';
@@ -13,6 +14,13 @@ import { getMetaByPath } from "@/lib/meta-config";
 
     
 const ProfileHistoryPage = () => {
+  const router = useRouter();
+  React.useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+    if (!token) {
+      router.replace('/login-required');
+    }
+  }, [router]);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const [menuHeight, setMenuHeight] = React.useState<number | undefined>(undefined);
 

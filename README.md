@@ -38,3 +38,14 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+
+## ENV and Docker deploy
+- `stack.env` хранится в репозитории как шаблон без секретов и подключён в `docker-compose.yml` через `env_file`. При деплое через Repository (Portainer) файл должен быть в Git.
+- Для локальной разработки используйте `.env` (опционально) — значения с префиксом `NEXT_PUBLIC_` попадают в клиент.
+- Синхронизация ключей:
+  - `npm run env:check` — отчёт о пропущенных/плейсхолдерных значениях в `stack.env` и `.env`.
+  - `npm run env:sync` — добавит недостающие ключи на основе `docker-compose.yml` и `*.example.env`.
+  
+Примечания:
+- Публичные переменные фронта начинаются с `NEXT_PUBLIC_`.
+- Не коммитьте реальные секреты в `stack.env` — используйте плейсхолдеры. Реальные значения задавайте на сервере/в Portainer.

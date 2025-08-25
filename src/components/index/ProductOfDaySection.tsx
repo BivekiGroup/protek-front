@@ -137,6 +137,18 @@ const ProductOfDaySection: React.FC = () => {
   const discountedPrice = calculateDiscountedPrice(originalPrice, currentProduct.discount);
   const hasDiscount = currentProduct.discount && currentProduct.discount > 0;
 
+  // Переход в карточку товара
+  const cardUrl = (product.article && product.brand)
+    ? `/card?article=${encodeURIComponent(product.article)}&brand=${encodeURIComponent(product.brand!)}&artId=${encodeURIComponent(product.id)}`
+    : `/card?artId=${encodeURIComponent(product.id)}`;
+  const openCard = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    window.location.href = cardUrl;
+  };
+
   return (
     <section className="main">
       <div className="w-layout-blockcontainer batd w-container">
@@ -163,7 +175,7 @@ const ProductOfDaySection: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className="text-block-10" title={product.name}>
+                <div className="text-block-10" title={product.name} onClick={openCard} style={{ cursor: 'pointer' }}>
                   {product.brand && `${product.brand} `}
                   {product.name}
                 </div>
@@ -176,7 +188,7 @@ const ProductOfDaySection: React.FC = () => {
               </div>
               
               {productImage && (
-                <div className="">
+                <div className="" onClick={openCard} style={{ cursor: 'pointer' }}>
                   <img 
                     width="Auto" 
                     height="Auto" 

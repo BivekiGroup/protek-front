@@ -2,6 +2,8 @@ version: '3.8'
 
 services:
   frontend:
+    env_file:
+      - stack.env
     build: 
       context: .
       dockerfile: Dockerfile

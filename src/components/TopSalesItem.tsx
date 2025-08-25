@@ -100,13 +100,23 @@ const TopSalesItem: React.FC<TopSalesItemProps> = ({
     }
   };
 
-  // Ссылка на карточку товара (если нужно)
+  // Ссылка на карточку товара
   const cardUrl = article && brand 
     ? `/card?article=${encodeURIComponent(article)}&brand=${encodeURIComponent(brand)}`
     : '/card';
 
+  const handleOpenCard = () => {
+    window.location.href = cardUrl;
+  };
+
   return (
-    <div className="w-layout-vflex flex-block-15-copy">
+    <div
+      className="w-layout-vflex flex-block-15-copy"
+      onClick={handleOpenCard}
+      role="link"
+      tabIndex={0}
+      style={{ cursor: 'pointer' }}
+    >
       <div 
         className={`favcardcat${isItemFavorite ? ' favorite-active' : ''}`}
         onClick={handleFavoriteClick}

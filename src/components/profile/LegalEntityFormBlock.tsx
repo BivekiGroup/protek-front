@@ -215,9 +215,13 @@ const LegalEntityFormBlock: React.FC<LegalEntityFormBlockProps> = (props) => {
           <button
             onClick={handleFillFromInn}
             disabled={daDataLoading || inn.trim().length < 10}
-            className={`gap-2.5 px-5 py-4 my-auto rounded-xl border min-h-[50px] min-w-[240px] cursor-pointer bg-white ${
-              daDataLoading ? 'opacity-60 cursor-wait' : ''
-            } ${inn.trim().length < 10 ? 'border-stone-300 text-stone-400' : 'border-red-600 text-gray-950'}`}
+            className={`gap-2.5 px-5 py-4 my-auto rounded-xl min-h-[50px] min-w-[240px] cursor-pointer transition-colors ${
+              daDataLoading
+                ? 'bg-red-600/70 text-white cursor-wait'
+                : inn.trim().length < 10
+                  ? 'bg-stone-200 text-stone-500 cursor-not-allowed'
+                  : 'bg-red-600 text-white hover:bg-red-700'
+            }`}
             type="button"
           >
             {daDataLoading ? 'Получаем…' : 'Получить по ИНН'}
@@ -225,22 +229,46 @@ const LegalEntityFormBlock: React.FC<LegalEntityFormBlockProps> = (props) => {
         </div>
       </div>
 
-      {/* Превью авто-полей */}
+      {/* Превью авто-полей (улучшенный вид, без упоминания DaData) */}
       {hasAutoData && (
-        <div className="mt-5 p-4 rounded-xl border border-stone-200 bg-stone-50">
-          <div className="text-gray-900 font-semibold mb-2">Автоматически заполнено (DaData)</div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-700">
-            <div><span className="text-gray-500">Краткое наименование:</span> {shortName || '—'}</div>
-            <div><span className="text-gray-500">Полное наименование:</span> {fullName || '—'}</div>
-            <div><span className="text-gray-500">Форма:</span> {form || '—'}</div>
-            <div><span className="text-gray-500">ОГРН:</span> {ogrn || '—'}</div>
-            <div><span className="text-gray-500">КПП:</span> {kpp || '—'}</div>
-            <div className="md:col-span-2"><span className="text-gray-500">Юридический адрес:</span> {jurAddress || '—'}</div>
-          </div>
-          <div className="mt-3">
-            <button className="text-blue-600 text-sm underline" onClick={() => setShowAutoEdit(v => !v)}>
-              {showAutoEdit ? 'Скрыть редактирование авто-полей' : 'Изменить эти поля'}
+        <div className="mt-5 p-5 rounded-xl border border-stone-200 bg-white shadow-sm">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-700 text-xs font-bold">✓</span>
+              <div className="text-gray-900 font-semibold">Данные найдены</div>
+            </div>
+            <button
+              className="text-blue-600 text-sm hover:text-blue-700"
+              onClick={() => setShowAutoEdit(v => !v)}
+            >
+              {showAutoEdit ? 'Скрыть редактирование' : 'Изменить'}
             </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[13px] text-gray-800">
+            <div>
+              <div className="text-gray-500">Краткое наименование</div>
+              <div className="font-medium">{shortName || '—'}</div>
+            </div>
+            <div>
+              <div className="text-gray-500">Полное наименование</div>
+              <div className="font-medium">{fullName || '—'}</div>
+            </div>
+            <div>
+              <div className="text-gray-500">Форма</div>
+              <div className="font-medium">{form || '—'}</div>
+            </div>
+            <div>
+              <div className="text-gray-500">ОГРН</div>
+              <div className="font-medium">{ogrn || '—'}</div>
+            </div>
+            <div>
+              <div className="text-gray-500">КПП</div>
+              <div className="font-medium">{kpp || '—'}</div>
+            </div>
+            <div className="md:col-span-2">
+              <div className="text-gray-500">Юридический адрес</div>
+              <div className="font-medium">{jurAddress || '—'}</div>
+            </div>
           </div>
         </div>
       )}
@@ -311,7 +339,7 @@ const LegalEntityFormBlock: React.FC<LegalEntityFormBlockProps> = (props) => {
         <>
           <div className="flex flex-wrap gap-5 items-start mt-5 w-full max-md:max-w-full">
             <div className="flex flex-col flex-1 min-w-[240px]">
-              <div className="text-gray-950">Система налогоблажения</div>
+              <div className="text-gray-950">Система налогообложения</div>
               <div className="relative mt-1.5">
                 <div className={`flex gap-10 justify-between items-center px-6 py-3.5 w-full whitespace-nowrap bg-white rounded border border-solid min-h-[46px] text-neutral-500 cursor-pointer select-none ${validationErrors.taxSystem ? 'border-red-500' : 'border-stone-300'}`}
                   onClick={() => setIsTaxSystemOpen((prev: boolean) => !prev)} tabIndex={0} onBlur={() => setIsTaxSystemOpen(false)}>

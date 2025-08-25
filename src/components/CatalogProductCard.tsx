@@ -88,8 +88,29 @@ const CatalogProductCard: React.FC<CatalogProductCardProps> = ({
     }
   };
 
+  const handleOpenCard = () => {
+    window.location.href = cardUrl;
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleOpenCard();
+    }
+  };
+
   return (
-    <div className="w-layout-vflex flex-block-15-copy" data-article-card="visible" itemScope itemType="https://schema.org/Product">
+    <div
+      className="w-layout-vflex flex-block-15-copy"
+      data-article-card="visible"
+      itemScope
+      itemType="https://schema.org/Product"
+      onClick={handleOpenCard}
+      onKeyDown={handleKeyDown}
+      role="link"
+      tabIndex={0}
+      style={{ cursor: 'pointer' }}
+    >
       <div
         className={`favcardcat${isItemFavorite ? ' favorite-active' : ''}`}
         onClick={handleFavoriteClick}
