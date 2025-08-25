@@ -62,15 +62,32 @@ const ProductCharacteristics = ({ result }: ProductCharacteristicsProps) => {
                 <span className="text-block-29">Название:</span>
                 <span className="text-block-28">{result.name}</span>
               </div>
+              {result.description && (
+                <div className="w-layout-hflex flex-block-55">
+                  <span className="text-block-29">Описание:</span>
+                  <span className="text-block-28">{result.description}</span>
+                </div>
+              )}
+
+              {Array.isArray(result.characteristics) && result.characteristics.length > 0 && (
+                <div className="w-layout-vflex flex-block-53">
+                  {result.characteristics.map((ch: any, idx: number) => (
+                    <div key={idx} className="w-layout-hflex flex-block-55">
+                      <span className="text-block-29">{ch?.characteristic?.name || 'Параметр'}:</span>
+                      <span className="text-block-28">{ch?.value || '—'}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               {partsIndexData?.originalName && (
                 <div className="w-layout-hflex flex-block-55">
                   <span className="text-block-29">Оригинальное название:</span>
                   <span className="text-block-28">{partsIndexData.originalName}</span>
                 </div>
               )}
-              {partsIndexData?.description && (
+              {partsIndexData?.description && !result.description && (
                 <div className="w-layout-hflex flex-block-55">
-                  <span className="text-block-29">Описание:</span>
+                  <span className="text-block-29">Описание (каталог):</span>
                   <span className="text-block-28">{partsIndexData.description}</span>
                 </div>
               )}
