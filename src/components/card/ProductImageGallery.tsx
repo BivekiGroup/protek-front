@@ -48,6 +48,7 @@ export default function ProductImageGallery({ imageUrl, images, partsIndexImages
   const galleryImages = allImages.length > 0 ? allImages : [];
   const [selectedImage, setSelectedImage] = useState(galleryImages[0] || '');
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+  const [overlayIndex, setOverlayIndex] = useState<number | null>(null);
 
   // Обновляем selectedImage при изменении galleryImages
   useEffect(() => {
@@ -60,11 +61,31 @@ export default function ProductImageGallery({ imageUrl, images, partsIndexImages
   useEffect(() => {
     if (!isOverlayOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsOverlayOpen(false);
+      if (e.key === 'Escape') {
+        setIsOverlayOpen(false);
+        setOverlayIndex(null);
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        setOverlayIndex((prev) => {
+          const idx = typeof prev === 'number' ? prev : Math.max(0, galleryImages.indexOf(selectedImage));
+          const next = (idx + 1) % galleryImages.length;
+          setSelectedImage(galleryImages[next]);
+          return next;
+        });
+      }
+      if (e.key === 'ArrowLeft') {
+        setOverlayIndex((prev) => {
+          const idx = typeof prev === 'number' ? prev : Math.max(0, galleryImages.indexOf(selectedImage));
+          const next = (idx - 1 + galleryImages.length) % galleryImages.length;
+          setSelectedImage(galleryImages[next]);
+          return next;
+        });
+      }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOverlayOpen]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOverlayOpen, galleryImages, selectedImage]);
 
   // Клик вне картинки
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -88,11 +109,46 @@ export default function ProductImageGallery({ imageUrl, images, partsIndexImages
     );
   }
 
+  const openOverlay = (index?: number) => {
+    const idx = typeof index === 'number' ? index : Math.max(0, galleryImages.indexOf(selectedImage));
+    setOverlayIndex(idx);
+    setIsOverlayOpen(true);
+  };
+
+  const goPrev = () => {
+    setOverlayIndex((prev) => {
+      const idx = typeof prev === 'number' ? prev : Math.max(0, galleryImages.indexOf(selectedImage));
+      const next = (idx - 1 + galleryImages.length) % galleryImages.length;
+      setSelectedImage(galleryImages[next]);
+      return next;
+    });
+  };
+
+  const goNext = () => {
+    setOverlayIndex((prev) => {
+      const idx = typeof prev === 'number' ? prev : Math.max(0, galleryImages.indexOf(selectedImage));
+      const next = (idx + 1) % galleryImages.length;
+      setSelectedImage(galleryImages[next]);
+      return next;
+    });
+  };
+
   return (
     <div className="w-layout-vflex core-product-copy-copy">
       {/* Основная картинка */}
-      <div className="div-block-20 cursor-zoom-in" onClick={() => setIsOverlayOpen(true)} tabIndex={0} aria-label="Открыть изображение в полный экран" role="button" onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setIsOverlayOpen(true)}>
+      <div className="div-block-20 relative" aria-label="Изображение товара">
         <img src={selectedImage} loading="lazy" alt="Изображение товара" className="image-10-copy" />
+        {/* Кнопка увеличения */}
+        <button
+          type="button"
+          className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 shadow-lg"
+          aria-label="Открыть галерею"
+          onClick={() => openOverlay()}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
       </div>
       {/* Миниатюры */}
       <div className="w-layout-hflex flex-block-56 mt-2 gap-2">
@@ -105,14 +161,14 @@ export default function ProductImageGallery({ imageUrl, images, partsIndexImages
             className={`small-img cursor-pointer border ${selectedImage === img ? 'border-blue-500' : 'border-transparent'} rounded transition`}
             onClick={() => {
               setSelectedImage(img);
-              setIsOverlayOpen(true);
+              // Только меняем изображение, overlay не открываем
             }}
             tabIndex={0}
             aria-label={`Показать изображение ${idx + 1}`}
             onKeyDown={e => {
               if (e.key === 'Enter' || e.key === ' ') {
                 setSelectedImage(img);
-                setIsOverlayOpen(true);
+                // overlay не открываем
               }
             }}
           />
@@ -137,8 +193,31 @@ export default function ProductImageGallery({ imageUrl, images, partsIndexImages
               <path d="M8 24L24 8M8 8l16 16" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </button>
+          {/* Кнопки навигации */}
+          {galleryImages.length > 1 && (
+            <>
+              <button
+                onClick={goPrev}
+                className="absolute left-6 text-white bg-black/40 rounded-full p-3 hover:bg-black/70"
+                aria-label="Предыдущее изображение"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M15 19l-7-7 7-7" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <button
+                onClick={goNext}
+                className="absolute right-6 text-white bg-black/40 rounded-full p-3 hover:bg-black/70"
+                aria-label="Следующее изображение"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 5l7 7-7 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </>
+          )}
           <img
-            src={selectedImage}
+            src={typeof overlayIndex === 'number' ? galleryImages[overlayIndex] : selectedImage}
             alt="Просмотр товара"
             className="max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl border-4 border-white"
             draggable={false}
@@ -147,4 +226,4 @@ export default function ProductImageGallery({ imageUrl, images, partsIndexImages
       )}
     </div>
   );
-} 
+}
