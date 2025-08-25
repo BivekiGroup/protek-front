@@ -1131,6 +1131,8 @@ export const SEARCH_PRODUCT_OFFERS = gql`
       brand
       name
       description
+      weight
+      dimensions
       hasInternalStock
       totalOffers
       isInCart
