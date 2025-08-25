@@ -125,14 +125,6 @@ const Footer = () => (
               <a href="#" className="link">Избранное</a>
             </div>
             <div className="flex flex-col gap-3 min-w-[150px]">
-              <div className="link">Детали для ТО</div>
-              <a href="#" className="link">Шины</a>
-              <a href="#" className="link">Диски</a>
-              <a href="#" className="link">Масла и жидкости</a>
-              <a href="#" className="link">Инструменты</a>
-              <a href="#" className="link">Все категории</a>
-            </div>
-            <div className="flex flex-col gap-3 min-w-[150px]">
               <div className="link">О компании</div>
               <a href="#" className="link">Оплата и доставка</a>
               <a href="#" className="link">Гарантии и возврат</a>
