@@ -168,7 +168,7 @@ const BestPriceSection: React.FC = () => {
                 </svg>
               </span>
             </button>
-            <div className="w-layout-hflex flex-block-121 carousel-scroll" ref={scrollRef}>
+            <div className="w-layout-hflex flex-block-121 carousel-scroll-top" ref={scrollRef}>
               {bestPriceItems.map((item, i) => (
                 <BestPriceItem key={i} {...item} />
               ))}

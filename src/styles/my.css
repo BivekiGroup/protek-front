@@ -814,6 +814,7 @@ a.link-block-2.w-inline-block  {
   }
   .flex-block-119 {
     width: 100%;
+    align-items: center;
   }
 }
 
@@ -892,7 +893,7 @@ a.link-block-2.w-inline-block  {
 
 
 .flex-block-108 , .flex-block-108-copy, .w-layout-hflex.flex-block-121, .core-product-search{
-  overflow-x: scroll;
+  overflow-x: scroll; 
   overflow-y: hidden;
 
   
@@ -907,9 +908,17 @@ a.link-block-2.w-inline-block  {
 
 .flex-block-108 , .flex-block-108-copy, .w-layout-hflex.flex-block-121, .core-product-search {
   overflow-x: scroll;
-  
+   
   overflow-y: hidden;
   scrollbar-width: none; /* Firefox */
+}
+
+/* Дополнительные стили для flex-block-121 */
+.w-layout-hflex.flex-block-121 {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 .flex-block-108::-webkit-scrollbar, .flex-block-108-copy::-webkit-scrollbar, .w-layout-hflex.flex-block-121::-webkit-scrollbar, .core-product-search::-webkit-scrollbar {
   display: none; /* Chrome, Safari */
@@ -996,9 +1005,14 @@ a.link-block-2.w-inline-block  {
   flex: 0 auto;
   align-self: auto;
   height: 60px;
-  width: 130px;
+  
   overflow: hidden;
 }
+
+.bp-item-info {
+  width: 100% !important;
+}
+
 @media screen and (max-width: 991px) {
   .flex-block-15-copy {
     grid-column-gap: 5px;
@@ -1028,7 +1042,7 @@ a.link-block-2.w-inline-block  {
   }
   .nameitembp {
     height: 36px;
-    width: 95px;
+    
     font-size: 12px;
     line-height: 18px;
     overflow: hidden;
@@ -1055,6 +1069,12 @@ a.link-block-2.w-inline-block  {
   .topmenub {
     display: none !important;
   }
+
+  .nameitembp {
+    height: 36px;
+    
+
+  }
 }
 
 @media screen and (max-width: 479px) {
@@ -1062,8 +1082,9 @@ a.link-block-2.w-inline-block  {
     grid-column-gap: 5px;
     grid-row-gap: 5px;
     min-width: 160px;
-    max-width: 190px;
+    max-width: 160px;
     padding: 15px;
+
   }
 }
 @media screen and (max-width: 1440px) {
@@ -1104,6 +1125,8 @@ a.link-block-2.w-inline-block  {
   position: relative;
   gap: 12px;
   width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 /* Improve Best Price horizontal scroll behavior */
@@ -1139,6 +1162,10 @@ a.link-block-2.w-inline-block  {
   object-fit: contain;
 }
 
+.favcardcat, .pricecartbp{
+  z-index: 10;
+}
+
 /* Discount badge pinned to image corner for stability */
 .saletagbp {
   position: absolute;
@@ -1146,23 +1173,22 @@ a.link-block-2.w-inline-block  {
   left: 8px;
 }
 
+.div-block-3.bp-item-info {
+  margin-top: -25px;
+}
+
 /* Actions/price block tighter on small screens */
 @media (max-width: 767px) {
   .carousel-arrow { display: none; }
-  .w-layout-vflex.bestpriceitem {
-    width: clamp(150px, 60vw, 200px);
-    min-width: clamp(150px, 60vw, 200px);
-    max-width: clamp(150px, 60vw, 200px);
+
+  .imgitembp { height: 130px; }
+
+  .div-block-3.bp-item-info {
+    margin-top: -5px;
   }
-  .imgitembp { height: 140px; }
 }
 
 @media (max-width: 479px) {
-  .w-layout-vflex.bestpriceitem {
-    width: clamp(150px, 80vw, 190px);
-    min-width: clamp(150px, 80vw, 190px);
-    max-width: clamp(150px, 80vw, 190px);
-  }
   .imgitembp { height: 130px; }
 }
 
@@ -1325,6 +1351,10 @@ a.link-block-2.w-inline-block  {
   .sort-item.first {
     width: 60px;
   }
+  /* .bestpriceitem {
+    min-height: 250px;
+    max-height: 250px;
+  } */
 }
 @media (max-width: 479px) {
   .pcs-search-s1,
@@ -1389,5 +1419,68 @@ a.link-block-2.w-inline-block  {
 @media (max-width: 767px) {
   .filters-desktop {
     display: none !important;
+  }
+}
+
+/* ===== СТИЛИ ДЛЯ СКРОЛЛА КАРУСЕЛИ TOP ===== */
+
+/* Основной контейнер карусели */
+.carousel-scroll-top {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 4px 16px 4px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE и Edge */
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+}
+
+.carousel-scroll-top::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Адаптивные размеры для разных разрешений */
+@media (max-width: 1440px) {
+  .carousel-scroll-top {
+    gap: 16px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 1200px) {
+  .carousel-scroll-top {
+    gap: 16px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 991px) {
+  .carousel-scroll-top {
+    gap: 14px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .carousel-scroll-top {
+    gap: 12px;
+    scroll-snap-type: x proximity;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 479px) {
+  .carousel-scroll-top {
+    gap: 10px;
+    scroll-snap-type: x mandatory;
+    max-width: 100%;
   }
 }

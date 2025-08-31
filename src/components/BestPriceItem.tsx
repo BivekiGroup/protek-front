@@ -189,7 +189,9 @@ const BestPriceItem: React.FC<BestPriceItemProps> = ({
           <div className="oldpricebp">{oldPrice}</div>
         </div>
         <div className="w-layout-hflex flex-block-120">
-          <div className="nameitembp">{title}</div>
+          
+            <div className="nameitembp">{title}</div>
+          
           <a 
             href="#" 
             className={`button-icon w-inline-block ${inCart || localInCart ? 'in-cart' : ''}`}
