@@ -25,6 +25,8 @@ const BestPriceSection: React.FC = () => {
   const { data, loading, error } = useQuery(GET_BEST_PRICE_PRODUCTS);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+
+
   const scrollLeft = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollBy({ left: -SCROLL_AMOUNT, behavior: 'smooth' });
@@ -168,7 +170,10 @@ const BestPriceSection: React.FC = () => {
                 </svg>
               </span>
             </button>
-            <div className="w-layout-hflex flex-block-121 carousel-scroll-top" ref={scrollRef}>
+                         <div 
+               className="w-layout-hflex flex-block-121 carousel-scroll-top" 
+               ref={scrollRef}
+             >
               {bestPriceItems.map((item, i) => (
                 <BestPriceItem key={i} {...item} />
               ))}

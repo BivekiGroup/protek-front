@@ -809,8 +809,7 @@ a.link-block-2.w-inline-block  {
 @media screen and (max-width: 991px) {
   .flex-block-118 {
     flex-direction: column !important;
-    align-items: stretch; /* или center, если нужно по центру */
-    gap: 20px; /* если нужен отступ между блоками */
+    align-items: stretch; 
   }
   .flex-block-119 {
     width: 100%;
@@ -906,7 +905,7 @@ a.link-block-2.w-inline-block  {
 } */
 
 
-.flex-block-108 , .flex-block-108-copy, .w-layout-hflex.flex-block-121, .core-product-search {
+.flex-block-108 , .flex-block-108-copy, .w-layout-hflex.flex-block-121, .core-product-search, .carousel-scroll-top {
   overflow-x: scroll;
    
   overflow-y: hidden;
@@ -920,7 +919,39 @@ a.link-block-2.w-inline-block  {
   box-sizing: border-box;
   overflow: hidden;
 }
-.flex-block-108::-webkit-scrollbar, .flex-block-108-copy::-webkit-scrollbar, .w-layout-hflex.flex-block-121::-webkit-scrollbar, .core-product-search::-webkit-scrollbar {
+
+/* Стили для carousel-scroll-top - точно такие же как у carousel-scroll */
+.carousel-scroll-top {
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-behavior: smooth;
+  display: flex;
+  gap: 24px;
+  flex: 1 1 auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE и Edge */
+}
+
+.carousel-scroll-top::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Стили для carousel-scroll-top - точно такие же как у carousel-scroll */
+.carousel-scroll-top {
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-behavior: smooth;
+  display: flex;
+  gap: 24px;
+  flex: 1 1 auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE и Edge */
+}
+
+.carousel-scroll-top::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+.flex-block-108::-webkit-scrollbar, .flex-block-108-copy::-webkit-scrollbar, .w-layout-hflex.flex-block-121::-webkit-scrollbar, .core-product-search::-webkit-scrollbar, .carousel-scroll-top::-webkit-scrollbar {
   display: none; /* Chrome, Safari */
 }
 
@@ -1186,10 +1217,14 @@ a.link-block-2.w-inline-block  {
   .div-block-3.bp-item-info {
     margin-top: -5px;
   }
+
+
 }
 
 @media (max-width: 479px) {
   .imgitembp { height: 130px; }
+
+
 }
 
 
@@ -1223,7 +1258,8 @@ a.link-block-2.w-inline-block  {
   margin-left: 4px;
 }
 
-.carousel-scroll {
+.carousel-scroll,
+.carousel-scroll-top {
   overflow-x: auto;
   overflow-y: visible;
   scroll-behavior: smooth;
@@ -1233,12 +1269,14 @@ a.link-block-2.w-inline-block  {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE и Edge */
 }
-.carousel-scroll::-webkit-scrollbar {
+.carousel-scroll::-webkit-scrollbar,
+.carousel-scroll-top::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
 
 @media (max-width: 991px) {
-  .carousel-scroll {
+  .carousel-scroll,
+  .carousel-scroll-top {
     gap: 12px;
   }
   .carousel-row {
@@ -1249,6 +1287,12 @@ a.link-block-2.w-inline-block  {
 @media (max-width: 767px) {
   .carousel-arrow {
     display: none !important;
+  }
+  
+  /* Улучшаем touch-скролл на мобильных для carousel-scroll-top */
+  .carousel-scroll-top {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
   }
 }
 
@@ -1422,65 +1466,4 @@ a.link-block-2.w-inline-block  {
   }
 }
 
-/* ===== СТИЛИ ДЛЯ СКРОЛЛА КАРУСЕЛИ TOP ===== */
 
-/* Основной контейнер карусели */
-.carousel-scroll-top {
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-behavior: smooth;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  padding: 0 4px 16px 4px;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE и Edge */
-  max-width: 100%;
-  width: 100%;
-  box-sizing: border-box;
-  flex: 1;
-  min-width: 0;
-}
-
-.carousel-scroll-top::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-/* Адаптивные размеры для разных разрешений */
-@media (max-width: 1440px) {
-  .carousel-scroll-top {
-    gap: 16px;
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 1200px) {
-  .carousel-scroll-top {
-    gap: 16px;
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 991px) {
-  .carousel-scroll-top {
-    gap: 14px;
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 767px) {
-  .carousel-scroll-top {
-    gap: 12px;
-    scroll-snap-type: x proximity;
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 479px) {
-  .carousel-scroll-top {
-    gap: 10px;
-    scroll-snap-type: x mandatory;
-    max-width: 100%;
-  }
-}
