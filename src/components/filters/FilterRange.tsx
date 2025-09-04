@@ -62,6 +62,31 @@ const FilterRange: React.FC<FilterRangeProps> = ({
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
+  // Переизмеряем ширину при открытии дропдауна (когда элемент становится видимым)
+  useEffect(() => {
+    if (!open) return;
+    const raf = requestAnimationFrame(() => {
+      if (trackRef.current) setTrackWidth(trackRef.current.offsetWidth);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [open]);
+
+  // Наблюдаем за изменением размеров контейнера (на случай адаптивной ширины)
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    let ro: ResizeObserver | null = null;
+    try {
+      if (typeof ResizeObserver !== 'undefined') {
+        ro = new ResizeObserver(() => {
+          try { setTrackWidth(el.offsetWidth); } catch {}
+        });
+        ro.observe(el);
+      }
+    } catch {}
+    return () => { try { ro?.disconnect(); } catch {} };
+  }, [trackRef, open]);
+
   // Перевод значения в px и обратно
   const valueToPx = (value: number) => trackWidth ? ((value - min) / (max - min)) * trackWidth : 0;
   const pxToValue = (px: number) => trackWidth ? Math.round((px / trackWidth) * (max - min) + min) : min;
