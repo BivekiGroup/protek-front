@@ -20,6 +20,7 @@ import ProductDescriptionTabs from "@/components/card/ProductDescriptionTabs";
 import { SEARCH_PRODUCT_OFFERS, PARTS_INDEX_SEARCH_BY_ARTICLE, GET_ANALOG_OFFERS } from "@/lib/graphql";
 import { useArticleImage } from "@/hooks/useArticleImage";
 import { useRecommendedProducts } from "../hooks/useRecommendedProducts";
+import { emitAnalyticsView } from "@/lib/utils";
 
 const INITIAL_OFFERS_COUNT = 4;
 
@@ -284,6 +285,22 @@ export default function CardPage() {
           return pidx || mainImageUrl || undefined;
         })()}
       />
+      {/* Аналитика: просмотр карточки товара */}
+      {result && (
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(${(() => {
+              const payload = {
+                productId: (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('artId') || undefined) : undefined),
+                article: result?.articleNumber,
+                brand: result?.brand,
+                referrer: typeof document !== 'undefined' ? document.referrer : undefined,
+              }
+              fetch((process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL||'').replace(/\/api\/graphql.*/, '/api/analytics/view'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(()=>{})
+            }).toString()})()`
+          }}
+        />
+      )}
       <section className="main">
         <div className="w-layout-blockcontainer container w-container">
           <div className="w-layout-vflex flex-block-14">

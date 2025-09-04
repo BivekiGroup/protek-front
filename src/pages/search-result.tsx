@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState, useMemo } from "react";
 import { useQuery, useLazyQuery } from "@apollo/client";
 import Header from "@/components/Header";
+import { emitAnalyticsSearch } from "@/lib/utils";
 import Footer from "@/components/Footer";
 import CatalogSubscribe from "@/components/CatalogSubscribe";
 import Filters, { FilterConfig } from "@/components/Filters";
@@ -499,6 +500,25 @@ export default function SearchResult() {
   }, [result, loadedAnalogs, filtersAreActive, allOffers, selectedBrands, priceRange, deliveryRange, quantityRange, filterSearchTerm]);
   
   const bestOffersData = getBestOffers(filteredOffers);
+  // Отправка события поиска при готовности данных
+  useEffect(() => {
+    if (searchQuery) {
+      const resultsCount = result ? (result.totalOffers || filteredOffers.length || 0) : 0
+      emitAnalyticsSearch({
+        query: searchQuery,
+        brand: brandQuery || undefined,
+        article: searchQuery,
+        filters: {
+          brands: selectedBrands,
+          priceRange,
+          deliveryRange,
+          quantityRange,
+          search: filterSearchTerm,
+        },
+        resultsCount
+      })
+    }
+  }, [searchQuery, brandQuery, result, filteredOffers.length, selectedBrands, priceRange, deliveryRange, quantityRange, filterSearchTerm])
 
 
 

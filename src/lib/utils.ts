@@ -103,3 +103,40 @@ export const isDeliveryDate = (dateString: string): boolean => {
   
   return months.some(month => dateString.includes(month));
 }; 
+
+// ---- Analytics emitters ----
+export async function emitAnalyticsSearch(payload: {
+  query: string
+  brand?: string
+  article?: string
+  filters?: unknown
+  resultsCount?: number
+}) {
+  try {
+    const cmsGraphql = process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL || 'http://localhost:3000/api/graphql'
+    const url = cmsGraphql.replace(/\/api\/graphql.*/, '/api/analytics/search')
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload })
+    })
+  } catch {}
+}
+
+export async function emitAnalyticsView(payload: {
+  productId?: string
+  offerKey?: string
+  article?: string
+  brand?: string
+  referrer?: string
+}) {
+  try {
+    const cmsGraphql = process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL || 'http://localhost:3000/api/graphql'
+    const url = cmsGraphql.replace(/\/api\/graphql.*/, '/api/analytics/view')
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, referrer: payload.referrer || (typeof document !== 'undefined' ? document.referrer : undefined) })
+    })
+  } catch {}
+}
