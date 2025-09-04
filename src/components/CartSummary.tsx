@@ -25,7 +25,7 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
   // Новые состояния для первого шага
   const [selectedLegalEntity, setSelectedLegalEntity] = useState<string>("");
   const [selectedLegalEntityId, setSelectedLegalEntityId] = useState<string>("");
-  const [isIndividual, setIsIndividual] = useState(true); // true = физ лицо, false = юр лицо
+  const [isIndividual, setIsIndividual] = useState(false); // только юр лицо
   const [showLegalEntityDropdown, setShowLegalEntityDropdown] = useState(false);
   const [selectedDeliveryAddress, setSelectedDeliveryAddress] = useState<string>("");
   const [showAddressDropdown, setShowAddressDropdown] = useState(false);
@@ -70,7 +70,7 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
           setStep(state.step || 1);
           setSelectedLegalEntity(state.selectedLegalEntity || '');
           setSelectedLegalEntityId(state.selectedLegalEntityId || '');
-          setIsIndividual(state.isIndividual ?? true);
+          setIsIndividual(false);
           setSelectedDeliveryAddress(state.selectedDeliveryAddress || '');
           setRecipientName(state.recipientName || '');
           setRecipientPhone(state.recipientPhone || '');
@@ -191,9 +191,9 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
             clientPhone: recipientPhone,
             clientName: recipientName,
             deliveryAddress: selectedDeliveryAddress || delivery.address,
-            legalEntityId: !isIndividual ? selectedLegalEntityId : null,
+            legalEntityId: selectedLegalEntityId || null,
             paymentMethod: paymentMethod,
-            comment: orderComment || `Адрес доставки: ${selectedDeliveryAddress}. ${!isIndividual && selectedLegalEntity ? `Юридическое лицо: ${selectedLegalEntity}.` : 'Физическое лицо.'} Способ оплаты: ${getPaymentMethodName(paymentMethod)}. Доставка: ${selectedDeliveryAddress}.`,
+            comment: orderComment || `Адрес доставки: ${selectedDeliveryAddress}. ${selectedLegalEntity ? `Юридическое лицо: ${selectedLegalEntity}. ` : ''}Способ оплаты: ${getPaymentMethodName(paymentMethod)}. Доставка: ${selectedDeliveryAddress}.`,
             items: selectedItems.map(item => ({
               productId: item.productId,
               externalId: item.offerKey,
@@ -286,7 +286,7 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
               style={{ cursor: 'pointer', justifyContent: 'space-between', alignItems: 'center' }}
             >
               <div className="text-block-31" style={{ fontSize: '14px', color: '#333' }}>
-                {isIndividual ? 'Физическое лицо' : selectedLegalEntity || 'Выберите юридическое лицо'}
+                {selectedLegalEntity || 'Выберите юридическое лицо'}
               </div>
               <div className="code-embed w-embed" style={{ transform: showLegalEntityDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
                 <svg width="14" height="9" viewBox="0 0 14 9" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -295,7 +295,7 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
               </div>
             </div>
             
-            {/* Dropdown список типов клиента */}
+            {/* Dropdown список типов клиента (только юр. лица) */}
             {showLegalEntityDropdown && (
               <div style={{
                 position: 'absolute',
@@ -310,37 +310,6 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
                 maxHeight: '200px',
                 overflowY: 'auto'
               }}>
-                {/* Опция физического лица */}
-                <div
-                  onClick={() => {
-                    setIsIndividual(true);
-                    setSelectedLegalEntity('');
-                    setSelectedLegalEntityId('');
-                    setPaymentMethod('yookassa'); // Для физ лица только ЮКасса
-                    setShowLegalEntityDropdown(false);
-                  }}
-                  style={{
-                    padding: '12px 16px',
-                    cursor: 'pointer',
-                    borderBottom: '1px solid #f0f0f0',
-                    backgroundColor: isIndividual ? '#f8f9fa' : 'white',
-                    fontSize: '14px',
-                    
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isIndividual) {
-                      e.currentTarget.style.backgroundColor = '#f8f9fa';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isIndividual) {
-                      e.currentTarget.style.backgroundColor = 'white';
-                    }
-                  }}
-                >
-                  Физическое лицо
-                </div>
-
                 {/* Юридические лица (если есть) */}
                 {clientData?.clientMe?.legalEntities && clientData.clientMe.legalEntities.length > 0 && 
                   clientData.clientMe.legalEntities.map((entity: any, index: number) => (
