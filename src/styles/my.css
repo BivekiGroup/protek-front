@@ -1,7 +1,7 @@
 /* my.css — кастомные стили для проекта. Добавьте сюда свои стили. */ 
 /* Fix slider handle offsets overriding Webflow defaults for dynamic width */
 .start.end { margin-left: 0 !important; }
-.track.fill { margin-left: 0 !important; width: auto !important; }
+.track.fill { margin-left: 0 !important; width: auto !important; background-color: var(--_button---primary) !important; }
 
 .dropdown-scroll-invisible {
   scrollbar-width: none; /* Firefox */

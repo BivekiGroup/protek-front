@@ -30,7 +30,15 @@ const FilterRange: React.FC<FilterRangeProps> = ({
   const [confirmedTo, setConfirmedTo] = useState<number>(value ? value[1] : max);
   const [dragging, setDragging] = useState<null | "from" | "to">(null);
   const [trackWidth, setTrackWidth] = useState(0);
-  const [open, setOpen] = useState(isMobile || defaultOpen); // Учитываем isMobile и defaultOpen
+  // Сохраняем состояние открытия фильтра между ремонтами (если родитель перерисовывает список)
+  const storageKey = `filter-open:${title}`;
+  const [open, setOpen] = useState(() => {
+    if (typeof window === 'undefined') return isMobile || defaultOpen;
+    const saved = window.localStorage.getItem(storageKey);
+    if (saved === '1') return true;
+    if (saved === '0') return false;
+    return isMobile || defaultOpen;
+  });
   const trackRef = useRef<HTMLDivElement>(null);
 
   // Обновляем локальное состояние при изменении внешнего значения или границ
@@ -87,12 +95,19 @@ const FilterRange: React.FC<FilterRangeProps> = ({
     return () => { try { ro?.disconnect(); } catch {} };
   }, [trackRef, open]);
 
+  // Сохраняем флаг открытия локально
+  useEffect(() => {
+    try { if (typeof window !== 'undefined') window.localStorage.setItem(storageKey, open ? '1' : '0'); } catch {}
+  }, [open, storageKey]);
+
   // Перевод значения в px и обратно
   const valueToPx = (value: number) => trackWidth ? ((value - min) / (max - min)) * trackWidth : 0;
   const pxToValue = (px: number) => trackWidth ? Math.round((px / trackWidth) * (max - min) + min) : min;
 
   // Drag logic
   const onMouseDown = (type: "from" | "to") => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpen(true);
     setDragging(type);
     e.preventDefault();
   };
@@ -127,10 +142,12 @@ const FilterRange: React.FC<FilterRangeProps> = ({
   // Input handlers
   const handleFromInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     let v = e.target.value.replace(/\D/g, "");
+    setOpen(true);
     setFrom(v);
   };
   const handleToInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     let v = e.target.value.replace(/\D/g, "");
+    setOpen(true);
     setTo(v);
   };
 
@@ -269,8 +286,8 @@ const FilterRange: React.FC<FilterRangeProps> = ({
         <div className="icon-3 w-icon-dropdown-toggle"></div>
       </div>
       {open && (
-        <nav className="dropdown-list w-dropdown-list">
-          <div className="form-block-2">
+        <nav className="dropdown-list w-dropdown-list" onMouseDown={(e) => { e.stopPropagation(); }}>
+          <div className="form-block-2" onMouseDown={(e) => { e.stopPropagation(); }}>
             <form className="form-2" onSubmit={e => e.preventDefault()}>
               <div className="div-block-5">
                 <label htmlFor="from" className="field-label">от</label>
