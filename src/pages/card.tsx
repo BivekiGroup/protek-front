@@ -69,6 +69,17 @@ export default function CardPage() {
 
   const result = data?.searchProductOffers;
 
+  // Аналитика: просмотр карточки товара (на клиенте)
+  useEffect(() => {
+    if (!result) return
+    const pid = typeof artId === 'string' ? artId : (Array.isArray(artId) ? artId[0] : undefined)
+    emitAnalyticsView({
+      productId: pid ? String(pid) : undefined,
+      article: result?.articleNumber,
+      brand: result?.brand,
+    })
+  }, [result, artId])
+
   // Запрос для получения предложений аналогов
   const [getAnalogOffers, { loading: analogsLoading }] = useLazyQuery(GET_ANALOG_OFFERS, {
     onCompleted: (analogsData) => {
@@ -285,22 +296,7 @@ export default function CardPage() {
           return pidx || mainImageUrl || undefined;
         })()}
       />
-      {/* Аналитика: просмотр карточки товара */}
-      {result && (
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(${(() => {
-              const payload = {
-                productId: (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('artId') || undefined) : undefined),
-                article: result?.articleNumber,
-                brand: result?.brand,
-                referrer: typeof document !== 'undefined' ? document.referrer : undefined,
-              }
-              fetch((process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL||'').replace(/\/api\/graphql.*/, '/api/analytics/view'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(()=>{})
-            }).toString()})()`
-          }}
-        />
-      )}
+      {/* Аналитика отправляется в useEffect выше */}
       <section className="main">
         <div className="w-layout-blockcontainer container w-container">
           <div className="w-layout-vflex flex-block-14">

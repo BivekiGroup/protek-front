@@ -9,6 +9,7 @@ import { DOC_FIND_OEM, FIND_LAXIMO_VEHICLES_BY_PART_NUMBER } from '@/lib/graphql
 import { LaximoDocFindOEMResult, LaximoVehiclesByPartResult, LaximoVehicleSearchResult } from '@/types/laximo';
 import MetaTags from '@/components/MetaTags';
 import { getMetaByPath } from '@/lib/meta-config';
+import { emitAnalyticsSearch } from '@/lib/utils'
 
 type SearchMode = 'parts' | 'vehicles';
 
@@ -71,6 +72,8 @@ const SearchPage = () => {
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
+    // Отправим событие поиска сразу при сабмите
+    try { emitAnalyticsSearch({ query: searchQuery.trim().toUpperCase() }) } catch {}
     router.push(`/search?q=${encodeURIComponent(searchQuery.trim().toUpperCase())}&mode=${searchMode}`);
   };
 
@@ -101,6 +104,26 @@ const SearchPage = () => {
   const hasVehiclesResults = vehiclesResult && vehiclesResult.totalVehicles > 0;
 
   const metaData = getMetaByPath('/search');
+
+  // Аналитика: событие поиска при загрузке результатов (parts/vehicles)
+  useEffect(() => {
+    if (!searchQuery) return
+    const resultsCount = searchMode === 'parts'
+      ? (partsResult?.details?.length || 0)
+      : (vehiclesResult?.totalVehicles || 0)
+    try {
+      emitAnalyticsSearch({
+        query: searchQuery,
+        brand: searchMode === 'parts' ? undefined : undefined,
+        article: searchQuery,
+        filters: {
+          mode: searchMode,
+          page: typeof window !== 'undefined' ? window.location.pathname : undefined,
+        },
+        resultsCount,
+      })
+    } catch {}
+  }, [searchQuery, searchMode, partsResult?.details?.length, vehiclesResult?.totalVehicles])
 
   return (
     <>
