@@ -936,13 +936,12 @@ a.link-block-2.w-inline-block  {
 }
 
 .carousel-row {
-  
   align-items: center;
   position: relative;
   gap: 12px;
   width: 100%;
   max-width: 100%;
-  overflow: hidden;
+  /* overflow: hidden; */
   
 }
 
@@ -1322,11 +1321,23 @@ a.link-block-2.w-inline-block  {
 }
 @media screen and (max-width: 1440px) {
   .image-27 {
-    margin-bottom: -212px;
-    margin-left: 800px;
+    margin-bottom: -232px;
+    margin-left: 650px;
   }
 }
+
+@media screen and (max-width: 1000px) {
+  .image-27 {
+    margin-bottom: -276px;
+    margin-left: 400px;
+  }
+}
+
+
 @media (max-width: 767px) {
+
+
+
   .carousel-arrow {
     display: none !important;
   }
@@ -1363,5 +1374,14 @@ a.link-block-2.w-inline-block  {
   }
 }
 
+.text-block-11 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}   
 
+.text-field-3.w-input {
+  min-width: 300px;
+  max-width: 300px;
+}
 

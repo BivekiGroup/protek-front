@@ -161,6 +161,7 @@ const BestPriceSection: React.FC = () => {
                 display: flex;
                 align-items: center;
                 justify-content: flex-start;
+                overflow: hidden;
               }
             `}</style>
             <button className="carousel-arrow carousel-arrow-left" onClick={scrollLeft} aria-label="Прокрутить влево">
