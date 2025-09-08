@@ -104,37 +104,33 @@ const Footer = () => (
     <footer className="section-2 text-white h-full">
     <div className="w-layout-blockcontainer container footer w-container h-full">
         <div className="mx-auto flex flex-col md:flex-row items-center md:items-end justify-between gap-2 md:gap-4 mt-2 h-full w-full">
-          {/* Левая часть: логотип и контакты */}
+          
           <div className="flex flex-col gap-4 min-w-[260px] items-center md:items-start mx-auto md:mx-0">
             <div className="flex items-center gap-2">
               <img src="/images/logo_gor.svg" alt="Protek Авто" className="h-10" />
-              {/* <span className="bg-[#EC1C24] text-white font-bold rounded px-2 py-1 ml-2 text-sm">АВТО</span> */}
+              
             </div>
             <div className="text-xs opacity-80 leading-tight">ООО «Протек» ИНН 5007117840<br />ОРГН 1225000146282</div>
             <div className="font-semibold mt-2">Есть вопросы или предложения?</div>
             <button className="bg-[#23407A] rounded-lg py-2 px-6 font-medium mt-1 mb-2">Напиши нам</button>
           </div>
-          {/* Центр: меню */}
-          <div className="hidden md:flex flex-1 flex-wrap gap-30 justify-center min-w-[400px]">
-            <div className="flex flex-col gap-3 min-w-[150px]">
-              <div className="link">Подбор по марке авто</div>
-              <a href="#" className="link">Поиск по VIN</a>
-              <a href="#" className="link">Добавить авто в гараж</a>
-              <a href="#" className="link">Личный кабинет</a>
-              <a href="#" className="link">История поиска</a>
-              <a href="#" className="link">Избранное</a>
-            </div>
-            <div className="flex flex-col gap-3 min-w-[150px]">
-              <div className="link">О компании</div>
-              <a href="#" className="link">Оплата и доставка</a>
-              <a href="#" className="link">Гарантии и возврат</a>
-              <a href="#" className="link">Оптовым клиентам</a>
-              <a href="#" className="link">Покупателям</a>
-              <a href="#" className="link">Контакты</a>
-            </div>
+          <div className="flex flex-col gap-3">
+            <div className="link">Подбор по марке авто</div>
+            <a href="#" className="link">Поиск по VIN</a>
+            <a href="#" className="link">Добавить авто в гараж</a>
+            <a href="#" className="link">Личный кабинет</a>
+            <a href="#" className="link">История поиска</a>
+            <a href="#" className="link">Избранное</a>
           </div>
-          {/* Правая часть: контакты и платежи */}
-          <div className="flex flex-col gap-3 min-w-[220px] items-center md:items-end mx-auto md:mx-0">
+          <div className="flex flex-col gap-3">
+            <div className="link">О компании</div>
+            <a href="#" className="link">Оплата и доставка</a>
+            <a href="#" className="link">Гарантии и возврат</a>
+            <a href="#" className="link">Оптовым клиентам</a>
+            <a href="#" className="link">Покупателям</a>
+            <a href="#" className="link">Контакты</a>
+          </div>
+          <div className="flex flex-col gap-3 items-center md:items-end mx-auto md:mx-0">
             <div className="text-lg font-bold">+7 (495) 260-20-60</div>
             <div className="text-xs opacity-80">Ежедневно 9:00 – 21:00</div>
             <div className="text-sm font-medium">info@protekauto.ru</div>
@@ -170,11 +166,16 @@ const Footer = () => (
       
             </a>
           </div>
-          <div className="flex flex-col items-center md:flex-row md:items-start md:justify-center flex-1 flex-wrap gap-4 md:gap-37 md:mt-6 md:min-w-[400px]">
-            <a href="#" className=" hover:underline text-xs opacity-70 text-center  md:w-auto md:text-left">Политика конфиденциальности</a>
-            
-            <a href="#" className=" hover:underline text-xs opacity-70 text-center md:w-auto md:text-left">Согласие на обработку персональных данных</a>
-            <span className="text-xs opacity-70">© 2025 Protek. Все права защищены.</span>
+          <div className="
+            flex flex-col items-center
+            md:flex-row md:items-start md:justify-end
+            flex-1
+            md:flex-nowrap
+            gap-4 md:gap-8 lg:gap-40
+          ">
+            <a href="#" className="hover:underline text-xs opacity-70 text-center md:text-left break-words min-w-0">Политика конфиденциальности</a>
+            <a href="#" className="hover:underline text-xs opacity-70 text-center md:text-left break-words min-w-0">Согласие на обработку персональных данных</a>
+            <span className="text-xs opacity-70 break-words min-w-0">© 2025 Protek. Все права защищены.</span>
           </div>
           
         </div>

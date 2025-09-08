@@ -127,11 +127,7 @@ const NewArrivalsSection: React.FC = () => {
               .carousel-arrow:focus .arrow-svg {
                 stroke: #fff;
               }
-              .carousel-row {
-                display: flex;
-                align-items: center;
-                justify-content: flex-start;
-              }
+
             `}</style>
             <button 
               className="carousel-arrow carousel-arrow-left" 
