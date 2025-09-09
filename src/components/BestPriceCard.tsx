@@ -212,9 +212,7 @@ const BestPriceCard: React.FC<BestPriceCardProps> = ({
               {inCart && (
                 <div 
                   style={{
-                    position: 'absolute',
-                    top: '-8px',
-                    right: '-8px',
+
                     backgroundColor: '#22c55e',
                     color: 'white',
                     borderRadius: '50%',

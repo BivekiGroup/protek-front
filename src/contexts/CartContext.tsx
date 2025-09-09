@@ -350,11 +350,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const selectAll = () => {
-    setState(prev => ({
-      ...prev,
-      items: prev.items.map(item => ({ ...item, selected: true }))
-    }))
-  }
+    setState(prev => {
+      const allSelected = prev.items.length > 0 && prev.items.every(item => item.selected);
+      return {
+        ...prev,
+        items: prev.items.map(item => ({ ...item, selected: !allSelected }))
+      };
+    });
+  };
 
   const removeAll = () => {
     clearCart()

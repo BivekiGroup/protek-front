@@ -380,22 +380,11 @@ button,
 }
 
 /* Стили для состояния "товар в корзине" */
-.button-icon.in-cart {
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
 
 .button-icon.in-cart::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+
   background: rgba(156, 163, 175, 0.2);
-  pointer-events: none;
-  border-radius: inherit;
+
 }
 
 .button-icon.in-cart:hover {
