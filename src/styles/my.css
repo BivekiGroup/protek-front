@@ -368,7 +368,7 @@ input.input-receiver:focus {
 .flex-block-122 {
   width: 100% !important;
 }
-.button-icon.w-inline-block {
+.button-icon{
   margin-left: auto;
 }
 .text-block-10 {
