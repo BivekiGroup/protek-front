@@ -11,6 +11,7 @@ import Link from "next/link";
 import CartButton from './CartButton';
 import SearchHistoryDropdown from './SearchHistoryDropdown';
 import { GET_RECENT_SEARCH_QUERIES, PartsSearchHistoryItem } from '@/lib/graphql/search-history';
+import { onAuthChanged } from '@/lib/authEvents'
 
 interface HeaderProps {
   onOpenAuthModal?: () => void;
@@ -164,6 +165,17 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
         localStorage.removeItem('userData');
       }
     }
+    // Подписка на смену авторизации
+    const unsub = onAuthChanged(() => {
+      const t = localStorage.getItem('authToken')
+      const ud = localStorage.getItem('userData')
+      if (t && ud) {
+        try { setCurrentUser(JSON.parse(ud)) } catch { setCurrentUser(null) }
+      } else {
+        setCurrentUser(null)
+      }
+    })
+    return () => { unsub && unsub() }
   }, [isClient]);
 
   useEffect(() => {

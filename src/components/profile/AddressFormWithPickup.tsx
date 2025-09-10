@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { toast } from 'react-hot-toast'
 import { useMutation, useLazyQuery } from '@apollo/client';
 import CustomCheckbox from './CustomCheckbox';
 import PickupPointSelector from '../delivery/PickupPointSelector';
@@ -10,6 +11,7 @@ interface AddressFormWithPickupProps {
   address: string;
   setAddress: (address: string) => void;
   onBack: () => void;
+  onSaved?: () => void;
   onCityChange: (cityName: string) => void;
   onPickupPointSelect: (point: YandexPickupPoint) => void;
   selectedPickupPoint?: YandexPickupPoint;
@@ -273,7 +275,8 @@ const AddressFormWithPickup = ({
   onCityChange,
   onPickupPointSelect,
   selectedPickupPoint,
-  editingAddress
+  editingAddress,
+  onSaved
 }: AddressFormWithPickupProps) => {
   const [deliveryType, setDeliveryType] = useState(editingAddress?.deliveryType || 'COURIER');
   const [pickupTypeFilter, setPickupTypeFilter] = useState<string>('pickup_point');
@@ -292,24 +295,24 @@ const AddressFormWithPickup = ({
 
   const [createAddress] = useMutation(CREATE_CLIENT_DELIVERY_ADDRESS, {
     onCompleted: () => {
-      alert('Адрес доставки сохранен!');
-      onBack();
+      toast.success('Адрес доставки сохранён');
+      if (onSaved) onSaved(); else onBack();
     },
     onError: (error) => {
       console.error('Ошибка сохранения адреса:', error);
-      alert('Ошибка сохранения адреса: ' + error.message);
+      toast.error('Ошибка сохранения адреса: ' + error.message);
     },
     refetchQueries: [{ query: GET_CLIENT_DELIVERY_ADDRESSES }]
   });
 
   const [updateAddress] = useMutation(UPDATE_CLIENT_DELIVERY_ADDRESS, {
     onCompleted: () => {
-      alert('Адрес доставки обновлен!');
-      onBack();
+      toast.success('Адрес доставки обновлён');
+      if (onSaved) onSaved(); else onBack();
     },
     onError: (error) => {
       console.error('Ошибка обновления адреса:', error);
-      alert('Ошибка обновления адреса: ' + error.message);
+      toast.error('Ошибка обновления адреса: ' + error.message);
     },
     refetchQueries: [{ query: GET_CLIENT_DELIVERY_ADDRESSES }]
   });
@@ -317,7 +320,7 @@ const AddressFormWithPickup = ({
   const handlePickupPointSelect = (point: YandexPickupPoint) => {
     // Проверяем соответствие выбранному типу
     if (point.type !== pickupTypeFilter) {
-      alert(`Выбранный пункт не соответствует типу "${pickupTypeFilter === 'pickup_point' ? 'ПВЗ' : 'Постомат'}". Пожалуйста, выберите другой пункт.`);
+      toast.error(`Выбранный пункт не соответствует типу "${pickupTypeFilter === 'pickup_point' ? 'ПВЗ' : 'Постомат'}". Пожалуйста, выберите другой пункт.`);
       return;
     }
     
@@ -328,7 +331,7 @@ const AddressFormWithPickup = ({
   const handleSave = async () => {
     if (deliveryType === 'COURIER') {
       if (!formData.name || !formData.address) {
-        alert('Пожалуйста, заполните обязательные поля: название и адрес');
+        toast.error('Пожалуйста, заполните обязательные поля: название и адрес');
         return;
       }
 
@@ -406,7 +409,7 @@ const AddressFormWithPickup = ({
         console.error('Ошибка сохранения ПВЗ:', error);
       }
     } else {
-      alert('Пожалуйста, выберите пункт выдачи соответствующего типа');
+      toast.error('Пожалуйста, выберите пункт выдачи соответствующего типа');
     }
   };
 

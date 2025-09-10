@@ -384,8 +384,9 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
                 {/* Кнопка добавления нового адреса */}
                 <div
                   onClick={() => {
-                    // Переход в личный кабинет на страницу адресов
-                    window.location.href = '/profile-addresses';
+                    // Переход в личный кабинет на страницу адресов с возвратом в корзину
+                    const back = encodeURIComponent('/cart')
+                    window.location.href = `/profile-addresses?returnTo=${back}`;
                     setShowAddressDropdown(false);
                   }}
                   style={{

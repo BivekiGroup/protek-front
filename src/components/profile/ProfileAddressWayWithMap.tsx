@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { toast } from 'react-hot-toast'
 import AddressFormWithPickup from "./AddressFormWithPickup";
 import AddressDetails from "./AddressDetails";
 import YandexPickupPointsMap from "../delivery/YandexPickupPointsMap";
 import { useLazyQuery } from '@apollo/client';
+import { useRouter } from 'next/router'
 import { 
   YANDEX_PICKUP_POINTS_BY_CITY, 
   YANDEX_PICKUP_POINTS_BY_COORDINATES,
@@ -114,6 +116,8 @@ const cityCoordinates: Record<string, [number, number]> = {
 };
 
 const ProfileAddressWayWithMap: React.FC<ProfileAddressWayWithMapProps> = ({ onBack, editingAddress }) => {
+  const router = useRouter()
+  const returnTo = typeof router.query.returnTo === 'string' ? router.query.returnTo : null
   const [showDetails, setShowDetails] = useState(false);
   const [address, setAddress] = useState("");
   const [pickupPoints, setPickupPoints] = useState<YandexPickupPoint[]>([]);
@@ -179,11 +183,11 @@ const ProfileAddressWayWithMap: React.FC<ProfileAddressWayWithMapProps> = ({ onB
         },
         (error) => {
           console.error('Ошибка определения местоположения:', error);
-          alert('Не удалось определить местоположение');
+          toast.error('Не удалось определить местоположение');
         }
       );
     } else {
-      alert('Геолокация не поддерживается браузером');
+      toast.error('Геолокация не поддерживается браузером');
     }
   };
 
@@ -214,6 +218,7 @@ const ProfileAddressWayWithMap: React.FC<ProfileAddressWayWithMapProps> = ({ onB
           address={address} 
           setAddress={setAddress} 
           onBack={onBack}
+          onSaved={() => { if (returnTo) router.push(returnTo); else onBack(); }}
           onCityChange={handleCityChange}
           onPickupPointSelect={handlePickupPointSelect}
           selectedPickupPoint={selectedPickupPoint}

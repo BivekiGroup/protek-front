@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useQuery } from '@apollo/client';
 import { useIsClient } from '@/lib/useIsomorphicLayoutEffect';
 import { GET_CLIENT_ME } from '@/lib/graphql';
+import { emitAuthChanged } from '@/lib/authEvents'
 
 const menuItems = [
   { label: 'Заказы', href: '/profile-orders', icon: 'https://cdn.builder.io/api/v1/image/assets/TEMP/22ecd7e6251abe04521d03f0ac09f73018a8c2c8?placeholderIfAbsent=true&apiKey=f5bc5a2dc9b841d0aba1cc6c74a35920' },
@@ -44,6 +45,7 @@ const LKMenu = React.forwardRef<HTMLDivElement>((props, ref) => {
     if (isClient) {
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
+      emitAuthChanged({ status: 'logout' })
       window.location.href = '/';
     }
   };

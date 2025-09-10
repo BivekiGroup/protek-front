@@ -2,6 +2,7 @@ import React from 'react';
 import MobileMenuButton from './MobileMenuButton';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useCart } from '@/contexts/CartContext';
+import { onAuthChanged } from '@/lib/authEvents'
 
 interface MobileMenuBottomSectionProps {
   onOpenAuthModal?: () => void;
@@ -42,6 +43,11 @@ const MobileMenuBottomSection: React.FC<MobileMenuBottomSectionProps> = ({
   React.useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     setIsAuth(!!token);
+    const unsub = onAuthChanged(() => {
+      const t = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      setIsAuth(!!t);
+    })
+    return () => { unsub && unsub() }
   }, []);
 
   const favoriteCounter = favorites.length > 0 ? (

@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 
 const CartInfo: React.FC = () => {
   const { state } = useCart();
   const { summary } = state;
+  const [showTip, setShowTip] = useState(false)
+  const tipRef = useRef<HTMLDivElement>(null)
 
   // Функция для форматирования цены
   const formatPrice = (price: number) => {
@@ -38,9 +40,27 @@ const CartInfo: React.FC = () => {
               )}
             </div>
           </div>
-          <div className="w-layout-hflex flex-block-11">
-            <img src="/images/qwestions.svg" loading="lazy" alt="" className="image-4" />
+          <div 
+            className="w-layout-hflex flex-block-11 relative"
+            onMouseEnter={() => setShowTip(true)}
+            onMouseLeave={() => setShowTip(false)}
+            onFocus={() => setShowTip(true)}
+            onBlur={() => setShowTip(false)}
+            tabIndex={0}
+            aria-describedby="cart-howto-tooltip"
+          >
+            <img src="/images/qwestions.svg" loading="lazy" alt="Подсказка" className="image-4" />
             <div className="text-block-5">Как оформить заказ?</div>
+            {showTip && (
+              <div 
+                id="cart-howto-tooltip"
+                ref={tipRef}
+                role="tooltip"
+                className="absolute z-50 top-full mt-2 right-0 w-[280px] p-3 rounded-lg shadow-lg bg-white border border-gray-200 text-sm text-gray-700"
+              >
+                1) Выберите адрес доставки и подтвердите шаг 1. 2) Укажите данные получателя. 3) Выберите оплату и подтвердите заказ. 
+              </div>
+            )}
           </div>
         </div>
       </div>

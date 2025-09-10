@@ -110,7 +110,7 @@ const BestPriceSection: React.FC = () => {
         <div className="w-layout-hflex flex-block-118">
           <div className="w-layout-vflex flex-block-119">
             <h1 className="heading-20">ЛУЧШАЯ ЦЕНА!</h1>
-            <div className="text-block-58">Подборка лучших предложенийпо цене</div>
+            <div className="text-block-58">Подборка лучших предложений по цене</div>
             <a href="#" className="button-24 w-button">Показать все</a>
           </div>
           <div className="carousel-row" style={{ position: 'relative' }}>

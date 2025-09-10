@@ -4,6 +4,7 @@ import Header from "./Header";
 import AuthModal from "./auth/AuthModal";
 import MobileMenuBottomSection from "./MobileMenuBottomSection";
 import IndexTopMenuNav from "./index/IndexTopMenuNav";
+import { emitAuthChanged } from '@/lib/authEvents'
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -18,6 +19,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       localStorage.setItem('userData', JSON.stringify(client));
     }
     setAuthModalOpen(false);
+    // Сообщаем приложению об успешной авторизации
+    emitAuthChanged({ status: 'login', user: client })
     router.push('/profile-orders');
   };
 

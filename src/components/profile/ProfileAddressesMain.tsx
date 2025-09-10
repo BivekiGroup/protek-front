@@ -1,4 +1,5 @@
 import * as React from "react";
+import { toast } from 'react-hot-toast'
 import { useQuery, useMutation } from "@apollo/client";
 import ProfileAddressCard from "./ProfileAddressCard";
 import ProfileAddressWayWithMap from "./ProfileAddressWayWithMap";
@@ -41,24 +42,38 @@ const ProfileAddressesMain = () => {
 
   const [deleteAddress] = useMutation(DELETE_CLIENT_DELIVERY_ADDRESS, {
     onCompleted: () => {
+      toast.success('Адрес удалён')
       refetch();
     },
     onError: (error) => {
       console.error('Ошибка удаления адреса:', error);
-      alert('Ошибка удаления адреса: ' + error.message);
+      toast.error('Ошибка удаления адреса: ' + error.message);
     }
   });
 
   const handleDeleteAddress = async (addressId: string) => {
-    if (confirm('Вы уверены, что хотите удалить этот адрес?')) {
-      try {
-        await deleteAddress({
-          variables: { id: addressId }
-        });
-      } catch (error) {
-        console.error('Ошибка удаления:', error);
-      }
-    }
+    const id = toast.custom((t) => (
+      <div className="bg-white shadow-xl rounded-xl p-4 border border-gray-200">
+        <div className="text-sm font-medium mb-3">Удалить адрес?</div>
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-2 text-sm rounded-md bg-gray-100 hover:bg-gray-200"
+          >Отмена</button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id)
+              try {
+                await deleteAddress({ variables: { id: addressId } })
+              } catch (error) {
+                console.error('Ошибка удаления:', error)
+              }
+            }}
+            className="px-3 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700"
+          >Удалить</button>
+        </div>
+      </div>
+    ), { duration: 8000 })
   };
 
   const handleEditAddress = (address: DeliveryAddress) => {
@@ -151,5 +166,4 @@ const ProfileAddressesMain = () => {
 };
 
 export default ProfileAddressesMain;
-
 

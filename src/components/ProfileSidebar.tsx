@@ -1,4 +1,5 @@
 import React from 'react';
+import { emitAuthChanged } from '@/lib/authEvents'
 import { useQuery } from '@apollo/client';
 import { useIsClient } from '@/lib/useIsomorphicLayoutEffect';
 import { GET_CLIENT_ME } from '@/lib/graphql';
@@ -33,6 +34,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeItem }) => {
     if (isClient) {
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
+      emitAuthChanged({ status: 'logout' })
       window.location.href = '/';
     }
   };

@@ -15,7 +15,6 @@ import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import Layout from "@/components/Layout";
 import { Toaster } from 'react-hot-toast';
 import CookieConsent from '@/components/CookieConsent';
-import GlobalPreloader from '@/components/GlobalPreloader';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -52,7 +51,6 @@ export default function App({ Component, pageProps }: AppProps) {
         <CartProvider>
           <Layout>
             <ErrorBoundary>
-              <GlobalPreloader />
               <Component {...pageProps} />
             </ErrorBoundary>
           </Layout>
