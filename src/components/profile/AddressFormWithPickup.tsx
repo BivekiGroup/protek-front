@@ -289,9 +289,42 @@ const AddressFormWithPickup = ({
     apartment: editingAddress?.apartment || '',
     intercom: editingAddress?.intercom || '',
     deliveryTime: editingAddress?.deliveryTime || '',
-    contactPhone: editingAddress?.contactPhone || '',
+    contactPhone: '',
     comment: editingAddress?.comment || ''
   });
+
+  // Helper: extract only digits
+  const extractDigits = (value: string) => value.replace(/\D/g, '')
+
+  // Helper: format 10-digit RU number to "+7 (XXX) XXX-XX-XX"
+  const formatPhoneDisplay = (digits: string) => {
+    let d = digits
+    // If includes leading 7, keep last 10 as local part
+    if (d.startsWith('7') && d.length > 10) d = d.substring(1)
+    // Trim to 10 local digits
+    d = d.substring(0, 10)
+    if (!d) return ''
+    const formatted = d.replace(/(\d{0,3})(\d{0,3})(\d{0,2})(\d{0,2}).*/, (_m, p1, p2, p3, p4) => {
+      let res = ''
+      if (p1) res += `(${p1}`
+      if (p2) res += `) ${p2}`
+      if (p3) res += `-${p3}`
+      if (p4) res += `-${p4}`
+      return res
+    })
+    return `+7 ${formatted}`.trim()
+  }
+
+  // Initialize formatted phone if editing existing address
+  useEffect(() => {
+    if (editingAddress?.contactPhone) {
+      const digits = extractDigits(editingAddress.contactPhone)
+      // Normalize to last 10 local digits
+      const local10 = digits.startsWith('7') ? digits.substring(1) : digits
+      setFormData(prev => ({ ...prev, contactPhone: formatPhoneDisplay(local10) }))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [createAddress] = useMutation(CREATE_CLIENT_DELIVERY_ADDRESS, {
     onCompleted: () => {
@@ -335,6 +368,11 @@ const AddressFormWithPickup = ({
         return;
       }
 
+      // Normalize phone for API: +7XXXXXXXXXX or null
+      const rawDigits = extractDigits(formData.contactPhone)
+      const local10 = rawDigits.startsWith('7') ? rawDigits.substring(1) : rawDigits
+      const normalizedPhone = local10.length === 10 ? `+7${local10}` : null
+
       const addressInput = {
         name: formData.name,
         address: formData.address,
@@ -345,7 +383,7 @@ const AddressFormWithPickup = ({
         apartment: formData.apartment || null,
         intercom: formData.intercom || null,
         deliveryTime: formData.deliveryTime || null,
-        contactPhone: formData.contactPhone || null
+        contactPhone: normalizedPhone
       };
 
       try {
@@ -545,9 +583,18 @@ const AddressFormWithPickup = ({
             <div className="gap-2.5 self-stretch px-6 py-3.5 mt-1.5 w-full bg-white rounded border border-solid border-stone-300 min-h-[46px] max-md:px-5">
               <input
                 type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 value={formData.contactPhone}
-                onChange={(e) => setFormData(prev => ({ ...prev, contactPhone: e.target.value }))}
-                placeholder="+7 (999) 123-45-67"
+                onChange={(e) => {
+                  let digits = extractDigits(e.target.value)
+                  // drop leading country 7 if user typed it
+                  if (digits.startsWith('7')) digits = digits.substring(1)
+                  digits = digits.substring(0, 10)
+                  const display = digits ? formatPhoneDisplay(digits) : ''
+                  setFormData(prev => ({ ...prev, contactPhone: display }))
+                }}
+                placeholder="+7 (999) 999-99-99"
                 className="w-full bg-transparent outline-none text-gray-600"
               />
             </div>
