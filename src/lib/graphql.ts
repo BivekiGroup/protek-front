@@ -1629,6 +1629,67 @@ export const GET_ADDRESS_SUGGESTIONS = gql`
   }
 `
 
+// Support tickets (client)
+export const MY_SUPPORT_TICKETS = gql`
+  query MySupportTickets($limit: Int, $offset: Int) {
+    mySupportTickets(limit: $limit, offset: $offset) {
+      id
+      subject
+      status
+      priority
+      lastMessageAt
+      createdAt
+      updatedAt
+    }
+  }
+`
+
+export const SUPPORT_TICKET = gql`
+  query SupportTicket($id: ID!) {
+    supportTicket(id: $id) {
+      id
+      subject
+      status
+      priority
+      lastMessageAt
+      createdAt
+      updatedAt
+      messages {
+        id
+        authorType
+        content
+        createdAt
+        attachments { id url fileName contentType size createdAt }
+      }
+    }
+  }
+`
+
+export const CREATE_SUPPORT_TICKET = gql`
+  mutation CreateSupportTicket($input: CreateSupportTicketInput!) {
+    createSupportTicket(input: $input) {
+      id
+      subject
+      status
+      priority
+      createdAt
+    }
+  }
+`
+
+export const ADD_SUPPORT_TICKET_MESSAGE = gql`
+  mutation AddSupportTicketMessage($input: AddSupportTicketMessageInput!) {
+    addSupportTicketMessage(input: $input) {
+      id
+      ticketId
+      authorType
+      content
+      createdAt
+      attachments { id url fileName contentType size createdAt }
+    }
+  }
+`
+
 export const UPDATE_CONTRACT_BALANCE = gql`
   mutation UpdateContractBalance($contractId: ID!, $amount: Float!, $comment: String) {
     updateContractBalance(contractId: $contractId, amount: $amount, comment: $comment) {
