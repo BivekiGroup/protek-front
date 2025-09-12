@@ -1385,3 +1385,91 @@ a.link-block-2.w-inline-block  {
   max-width: 300px;
 }
 
+
+/* --- Одинаковый размер карточек новостей (фиксированная ширина и высота) --- */
+.news {
+  width: 380px;
+  height: 420px;
+  min-width: 380px;
+  min-height: 420px;
+  max-width: 380px;
+  max-height: 420px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: var(--_round---big-20);
+  background-color: var(--white);
+  padding: 30px;
+}
+
+@media (max-width: 991px) {
+  .news {
+    width: 300px;
+    height: 340px;
+    min-width: 300px;
+    min-height: 340px;
+    max-width: 300px;
+    max-height: 340px;
+    padding: 18px;
+  }
+
+  .div-block-14 {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  .news {
+    width: 230px;
+    height: 300px;
+    min-width: 230px;
+    min-height: 300px;
+    max-width: 230px;
+    max-height: 300px;
+    padding: 10px;
+  }
+}
+
+
+.news .div-block-15 img,
+.news .div-block-15 {
+  max-width: 100%;
+
+  object-fit: cover;
+  display: block;
+}
+
+.text-block-20.description {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  max-height: 3.6em; /* примерно 3 строки, скорректируйте при необходимости */
+  min-height: 3.6em;
+  line-height: 1.2em;
+}
+
+.news .heading_news {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  max-height: 2.4em; /* примерно 2 строки, скорректируйте при необходимости */
+  min-height: 2.4em;
+  line-height: 1.2em;
+}
+
+.carousel-row .carousel-scroll {
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+.w-layout-hflex.flex-block-6-copy-copy.carousel-scroll {
+  padding-left: 0px;
+  padding-right: 0px;
+}

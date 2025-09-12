@@ -11,7 +11,7 @@ type NewsCardProps = {
 const NewsCard = ({ title, description, category, date, image }: NewsCardProps) => (
   <div className="news">
     <h3 className="heading_news">{title}</h3>
-    <div className="text-block-20">{description}</div>
+    <div className="text-block-20 description">{description}</div>
     <div className="w-layout-hflex flex-block-33">
       <div className="w-layout-hflex flex-block-32">
         <div className="div-block-13"></div>
