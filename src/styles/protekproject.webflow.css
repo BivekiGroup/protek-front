@@ -2088,6 +2088,7 @@ body {
   justify-content: flex-start;
   align-items: flex-start;
   min-width: 350px;
+  
   padding: 30px;
   display: flex;
 }
