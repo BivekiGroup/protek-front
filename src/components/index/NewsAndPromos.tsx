@@ -1,6 +1,8 @@
 import React, { useRef } from "react";
 import NewsCard from "@/components/news/NewsCard";
 import Link from "next/link";
+import { useQuery } from "@apollo/client";
+import { GET_NEWS_LIST } from "@/lib/graphql";
 
 const SCROLL_AMOUNT = 340; // px, ширина одной карточки + отступ
 
@@ -17,6 +19,9 @@ const NewsAndPromos = () => {
       scrollRef.current.scrollBy({ left: SCROLL_AMOUNT, behavior: 'smooth' });
     }
   };
+
+  const { data } = useQuery(GET_NEWS_LIST, { variables: { limit: 12, offset: 0 } });
+  const items = data?.newsList || [];
 
   return (
     <section className="main">
@@ -89,34 +94,16 @@ const NewsAndPromos = () => {
               </span>
             </button>
             <div className="w-layout-hflex flex-block-6-copy-copy carousel-scroll" ref={scrollRef}>
-              <NewsCard
-                title="Kia Syros будет выделяться необычным стилем"
-                description="Компания Kia готова представить новый кроссовер Syros"
-                category="Новости компании"
-                date="17.12.2024"
-                image="/images/news_img.png"
-              />
-              <NewsCard
-                title="Kia Syros будет выделяться необычным стилем"
-                description="Компания Kia готова представить новый кроссовер Syros"
-                category="Новости компании"
-                date="17.12.2024"
-                image="/images/news_img.png"
-              />
-              <NewsCard
-                title="Kia Syros будет выделяться необычным стилем"
-                description="Компания Kia готова представить новый кроссовер Syros"
-                category="Новости компании"
-                date="17.12.2024"
-                image="/images/news_img.png"
-              />
-              <NewsCard
-                title="Kia Syros будет выделяться необычным стилем"
-                description="Компания Kia готова представить новый кроссовер Syros"
-                category="Новости компании"
-                date="17.12.2024"
-                image="/images/news_img.png"
-              />
+              {items.map((n: any) => (
+                <NewsCard
+                  key={n.id}
+                  title={n.title}
+                  description={n.shortDescription}
+                  category={n.category}
+                  date={(n.publishedAt ? new Date(n.publishedAt) : new Date(n.createdAt)).toLocaleDateString('ru-RU')}
+                  image={n.coverImageUrl}
+                />
+              ))}
             </div>
             <button className="carousel-arrow carousel-arrow-right" onClick={scrollRight} aria-label="Прокрутить вправо">
               <span className="arrow-circle">

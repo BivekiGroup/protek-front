@@ -59,6 +59,37 @@ export const GET_HERO_BANNERS = gql`
   }
 `
 
+// --- News ---
+export const GET_NEWS_LIST = gql`
+  query GetNewsList($limit: Int, $offset: Int) {
+    newsList(limit: $limit, offset: $offset, publishedOnly: true) {
+      id
+      slug
+      title
+      category
+      shortDescription
+      coverImageUrl
+      publishedAt
+    }
+  }
+`
+
+export const GET_NEWS_BY_SLUG = gql`
+  query GetNewsBySlug($slug: String!) {
+    newsBySlug(slug: $slug) {
+      id
+      slug
+      title
+      category
+      shortDescription
+      coverImageUrl
+      contentHtml
+      publishedAt
+      createdAt
+    }
+  }
+`
+
 export const CHECK_CLIENT_BY_PHONE = gql`
   mutation CheckClientByPhone($phone: String!) {
     checkClientByPhone(phone: $phone) {

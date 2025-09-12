@@ -7,9 +7,13 @@ import InfoNews from "@/components/news/InfoNews";
 import NewsMenu from "@/components/news/NewsMenu";
 import NewsCard from "@/components/news/NewsCard";
 import MobileMenuBottomSection from "@/components/MobileMenuBottomSection";
+import { useQuery } from "@apollo/client";
+import { GET_NEWS_LIST } from "@/lib/graphql";
 
 export default function News() {
   const metaConfig = getMetaByPath('/news');
+  const { data } = useQuery(GET_NEWS_LIST, { variables: { limit: 24, offset: 0 } });
+  const items = data?.newsList || [];
   
   return (
     <>
@@ -26,14 +30,14 @@ export default function News() {
           <div className="w-layout-vflex">
             <NewsMenu />
             <div className="w-layout-hflex main-news">
-              {Array(12).fill(0).map((_, i) => (
+              {items.map((n: any) => (
                 <NewsCard
-                  key={i}
-                  title="Kia Syros будет выделяться необычным стилем"
-                  description="Компания Kia готова представить новый кроссовер Syros"
-                  category="Новости компании"
-                  date="17.12.2024"
-                  image="/images/news_img.png"
+                  key={n.id}
+                  title={n.title}
+                  description={n.shortDescription}
+                  category={n.category}
+                  date={(n.publishedAt ? new Date(n.publishedAt) : new Date(n.createdAt)).toLocaleDateString('ru-RU')}
+                  image={n.coverImageUrl}
                 />
               ))}
               <div className="w-layout-hflex pagination">
