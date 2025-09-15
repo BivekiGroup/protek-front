@@ -28,6 +28,26 @@ export default function Confidentiality() {
         href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;700&display=swap"
         rel="stylesheet"
       />
+            <section className="section-info">
+        <div className="w-layout-blockcontainer container info w-container">
+            <div className="w-layout-vflex flex-block-9">
+            <div className="w-layout-hflex flex-block-7">
+                <a href="#" className="link-block w-inline-block">
+                <div>Главная</div>
+                </a>
+                <div className="text-block-3">→</div>
+                <a href="#" className="link-block-2 w-inline-block">
+                <div>Политика конфиденциальности</div>
+                </a>
+            </div>
+            <div className="w-layout-hflex flex-block-8">
+                <div className="w-layout-hflex flex-block-10">
+                <h1 className="heading">Политика конфиденциальности</h1>
+                </div>
+            </div>
+            </div>
+        </div>
+        </section>
       <div className="flex relative gap-8 items-start self-stretch pt-10 pb-20  max-md:p-8 max-sm:gap-5 max-sm:p-5">
         <div className="flex relative flex-col gap-8 items-start p-10 bg-white rounded-3xl flex-[1_0_0] max-w-[1580px] mx-auto max-md:p-8 max-sm:gap-5 max-sm:p-5">
           <div className="flex relative flex-col gap-4 items-start w-full max-sm:gap-3">
