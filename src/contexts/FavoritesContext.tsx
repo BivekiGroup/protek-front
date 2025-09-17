@@ -119,82 +119,109 @@ const FavoritesProvider: React.FC<FavoritesProviderProps> = ({ children }) => {
 
   // GraphQL мутации с toast уведомлениями
   const [addFavoriteMutation] = useMutation(ADD_TO_FAVORITES, {
-    onCompleted: (data) => {
-      if (data?.addToFavorites) {
-        dispatch({ type: 'ADD_FAVORITE', payload: data.addToFavorites })
-        toast.success('Товар добавлен в избранное')
-      }
-    },
-    onError: (error) => {
-      console.error('Ошибка добавления в избранное:', error)
-      toast.error('Ошибка добавления в избранное')
-      dispatch({ type: 'SET_ERROR', payload: error.message })
-    }
+    errorPolicy: 'all'
   })
 
   const [removeFavoriteMutation] = useMutation(REMOVE_FROM_FAVORITES, {
-    onCompleted: () => {
-      toast('Товар удален из избранного', {
-        icon: <CloseIcon size={20} color="#fff" />,
-        style: {
-          background: '#6b7280', // Серый фон
-          color: '#fff', // Белый текст
-        },
-        duration: 3000,
-      })
-    },
-    onError: (error) => {
-      console.error('Ошибка удаления из избранного:', error)
-      toast.error('Ошибка удаления из избранного')
-      dispatch({ type: 'SET_ERROR', payload: error.message })
-    }
+    errorPolicy: 'all'
   })
 
   const [clearFavoritesMutation] = useMutation(CLEAR_FAVORITES, {
-    onCompleted: () => {
-      dispatch({ type: 'CLEAR_FAVORITES' })
-      toast.success('Избранное очищено')
-    },
-    onError: (error) => {
-      console.error('Ошибка очистки избранного:', error)
-      toast.error('Ошибка очистки избранного')
-      dispatch({ type: 'SET_ERROR', payload: error.message })
-    }
+    errorPolicy: 'all'
   })
 
   // Методы для работы с избранным
   const addToFavorites = async (item: FavoriteInput) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
-      await addFavoriteMutation({
+      const result = await addFavoriteMutation({
         variables: { input: item }
       })
+
+      const graphError = result.errors?.[0]?.message
+      if (graphError) {
+        const message = graphError.includes('авторизоваться')
+          ? 'Авторизуйтесь, чтобы добавлять товары в избранное'
+          : graphError
+        toast.error(message)
+        dispatch({ type: 'SET_ERROR', payload: message })
+        return
+      }
+
+      if (result.data?.addToFavorites) {
+        dispatch({ type: 'ADD_FAVORITE', payload: result.data.addToFavorites })
+        dispatch({ type: 'SET_ERROR', payload: null })
+        toast.success('Товар добавлен в избранное')
+      }
     } catch (error) {
       console.error('Ошибка добавления в избранное:', error)
+      toast.error('Ошибка добавления в избранное')
       dispatch({ type: 'SET_ERROR', payload: 'Ошибка добавления в избранное' })
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
     }
   }
 
   const removeFromFavorites = async (id: string) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
-      await removeFavoriteMutation({
+      const result = await removeFavoriteMutation({
         variables: { id }
       })
+
+      const graphError = result.errors?.[0]?.message
+      if (graphError) {
+        const message = graphError.includes('авторизоваться')
+          ? 'Авторизуйтесь, чтобы управлять избранным'
+          : graphError
+        toast.error(message)
+        dispatch({ type: 'SET_ERROR', payload: message })
+        return
+      }
+
       dispatch({ type: 'REMOVE_FAVORITE', payload: id })
+      dispatch({ type: 'SET_ERROR', payload: null })
+      toast('Товар удален из избранного', {
+        icon: <CloseIcon size={20} color="#fff" />,
+        style: {
+          background: '#6b7280',
+          color: '#fff',
+        },
+        duration: 3000,
+      })
     } catch (error) {
       console.error('Ошибка удаления из избранного:', error)
+      toast.error('Ошибка удаления из избранного')
       dispatch({ type: 'SET_ERROR', payload: 'Ошибка удаления из избранного' })
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
     }
   }
 
   const clearFavorites = async () => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
-      await clearFavoritesMutation()
+      const result = await clearFavoritesMutation()
+
+      const graphError = result.errors?.[0]?.message
+      if (graphError) {
+        const message = graphError.includes('авторизоваться')
+          ? 'Авторизуйтесь, чтобы управлять избранным'
+          : graphError
+        toast.error(message)
+        dispatch({ type: 'SET_ERROR', payload: message })
+        return
+      }
+
+      dispatch({ type: 'CLEAR_FAVORITES' })
+      dispatch({ type: 'SET_ERROR', payload: null })
+      toast.success('Избранное очищено')
     } catch (error) {
       console.error('Ошибка очистки избранного:', error)
+      toast.error('Ошибка очистки избранного')
       dispatch({ type: 'SET_ERROR', payload: 'Ошибка очистки избранного' })
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
     }
   }
 

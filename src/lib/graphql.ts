@@ -375,6 +375,15 @@ export const CREATE_ORDER = gql`
       discountAmount
       finalAmount
       currency
+      deliveryAddress
+      comment
+      cancelReason
+      canceledAt
+      returnReason
+      returnRequestedAt
+      returnedAt
+      createdAt
+      updatedAt
       items {
         id
         productId
@@ -414,6 +423,32 @@ export const CREATE_PAYMENT = gql`
         createdAt
       }
       confirmationUrl
+    }
+  }
+`
+
+export const CANCEL_ORDER = gql`
+  mutation CancelOrder($id: ID!, $reason: String) {
+    cancelOrder(id: $id, reason: $reason) {
+      id
+      orderNumber
+      status
+      cancelReason
+      canceledAt
+      updatedAt
+    }
+  }
+`
+
+export const REQUEST_ORDER_RETURN = gql`
+  mutation RequestOrderReturn($id: ID!, $reason: String) {
+    requestOrderReturn(id: $id, reason: $reason) {
+      id
+      orderNumber
+      status
+      returnReason
+      returnRequestedAt
+      updatedAt
     }
   }
 `
