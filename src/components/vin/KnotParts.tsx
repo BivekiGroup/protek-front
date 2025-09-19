@@ -40,6 +40,13 @@ const KnotParts: React.FC<KnotPartsProps> = ({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const getHighlightIdentifier = (part: any): string | number | null => {
+    if (!part) {
+      return null;
+    }
+    return part.codeonimage ?? part.detailid ?? null;
+  };
+
   // Отладочные логи для проверки данных
   React.useEffect(() => {
     console.log('🔍 KnotParts получил данные:', {
@@ -65,13 +72,13 @@ const KnotParts: React.FC<KnotPartsProps> = ({
 
   // Обработчик клика по детали в списке
   const handlePartClick = (part: any) => {
-    const codeOnImage = part.codeonimage || part.detailid;
-    if (codeOnImage && onPartSelect) {
+    const codeOnImage = getHighlightIdentifier(part);
+    if (codeOnImage !== null && codeOnImage !== undefined && onPartSelect) {
       onPartSelect(codeOnImage);
     }
     
     // Также подсвечиваем деталь на схеме при клике
-    if (codeOnImage && onPartHover) {
+    if (codeOnImage !== null && codeOnImage !== undefined && onPartHover) {
       // Очищаем предыдущий таймер, если он есть
       if (clickTimeoutRef.current) {
         clearTimeout(clickTimeoutRef.current);
@@ -95,13 +102,14 @@ const KnotParts: React.FC<KnotPartsProps> = ({
 
   // Обработчики наведения
   const handlePartMouseEnter = (part: any) => {
-    if (part.codeonimage && onPartHover) {
-      onPartHover(part.codeonimage);
+    const identifier = getHighlightIdentifier(part);
+    if (identifier !== null && identifier !== undefined && onPartHover) {
+      onPartHover(identifier);
     }
   };
 
   const handlePartMouseLeave = () => {
-    if (onPartHover) {
+    if (onPartHover && clickedPart === null) {
       onPartHover(null);
     }
   };

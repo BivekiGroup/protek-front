@@ -627,6 +627,7 @@ const VehicleDetailsPage = () => {
                     parts={unitDetails}
                     onPartSelect={handlePartSelect}
                     onPartsHighlight={handlePartHighlight}
+                    highlightedCodeOnImage={highlightedPart}
                     selectedParts={selectedParts}
                   />
                   {unitDetailsLoading ? (

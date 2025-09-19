@@ -24,6 +24,7 @@ interface KnotInProps {
   onPartSelect?: (codeOnImage: string | number | null) => void; // Коллбек для уведомления KnotParts о выделении детали
   onPartsHighlight?: (codeOnImage: string | number | null) => void; // Коллбек для подсветки при hover
   selectedParts?: Set<string | number>; // Выбранные детали (множественный выбор)
+  highlightedCodeOnImage?: string | number | null; // Подсветка, пришедшая из списка
 }
 
 // Функция для корректного формирования URL изображения
@@ -46,7 +47,8 @@ const KnotIn: React.FC<KnotInProps> = ({
   parts,
   onPartSelect,
   onPartsHighlight,
-  selectedParts = new Set()
+  selectedParts = new Set(),
+  highlightedCodeOnImage = null
 }) => {
   const imgRef = useRef<HTMLImageElement>(null);
   const [imageScale, setImageScale] = useState({ x: 1, y: 1 });
@@ -56,6 +58,21 @@ const KnotIn: React.FC<KnotInProps> = ({
   const [hoveredCodeOnImage, setHoveredCodeOnImage] = useState<string | number | null>(null);
   const router = useRouter();
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+
+  const matchesIdentifier = (
+    value: string | number | null | undefined,
+    target: string | number | null | undefined
+  ) => {
+    if (value === null || value === undefined || target === null || target === undefined) {
+      return false;
+    }
+    return value.toString() === target.toString();
+  };
+
+  const selectedPartKeys = React.useMemo(() => {
+    const entries = Array.from(selectedParts).map((entry) => (entry !== null && entry !== undefined ? entry.toString() : ''));
+    return new Set(entries);
+  }, [selectedParts]);
 
   // Получаем инфо об узле (для картинки)
   console.log('🔍 KnotIn - GET_LAXIMO_UNIT_INFO запрос:', {
@@ -335,13 +352,20 @@ const KnotIn: React.FC<KnotInProps> = ({
           const size = 22;
           const scaledX = coord.x * imageScale.x - size / 2;
           const scaledY = coord.y * imageScale.y - size / 2;
-          
-          // Используем code или codeonimage в зависимости от структуры данных
-          const codeValue = coord.code || coord.codeonimage;
-          
-          // Определяем состояние точки
-          const isSelected = selectedParts.has(codeValue);
-          const isHovered = hoveredCodeOnImage === codeValue;
+
+          const identifiers = [coord.code, coord.codeonimage, coord.detailid];
+          const codeValue = coord.code ?? coord.codeonimage ?? coord.detailid ?? '';
+
+          const isHoveredFromImage = identifiers.some((identifier) => matchesIdentifier(identifier, hoveredCodeOnImage));
+          const isHoveredFromList = identifiers.some((identifier) => matchesIdentifier(identifier, highlightedCodeOnImage));
+          const isHovered = isHoveredFromImage || isHoveredFromList;
+
+          const isSelected = identifiers.some((identifier) => {
+            if (identifier === null || identifier === undefined) {
+              return false;
+            }
+            return selectedPartKeys.has(identifier.toString());
+          });
           
           // Определяем цвета на основе состояния
           let backgroundColor = '#B7CAE2'; // Базовый цвет
