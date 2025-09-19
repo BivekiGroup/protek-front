@@ -38,6 +38,7 @@ export default function News() {
                   category={n.category}
                   date={(n.publishedAt ? new Date(n.publishedAt) : new Date(n.createdAt)).toLocaleDateString('ru-RU')}
                   image={n.coverImageUrl}
+                  slug={n.slug}
                 />
               ))}
               <div className="w-layout-hflex pagination">

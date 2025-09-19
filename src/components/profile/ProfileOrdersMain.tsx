@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useQuery, useMutation } from '@apollo/client';
+import toast from 'react-hot-toast';
 import { GET_ORDERS, CANCEL_ORDER, REQUEST_ORDER_RETURN } from '@/lib/graphql';
 
 interface OrderItem {
@@ -48,7 +49,8 @@ const tabs: Array<{ label: string; status: OrderStatus[] | null }> = [
   { label: "Все", status: null },
   { label: "Текущие", status: ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'RETURN_REQUESTED'] },
   { label: "Выполненные", status: ['DELIVERED'] },
-  { label: "Отмененные", status: ['CANCELED', 'REFUNDED'] }
+  { label: "Возврат", status: ['RETURN_REQUESTED', 'REFUNDED'] },
+  { label: "Отмененные", status: ['CANCELED'] }
 ];
 
 const statusLabels: Record<OrderStatus, string> = {
@@ -101,7 +103,6 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
   const [actionDialog, setActionDialog] = React.useState<{ type: 'cancel' | 'return'; order: Order } | null>(null);
   const [actionReason, setActionReason] = React.useState('');
   const [pendingAction, setPendingAction] = React.useState<{ orderId: string; type: 'cancel' | 'return' } | null>(null);
-  const [feedbackMessage, setFeedbackMessage] = React.useState<string | null>(null);
   const [feedbackError, setFeedbackError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -152,15 +153,6 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
     );
   }, [filteredOrdersByTab, search]);
 
-  React.useEffect(() => {
-    if (!feedbackMessage && !feedbackError) return;
-    const timer = setTimeout(() => {
-      setFeedbackMessage(null);
-      setFeedbackError(null);
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [feedbackMessage, feedbackError]);
-
   const isSubmitting = cancelLoading || returnLoading;
 
   const openActionDialog = (type: 'cancel' | 'return', order: Order) => {
@@ -187,7 +179,7 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
             reason: actionReason.trim() || null
           }
         });
-        setFeedbackMessage('Заказ отменён.');
+        toast.success('Заказ отменён.');
       } else {
         await requestOrderReturnMutation({
           variables: {
@@ -195,14 +187,16 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
             reason: actionReason.trim() || null
           }
         });
-        setFeedbackMessage('Запрос на возврат отправлен.');
+        toast.success('Запрос на возврат отправлен.');
       }
       setActionDialog(null);
       setActionReason('');
       await refetch();
     } catch (mutationError: any) {
       console.error('Ошибка при выполнении действия с заказом:', mutationError);
-      setFeedbackError(mutationError?.message || 'Не удалось выполнить действие. Попробуйте позже.');
+      const message = mutationError?.message || 'Не удалось выполнить действие. Попробуйте позже.';
+      setFeedbackError(message);
+      toast.error(message);
     } finally {
       setPendingAction(null);
     }
@@ -280,12 +274,6 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
         </div>
       </div>
 
-      {(feedbackMessage || feedbackError) && (
-        <div className={`mt-4 px-4 py-3 rounded-xl text-sm ${feedbackError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-          {feedbackError || feedbackMessage}
-        </div>
-      )}
-      
       <div className="flex overflow-hidden flex-col p-8 mt-5 w-full bg-white rounded-2xl max-md:px-5 max-md:max-w-full">
         <div className="text-3xl font-bold leading-none text-gray-950">{tabs[activeTab].label}</div>
         

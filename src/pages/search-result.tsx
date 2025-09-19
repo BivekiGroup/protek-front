@@ -213,7 +213,7 @@ const checkProductStock = (result: any): boolean => {
 };
 
 const transformOffersForCard = (offers: any[], hasStock: boolean = true) => {
-  return offers.map(offer => {
+  return offers.map((offer) => {
     const isExternal = offer.type === 'external';
     const deliveryDays = isExternal ? offer.deliveryTime : offer.deliveryDays;
     return {
@@ -222,7 +222,7 @@ const transformOffersForCard = (offers: any[], hasStock: boolean = true) => {
       offerKey: offer.offerKey,
       pcs: `${offer.quantity} шт.`,
       days: deliveryDays ? calculateDeliveryDate(deliveryDays) : 'Уточняйте',
-      recommended: !isExternal && offer.available,
+      recommended: !isExternal,
       price: `${offer.price.toLocaleString('ru-RU')} ₽`,
       count: "1",
       isExternal,

@@ -1,9 +1,8 @@
 import React, { useRef } from "react";
 import { useQuery } from '@apollo/client';
-import ArticleCard from "../ArticleCard";
+import CatalogProductCard from "../CatalogProductCard";
 import CatalogProductCardSkeleton from "../CatalogProductCardSkeleton";
 import { GET_NEW_ARRIVALS } from "@/lib/graphql";
-import { PartsAPIArticle } from "@/types/partsapi";
 
 const SCROLL_AMOUNT = 340; // px, ширина одной карточки + отступ
 
@@ -30,19 +29,6 @@ interface Product {
   }>;
 }
 
-// Функция для преобразования Product в PartsAPIArticle
-const transformProductToArticle = (product: Product, index: number): PartsAPIArticle => {
-  return {
-    artId: product.id,
-    artArticleNr: product.article || `PROD-${product.id}`,
-    artSupBrand: product.brand || 'Unknown Brand',
-    supBrand: product.brand || 'Unknown Brand',
-    supId: index + 1,
-    productGroup: product.categories?.[0]?.name || product.name,
-    ptId: index + 1,
-  };
-};
-
 const NewArrivalsSection: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   
@@ -62,11 +48,6 @@ const NewArrivalsSection: React.FC = () => {
       scrollRef.current.scrollBy({ left: SCROLL_AMOUNT, behavior: 'smooth' });
     }
   };
-
-  // Преобразуем данные для ArticleCard
-  const newArrivalsArticles = data?.newArrivals?.map((product: Product, index: number) => 
-    transformProductToArticle(product, index)
-  ) || [];
 
   // Получаем изображения для товаров
   const getProductImage = (product: Product): string => {
@@ -161,21 +142,30 @@ const NewArrivalsSection: React.FC = () => {
                     {error.message}
                   </p>
                 </div>
-                             ) : newArrivalsArticles.length > 0 ? (
-                 // Показываем товары
-                 newArrivalsArticles.map((article: PartsAPIArticle, index: number) => {
-                   const product = data.newArrivals[index];
-                   const image = getProductImage(product);
-                   
-                   return (
-                     <ArticleCard 
-                       key={article.artId || `article-${index}`} 
-                       article={article} 
-                       index={index} 
-                       image={image}
-                     />
-                   );
-                 })
+              ) : data?.newArrivals?.length ? (
+                data.newArrivals.map((product: Product, index: number) => {
+                  const price = product.retailPrice ?? product.wholesalePrice ?? null;
+                  const priceText = price ? `${price.toLocaleString('ru-RU')} ₽` : 'По запросу';
+                  const image = getProductImage(product);
+                  const brand = product.brand || 'Неизвестный бренд';
+                  const articleNumber = product.article || undefined;
+
+                  return (
+                    <CatalogProductCard
+                      key={product.id || `${articleNumber || 'article'}-${index}`}
+                      image={image}
+                      discount="Новинка"
+                      price={priceText}
+                      oldPrice=""
+                      title={product.name}
+                      brand={brand}
+                      articleNumber={articleNumber}
+                      brandName={product.brand}
+                      artId={product.id}
+                      productId={product.id}
+                    />
+                  );
+                })
               ) : (
                 // Показываем сообщение о том, что товаров нет
                 <div className="no-products-message" style={{ 

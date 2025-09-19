@@ -175,8 +175,18 @@ export default function CardPage() {
       });
     }
 
+    const offersWithRecommendation = offers.map((offer) => ({
+      ...offer,
+      recommended: offer.type !== 'external',
+    }));
+
     // Сортировка предложений
-    const sortedOffers = [...offers].sort((a, b) => {
+    const sortedOffers = [...offersWithRecommendation].sort((a, b) => {
+      if (a.recommended && !b.recommended) return -1;
+      if (!a.recommended && b.recommended) return 1;
+      if (a.type !== 'external' && b.type === 'external') return -1;
+      if (a.type === 'external' && b.type !== 'external') return 1;
+
       switch (sortBy) {
         case 'price':
           return a.sortPrice - b.sortPrice;

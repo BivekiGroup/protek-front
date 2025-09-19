@@ -71,7 +71,23 @@ export default function NewsBySlugPage() {
                 {item && (
                   <div className="w-layout-vflex contentnews">
                     <div className="w-layout-hflex flex-block-74-copy">
-                      <div className="w-layout-vflex" dangerouslySetInnerHTML={{ __html: item.contentHtml }} />
+                      <div className="w-layout-vflex" style={{ gap: '24px' }}>
+                        {item.coverImageUrl && (
+                          <div className="news-open-cover" style={{ width: '100%' }}>
+                            <img
+                              src={item.coverImageUrl}
+                              alt={item.title || 'Изображение новости'}
+                              style={{ width: '100%', height: 'auto', borderRadius: '16px' }}
+                            />
+                          </div>
+                        )}
+                        {item.shortDescription && (
+                          <div className="text-block-20 description" style={{ fontSize: '18px', lineHeight: '28px' }}>
+                            {item.shortDescription}
+                          </div>
+                        )}
+                        <div dangerouslySetInnerHTML={{ __html: item.contentHtml }} />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -85,6 +101,7 @@ export default function NewsBySlugPage() {
                     category={n.category}
                     date={(n.publishedAt ? new Date(n.publishedAt) : new Date(n.createdAt)).toLocaleDateString('ru-RU')}
                     image={n.coverImageUrl}
+                    slug={n.slug}
                   />
                 ))}
               </div>
@@ -100,4 +117,3 @@ export default function NewsBySlugPage() {
     </>
   )
 }
-

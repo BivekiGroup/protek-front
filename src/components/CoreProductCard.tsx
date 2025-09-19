@@ -96,21 +96,32 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
   // Функция сортировки предложений
   const sortOffers = (offers: CoreProductCardOffer[]) => {
     const sorted = [...offers];
-    
-    switch (sortBy) {
-      case 'stock':
-        return sorted.sort((a, b) => parseStock(b.pcs) - parseStock(a.pcs));
-      case 'delivery':
-        return sorted.sort((a, b) => {
+
+    const compareBySort = (a: CoreProductCardOffer, b: CoreProductCardOffer) => {
+      switch (sortBy) {
+        case 'stock':
+          return parseStock(b.pcs) - parseStock(a.pcs);
+        case 'delivery': {
           const aDelivery = a.deliveryTime || 999;
           const bDelivery = b.deliveryTime || 999;
           return aDelivery - bDelivery;
-        });
-      case 'price':
-        return sorted.sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
-      default:
-        return sorted;
-    }
+        }
+        case 'price':
+          return parsePrice(a.price) - parsePrice(b.price);
+        default:
+          return 0;
+      }
+    };
+
+    sorted.sort((a, b) => {
+      if (a.recommended && !b.recommended) return -1;
+      if (!a.recommended && b.recommended) return 1;
+      if (!a.isExternal && b.isExternal) return -1;
+      if (a.isExternal && !b.isExternal) return 1;
+      return compareBySort(a, b);
+    });
+
+    return sorted;
   };
 
   const sortedOffers = sortOffers(offers);
