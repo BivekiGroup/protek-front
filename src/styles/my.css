@@ -1473,3 +1473,23 @@ a.link-block-2.w-inline-block  {
   padding-left: 0px;
   padding-right: 0px;
 }
+
+
+@media (max-width: 768px) {
+  .flex-block-6-copy {
+    flex-direction: column !important;
+  }
+  .brandsortb, .flex-block-124 { 
+    max-width: 100% !important;
+  }
+  .code-embed-15.w-embed, .topnav.w-nav {
+    display: none;
+  }
+}
+
+.img-cover {
+  width: 100%;
+  aspect-ratio: 16/5;
+  object-fit: cover;
+  display: block;
+}

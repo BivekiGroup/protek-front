@@ -76,8 +76,9 @@ export default function NewsBySlugPage() {
                           <div className="news-open-cover" style={{ width: '100%' }}>
                             <img
                               src={item.coverImageUrl}
+                              className="img-cover"
                               alt={item.title || 'Изображение новости'}
-                              style={{ width: '100%', height: 'auto', borderRadius: '16px' }}
+                              style={{ borderRadius: '16px' }}
                             />
                           </div>
                         )}
