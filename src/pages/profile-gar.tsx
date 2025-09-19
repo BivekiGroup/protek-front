@@ -1,28 +1,27 @@
 import * as React from "react";
-import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CatalogSubscribe from '@/components/CatalogSubscribe';
 import MobileMenuBottomSection from "@/components/MobileMenuBottomSection";
 import LKMenu from '@/components/LKMenu';
 import ProfileGarageMain from '@/components/profile/ProfileGarageMain';
 import ProfileInfo from '@/components/profile/ProfileInfo';
-import Head from "next/head";
 import MetaTags from "@/components/MetaTags";
 import { getMetaByPath } from "@/lib/meta-config";
-import { useRouter } from "next/router";
+import useAuthModalGuard from '@/hooks/useAuthModalGuard';
 
 
     
 const ProfileGaragePage = () => {
   const metaData = getMetaByPath('/profile-gar');
-  const router = useRouter();
+  const authStatus = useAuthModalGuard();
 
-  React.useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-    if (!token) {
-      router.replace('/login-required');
-    }
-  }, [router]);
+  if (authStatus === null) {
+    return null;
+  }
+
+  if (!authStatus) {
+    return <MetaTags {...metaData} />;
+  }
 
   return (
     <div className="page-wrapper">

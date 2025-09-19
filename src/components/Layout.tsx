@@ -5,6 +5,7 @@ import AuthModal from "./auth/AuthModal";
 import MobileMenuBottomSection from "./MobileMenuBottomSection";
 import IndexTopMenuNav from "./index/IndexTopMenuNav";
 import { emitAuthChanged } from '@/lib/authEvents'
+import { AuthPromptProvider } from '@/contexts/AuthPromptContext';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -37,21 +38,22 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   }, [router.isReady, router.query.openAuth]);
 
   return (
-    <>
-    <header className="section-4">
-      <Header onOpenAuthModal={() => setAuthModalOpen(true)} />
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        onSuccess={handleAuthSuccess}
-      />
+    <AuthPromptProvider onRequestLogin={() => setAuthModalOpen(true)}>
+      <header className="section-4">
+        <Header onOpenAuthModal={() => setAuthModalOpen(true)} />
+        <AuthModal
+          isOpen={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
+          onSuccess={handleAuthSuccess}
+        />
       </header>
-      
+
       <main className="pt-[62px] md:pt-[63px]">
-      <IndexTopMenuNav isIndexPage={router.pathname === '/'} />
-        {children}</main>
+        <IndexTopMenuNav isIndexPage={router.pathname === '/'} />
+        {children}
+      </main>
       <MobileMenuBottomSection onOpenAuthModal={() => setAuthModalOpen(true)} />
-    </>
+    </AuthPromptProvider>
   );
 };
 

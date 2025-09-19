@@ -7,10 +7,11 @@ interface MobileMenuButtonProps {
   counter?: React.ReactNode;
   href?: string;
   status?: 'default' | 'success' | 'warning' | 'danger';
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
-const MobileMenuButton: React.FC<MobileMenuButtonProps> = ({ icon, label, counter, href = '#', status = 'default' }) => (
-  <Link href={href} className="button-for-mobile-menu-block w-inline-block">
+const MobileMenuButton: React.FC<MobileMenuButtonProps> = ({ icon, label, counter, href = '#', status = 'default', onClick }) => (
+  <Link href={href} className="button-for-mobile-menu-block w-inline-block" onClick={onClick}>
     <div className="block-for-moble-menu-icon">
       <div className="icon-setting w-embed">{icon}</div>
       {counter && (
