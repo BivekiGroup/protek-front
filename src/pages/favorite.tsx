@@ -4,31 +4,24 @@ import Footer from "@/components/Footer";
 import CatalogSubscribe from "@/components/CatalogSubscribe";
 import MobileMenuBottomSection from "../components/MobileMenuBottomSection";
 import FavoriteInfo from "@/components/FavoriteInfo";
-import Filters, { FilterConfig } from "@/components/Filters";
+import type { FilterConfig } from "@/components/Filters";
 import FiltersPanelMobile from "@/components/FiltersPanelMobile";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import CartRecommended from "../components/CartRecommended";
 import FavoriteList from "../components/FavoriteList";
 import { useFavorites } from "@/contexts/FavoritesContext";
-import { useRouter } from "next/router";
+import useAuthModalGuard from '@/hooks/useAuthModalGuard';
 
 export default function Favorite() {
-  const router = useRouter();
   const { favorites } = useFavorites();
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterValues, setFilterValues] = useState<{[key: string]: any}>({});
   const [sortBy, setSortBy] = useState<'name' | 'brand' | 'date'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const authStatus = useAuthModalGuard();
 
   const metaConfig = getMetaByPath('/favorite');
-
-  useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-    if (!token) {
-      router.replace('/login-required');
-    }
-  }, [router]);
 
   // Создаем динамические фильтры на основе данных избранного
   const dynamicFilters: FilterConfig[] = useMemo(() => {
@@ -104,7 +97,22 @@ export default function Favorite() {
     
     return count;
   }, [searchQuery, filterValues]);
-  
+  if (authStatus === null) {
+    return null;
+  }
+
+  if (!authStatus) {
+    return (
+      <MetaTags 
+        title={metaConfig.title}
+        description={metaConfig.description}
+        keywords={metaConfig.keywords}
+        ogTitle={metaConfig.ogTitle}
+        ogDescription={metaConfig.ogDescription}
+      />
+    );
+  }
+
   return (
     <>
       <MetaTags 

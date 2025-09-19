@@ -11,17 +11,13 @@ import HowToBuy from "@/components/wholesale/HowToBuy";
 import Help from "@/components/Help";
 import MetaTags from "@/components/MetaTags";
 import { getMetaByPath } from "@/lib/meta-config";
-import AuthModal from "@/components/AuthModal";
-import React from "react";
 
 export default function Wholesale() {
   const metaData = getMetaByPath('/wholesale');
-  const [modalOpen, setModalOpen] = React.useState(true); // показываем по умолчанию
 
   return (
     <>
       <MetaTags {...metaData} />
-      <AuthModal open={modalOpen} onClose={() => setModalOpen(false)} />
       <InfoWholesale />
       <section className="main">
         <div className="w-layout-blockcontainer container w-container">

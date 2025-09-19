@@ -12,6 +12,7 @@ import CartButton from './CartButton';
 import SearchHistoryDropdown from './SearchHistoryDropdown';
 import { GET_RECENT_SEARCH_QUERIES, PartsSearchHistoryItem } from '@/lib/graphql/search-history';
 import { onAuthChanged } from '@/lib/authEvents'
+import { useAuthPrompt } from '@/contexts/AuthPromptContext';
 
 interface HeaderProps {
   onOpenAuthModal?: () => void;
@@ -37,6 +38,15 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
   const searchDropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isClient = useIsClient();
+  const { openAuthPrompt } = useAuthPrompt();
+
+  const handleProtectedNavigation = (event: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    if (currentUser) {
+      return;
+    }
+    event.preventDefault();
+    openAuthPrompt({ targetPath: path });
+  };
 
   // Эффект для восстановления поискового запроса из URL
   useEffect(() => {
@@ -854,20 +864,30 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
                 </div>
               </div>
               <div className="w-layout-hflex flex-block-76">
-                <Link href="/profile-history" className="button_h w-inline-block">
-                
-    <img src="/images/union.svg" alt="История заказов" width={20} />
-
+                <Link
+                  href="/profile-history"
+                  className="button_h w-inline-block"
+                  onClick={(event) => handleProtectedNavigation(event, '/profile-history')}
+                >
+                  <img src="/images/union.svg" alt="История заказов" width={20} />
                 </Link>
-                <Link href={currentUser ? "/profile-gar" : "/login-required"} className="button_h w-inline-block">
-                    <div className="code-embed-7 w-embed"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M27 10.8V24H24.6V13.2H5.4V24H3V10.8L15 6L27 10.8ZM23.4 14.4H6.6V16.8H23.4V14.4ZM23.4 18H6.6V20.4H23.4V18Z" fill="currentColor" /><path d="M6.6 21.6H23.4V24H6.6V21.6Z" fill="currentColor" /></svg></div>
-                    <div className="text-block-2">Добавить в гараж</div>
+                <Link
+                  href="/profile-gar"
+                  className="button_h w-inline-block"
+                  onClick={(event) => handleProtectedNavigation(event, '/profile-gar')}
+                >
+                  <div className="code-embed-7 w-embed"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M27 10.8V24H24.6V13.2H5.4V24H3V10.8L15 6L27 10.8ZM23.4 14.4H6.6V16.8H23.4V14.4ZM23.4 18H6.6V20.4H23.4V18Z" fill="currentColor" /><path d="M6.6 21.6H23.4V24H6.6V21.6Z" fill="currentColor" /></svg></div>
+                  <div className="text-block-2">Добавить в гараж</div>
                 </Link>
-                <Link href={currentUser ? "/favorite" : "/login-required"} className="button_h w-inline-block">
+                <Link
+                  href="/favorite"
+                  className="button_h w-inline-block"
+                  onClick={(event) => handleProtectedNavigation(event, '/favorite')}
+                >
                   <div className="code-embed-7 w-embed"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 25L13.405 23.5613C7.74 18.4714 4 15.1035 4 10.9946C4 7.6267 6.662 5 10.05 5C11.964 5 13.801 5.88283 15 7.26703C16.199 5.88283 18.036 5 19.95 5C23.338 5 26 7.6267 26 10.9946C26 15.1035 22.26 18.4714 16.595 23.5613L15 25Z" fill="currentColor" /></svg></div>
                   <div className="text-block-2">Избранное</div>
                 </Link>
-                <button 
+                <button
                   onClick={() => {
                     if (currentUser) {
                       router.push('/profile-orders');
@@ -876,12 +896,13 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
                     }
                   }}
                   className="button_h login w-inline-block"
-                  style={{  cursor: 'pointer' }}
+                  style={{ cursor: 'pointer' }}
                 >
                   <div className="code-embed-8 w-embed"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 3C8.376 3 3 8.376 3 15C3 21.624 8.376 27 15 27C21.624 27 27 21.624 27 15C27 8.376 21.624 3 15 3ZM15 7.8C17.316 7.8 19.2 9.684 19.2 12C19.2 14.316 17.316 16.2 15 16.2C12.684 16.2 10.8 14.316 10.8 12C10.8 9.684 12.684 7.8 15 7.8ZM15 24.6C12.564 24.6 9.684 23.616 7.632 21.144C9.73419 19.4955 12.3285 18.5995 15 18.5995C17.6715 18.5995 20.2658 19.4955 22.368 21.144C20.316 23.616 17.436 24.6 15 24.6Z" fill="currentColor" /></svg></div>
                   <div className="text-block-2">{currentUser ? 'Личный кабинет' : 'Войти'}</div>
                 </button>
                 <CartButton />
+
               </div>
             </div>
         </div>

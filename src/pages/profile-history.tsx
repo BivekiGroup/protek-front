@@ -1,26 +1,18 @@
 import * as React from "react";
-import { useRouter } from 'next/router';
-import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CatalogSubscribe from '@/components/CatalogSubscribe';
-import MobileMenuBottomSection from "@/components/MobileMenuBottomSection";
 import LKMenu from '@/components/LKMenu';
 import ProfileHistoryMain from '@/components/profile/ProfileHistoryMain';
 import ProfileInfo from '@/components/profile/ProfileInfo';
-import Head from "next/head";
 import MetaTags from "@/components/MetaTags";
 import { getMetaByPath } from "@/lib/meta-config";
+import useAuthModalGuard from '@/hooks/useAuthModalGuard';
+import MobileMenuBottomSection from "@/components/MobileMenuBottomSection";
 
 
     
 const ProfileHistoryPage = () => {
-  const router = useRouter();
-  React.useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-    if (!token) {
-      router.replace('/login-required');
-    }
-  }, [router]);
+  const authStatus = useAuthModalGuard();
   const menuRef = React.useRef<HTMLDivElement>(null);
   const [menuHeight, setMenuHeight] = React.useState<number | undefined>(undefined);
 
@@ -40,6 +32,14 @@ const ProfileHistoryPage = () => {
   }, []);
 
   const metaData = getMetaByPath('/profile-history');
+
+  if (authStatus === null) {
+    return null;
+  }
+
+  if (!authStatus) {
+    return <MetaTags {...metaData} />;
+  }
 
   return (
     <>

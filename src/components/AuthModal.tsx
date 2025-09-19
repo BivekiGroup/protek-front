@@ -3,6 +3,7 @@ import * as React from "react";
 interface AuthModalProps {
   open: boolean;
   onClose: () => void;
+  onRequestLogin?: () => void;
 }
 
 const images = [
@@ -11,7 +12,7 @@ const images = [
   "https://api.builder.io/api/v1/image/assets/TEMP/0ef9d54b1df023cf88d94604cb322ad1dc512f85?width=240",
 ];
 
-export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onRequestLogin }) => {
   if (!open) return null;
   return (
     <>
@@ -114,6 +115,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
               <div
                 layer-name="button_icon"
                 className="flex relative gap-3.5 items-center px-8 py-5 bg-red-600 rounded-xl cursor-pointer duration-[0.2s] ease-[ease] transition-[background-color] max-md:justify-center max-md:w-full max-sm:px-6 max-sm:py-4"
+                onClick={onRequestLogin}
               >
                 <div>
                   <div

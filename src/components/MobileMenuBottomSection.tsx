@@ -3,6 +3,7 @@ import MobileMenuButton from './MobileMenuButton';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useCart } from '@/contexts/CartContext';
 import { onAuthChanged } from '@/lib/authEvents'
+import { useAuthPrompt } from '@/contexts/AuthPromptContext';
 
 interface MobileMenuBottomSectionProps {
   onOpenAuthModal?: () => void;
@@ -39,6 +40,11 @@ const MobileMenuBottomSection: React.FC<MobileMenuBottomSectionProps> = ({
   const { favorites } = useFavorites();
   const { state: cartState } = useCart();
   const [isAuth, setIsAuth] = React.useState(false);
+  const { openAuthPrompt } = useAuthPrompt();
+
+  const handleAuthRequiredNavigation = React.useCallback((path: string) => {
+    openAuthPrompt({ targetPath: path });
+  }, [openAuthPrompt]);
 
   React.useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
@@ -62,11 +68,27 @@ const MobileMenuBottomSection: React.FC<MobileMenuBottomSectionProps> = ({
     <nav className="mobile-menu-buttom-section">
       <div className="w-layout-blockcontainer mobile-menu-bottom w-container">
         <div className="w-layout-hflex flex-block-87">
-          <MobileMenuButton icon={GarageIcon} label="Гараж" href={isAuth ? "/profile-gar" : "/login-required"} />
+          <MobileMenuButton
+            icon={GarageIcon}
+            label="Гараж"
+            href="/profile-gar"
+            onClick={(event) => {
+              if (!isAuth) {
+                event.preventDefault();
+                handleAuthRequiredNavigation('/profile-gar');
+              }
+            }}
+          />
           <MobileMenuButton 
             icon={FavoriteIcon} 
             label="Избранное" 
-            href={isAuth ? "/favorite" : "/login-required"}
+            href="/favorite"
+            onClick={(event) => {
+              if (!isAuth) {
+                event.preventDefault();
+                handleAuthRequiredNavigation('/favorite');
+              }
+            }}
             counter={favoriteCounter}
             status={favorites.length > 0 ? "warning" : undefined}
           />
