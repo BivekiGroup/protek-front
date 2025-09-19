@@ -16,11 +16,23 @@ import Layout from "@/components/Layout";
 import { Toaster } from 'react-hot-toast';
 import CookieConsent from '@/components/CookieConsent';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import AuthModal from "@/components/AuthModal";
+import { useRouter } from "next/router";
 
 export default function App({ Component, pageProps }: AppProps) {
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
+  // Список защищённых роутов
+  const protectedRoutes = [
+    "/profile",
+    "/profile-history",
+    "/profile-garage",
+    "/favorite",
+    "/cart",
+  ];
 
   React.useEffect(() => {
     const maintenanceMode = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true';
