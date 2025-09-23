@@ -53,7 +53,7 @@ export default function NewArrivalsPage() {
     nextFetchPolicy: 'cache-first',
   });
 
-  const products = data?.newArrivals ?? previousData?.newArrivals ?? [];
+  const products: NewArrivalProduct[] = (data?.newArrivals ?? previousData?.newArrivals ?? []) as NewArrivalProduct[];
   const isInitialLoading = loading && !previousData;
   const isLoadingMore = loading && !!previousData;
   const canLoadMore = !isInitialLoading && products.length >= limit;
@@ -94,7 +94,7 @@ export default function NewArrivalsPage() {
                   <CatalogProductCardSkeleton key={`new-arrivals-skeleton-${index}`} />
                 ))
               ) : products.length ? (
-                products.map((product) => {
+                products.map((product: NewArrivalProduct) => {
                   const primaryPrice = product.retailPrice ?? product.wholesalePrice ?? null;
                   return (
                     <CatalogProductCard
