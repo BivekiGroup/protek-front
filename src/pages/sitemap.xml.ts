@@ -12,6 +12,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     { url: '/contacts', changeFrequency: 'monthly', priority: 0.8 },
     { url: '/catalog', changeFrequency: 'weekly', priority: 0.9 },
     { url: '/news', changeFrequency: 'weekly', priority: 0.7 },
+    { url: '/new-arrivals', changeFrequency: 'weekly', priority: 0.7 },
     { url: '/brands', changeFrequency: 'monthly', priority: 0.7 },
     { url: '/payments-method', changeFrequency: 'monthly', priority: 0.6 },
     { url: '/privacy-policy', changeFrequency: 'yearly', priority: 0.4 },
@@ -40,4 +41,3 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader('Content-Type', 'application/xml')
   res.status(200).send(sitemap)
 }
-

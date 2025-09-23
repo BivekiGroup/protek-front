@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from '@apollo/client';
 import { useRouter } from 'next/router';
 import { 
@@ -37,9 +37,12 @@ interface ClientData {
   legalEntities: LegalEntity[];
 }
 
-const ProfileRequisitiesMain = () => {
+interface ProfileRequisitiesMainProps {
+  onCreateLegalEntity?: () => void;
+}
+
+const ProfileRequisitiesMain: React.FC<ProfileRequisitiesMainProps> = ({ onCreateLegalEntity }) => {
   const router = useRouter();
-  const [selectedBankDetailId, setSelectedBankDetailId] = useState<string | null>(null);
   const [selectedLegalEntityId, setSelectedLegalEntityId] = useState<string | null>(null);
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
@@ -56,12 +59,6 @@ const ProfileRequisitiesMain = () => {
       // Устанавливаем первое юридическое лицо как выбранное по умолчанию
       if (data?.clientMe?.legalEntities?.length > 0) {
         setSelectedLegalEntityId(data.clientMe.legalEntities[0].id);
-        
-        // Находим первый банковский счет среди всех юридических лиц
-        const allBankDetails = data.clientMe.legalEntities.flatMap((le: LegalEntity) => le.bankDetails || []);
-        if (allBankDetails.length > 0) {
-          setSelectedBankDetailId(allBankDetails[0].id);
-        }
       }
     },
     onError: (error) => {
@@ -255,8 +252,18 @@ const ProfileRequisitiesMain = () => {
 
   const clientData: ClientData | null = data?.clientMe || null;
   const legalEntities = clientData?.legalEntities || [];
-  const selectedLegalEntity = legalEntities.find(le => le.id === selectedLegalEntityId);
-  const allBankDetails = legalEntities.flatMap(le => le.bankDetails?.filter(bd => bd && bd.id) || []);
+  const selectedLegalEntity = legalEntities.find(le => le.id === selectedLegalEntityId) || legalEntities[0] || null;
+  const bankDetails = selectedLegalEntity?.bankDetails?.filter(bd => bd && bd.id) || [];
+
+  useEffect(() => {
+    if (legalEntities.length === 0) {
+      return;
+    }
+
+    if (!selectedLegalEntityId || !legalEntities.some(le => le.id === selectedLegalEntityId)) {
+      setSelectedLegalEntityId(legalEntities[0].id);
+    }
+  }, [legalEntities, selectedLegalEntityId]);
 
   if (legalEntities.length === 0) {
     return (
@@ -270,7 +277,13 @@ const ProfileRequisitiesMain = () => {
           </div>
           <div className="flex gap-8 items-start self-start mt-8">
             <button
-              onClick={() => router.push('/profile-set')}
+              onClick={() => {
+                if (onCreateLegalEntity) {
+                  onCreateLegalEntity();
+                } else {
+                  router.push('/profile-set');
+                }
+              }}
               style={{ color: 'fff' }}
               className="gap-2.5 self-stretch px-5 py-4 bg-red-600 rounded-xl min-h-[50px] cursor-pointer text-white text-base font-medium leading-tight text-center hover:bg-red-700"
             >
@@ -288,66 +301,61 @@ const ProfileRequisitiesMain = () => {
         <div className="text-gray-950 max-md:max-w-full">
           Реквизиты {selectedLegalEntity ? selectedLegalEntity.shortName : 'юридического лица'}
         </div>
-        <div className="flex flex-col mt-8 w-full text-sm leading-snug text-gray-600 max-md:max-w-full">
-          {allBankDetails.length === 0 ? (
+        {legalEntities.length > 1 && (
+          <div className="flex flex-wrap gap-2 items-center mt-6">
+            {legalEntities.map((entity) => (
+              <button
+                key={entity.id}
+                type="button"
+                onClick={() => {
+                  if (selectedLegalEntity?.id === entity.id) {
+                    return;
+                  }
+                  setSelectedLegalEntityId(entity.id);
+                  if (showAddForm) {
+                    setShowAddForm(false);
+                    setEditingBankDetail(null);
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-full border text-sm transition-colors ${selectedLegalEntity?.id === entity.id ? 'border-red-600 text-red-600 bg-[#FFF5F5]' : 'border-slate-200 text-gray-600 hover:border-red-400 hover:text-red-600'}`}
+              >
+                {entity.shortName}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="flex flex-col mt-6 w-full text-sm leading-snug text-gray-600 max-md:max-w-full">
+          {bankDetails.length === 0 ? (
             <div className="text-gray-600 py-8 text-center">
-              У вас пока нет добавленных банковских реквизитов.
+              У {selectedLegalEntity?.shortName || 'выбранного юридического лица'} пока нет банковских реквизитов.
             </div>
           ) : (
-            allBankDetails.map((bankDetail) => (
+            bankDetails.map((bankDetail) => (
               <div key={bankDetail.id} className="flex flex-col justify-center px-5 py-3 w-full rounded-lg bg-slate-50 max-md:max-w-full mb-2.5">
-                <div className="flex flex-wrap gap-10 justify-between items-center w-full max-md:max-w-full">
-                  <div className="flex flex-wrap gap-5 items-center self-stretch my-auto min-w-[240px] max-md:max-w-full">
-                    <div className="self-stretch my-auto text-xl font-bold leading-none text-gray-950">
+                <div className="flex flex-wrap items-center justify-between gap-3 w-full text-sm leading-5 text-gray-600">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-base font-semibold leading-5 text-gray-950">
                       {bankDetail.name}
-                    </div>
-                    <div className="self-stretch my-auto text-gray-600">
-                      № р/с {bankDetail.accountNumber}
-                    </div>
-                    <div className="self-stretch my-auto text-gray-600">
-                      {bankDetail.bankName}
-                    </div>
-                    <div className="self-stretch my-auto text-gray-600 text-sm">
-                      БИК: {bankDetail.bik}
-                    </div>
-                    <div className="flex gap-1.5 items-center self-stretch my-auto" role="button" tabIndex={0} aria-label="Юридическое лицо">
+                    </span>
+                    <span className="hidden md:inline text-gray-300" aria-hidden="true">·</span>
+                    <span>№ р/с {bankDetail.accountNumber}</span>
+                    <span className="hidden md:inline text-gray-300" aria-hidden="true">·</span>
+                    <span>{bankDetail.bankName}</span>
+                    <span className="hidden md:inline text-gray-300" aria-hidden="true">·</span>
+                    <span className="inline-flex items-center gap-1.5" role="button" tabIndex={0} aria-label="Юридическое лицо">
                       <img
                         src="/images/icon-setting.svg"
                         alt="ЮЛ"
                         className="object-contain w-[18px] h-[18px]"
                       />
-                      <div className="self-stretch my-auto text-gray-600">
-                        {(() => {
-                          const entity = legalEntities.find(le => le.id === bankDetail.legalEntityId);
-                          return entity ? entity.shortName : (bankDetail.legalEntityId ? 'Неизвестное ЮЛ' : 'Не привязан к ЮЛ');
-                        })()}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-1.5 items-center self-stretch my-auto">
-                      <div
-                        className="relative aspect-[1/1] h-[18px] w-[18px] cursor-pointer"
-                        onClick={() => setSelectedBankDetailId(bankDetail.id)}
-                      >
-                        <div>
-                          <div
-                            dangerouslySetInnerHTML={{
-                              __html: selectedBankDetailId === bankDetail.id
-                                ? `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.5" stroke="#EC1C24"/><circle cx="9.0001" cy="8.99961" r="5.4" fill="#FF0000"/></svg>`
-                                : `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.5" stroke="#D0D0D0"/></svg>`
-                            }}
-                          />
-                        </div>
-                      </div>
-                      <div className="text-sm leading-5 text-gray-600">
-                        Основной счет
-                      </div>
-                    </div>
-                    
+                      <span>
+                        {selectedLegalEntity?.shortName || 'Юридическое лицо'}
+                      </span>
+                    </span>
                   </div>
-                  <div className="flex gap-5 items-center self-stretch pr-2.5 my-auto whitespace-nowrap">
+                  <div className="flex gap-4 items-center text-sm leading-5 text-gray-500 whitespace-nowrap">
                     <div
-                      className="flex gap-1.5 items-center self-stretch my-auto cursor-pointer hover:text-red-600"
+                      className="flex gap-1.5 items-center cursor-pointer hover:text-red-600"
                       role="button"
                       tabIndex={0}
                       aria-label="Редактировать счет"
@@ -358,12 +366,12 @@ const ProfileRequisitiesMain = () => {
                         alt="Редактировать"
                         className="object-contain w-[18px] h-[18px]"
                       />
-                      <div className="self-stretch my-auto text-gray-600">
+                      <div className="self-stretch my-auto text-sm leading-5 text-gray-600">
                         Редактировать
                       </div>
                     </div>
                     <div
-                      className="flex gap-1.5 items-center self-stretch my-auto cursor-pointer hover:text-red-600"
+                      className="flex gap-1.5 items-center cursor-pointer hover:text-red-600"
                       role="button"
                       tabIndex={0}
                       aria-label="Удалить счет"
@@ -374,7 +382,7 @@ const ProfileRequisitiesMain = () => {
                         alt="Удалить"
                         className="object-contain w-[18px] h-[18px]"
                       />
-                      <div className="self-stretch my-auto text-gray-600">
+                      <div className="self-stretch my-auto text-sm leading-5 text-gray-600">
                         Удалить
                       </div>
                     </div>
@@ -520,4 +528,3 @@ const ProfileRequisitiesMain = () => {
 }
 
 export default ProfileRequisitiesMain;
-

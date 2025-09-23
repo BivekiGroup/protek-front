@@ -23,9 +23,9 @@ const IndexTopMenuNav = ({ isIndexPage = false }: { isIndexPage?: boolean }) => 
         <Link href="/contacts" className="link-block-8 w-inline-block">
           <div>Контакты</div>
         </Link>
-        <a href="#" className="link-block-8 green w-inline-block">
+        <Link href="/new-arrivals" className="link-block-8 green w-inline-block">
           <div>Новые поступления товаров</div>
-        </a>
+        </Link>
         <a href="#" className="link-block-8 orange w-inline-block">
           <div>Распродажа</div>
         </a>

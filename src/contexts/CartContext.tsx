@@ -29,15 +29,15 @@ const initialState: CartState = {
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 // Утилитарная функция для парсинга количества в наличии
-const parseStock = (stockStr: string | number | undefined): number => {
-  if (stockStr === undefined || stockStr === null) return 0
-  if (typeof stockStr === 'number') return stockStr
+const parseStock = (stockStr: string | number | undefined): number | undefined => {
+  if (stockStr === undefined || stockStr === null) return undefined
+  if (typeof stockStr === 'number') return Number.isFinite(stockStr) ? stockStr : undefined
   if (typeof stockStr === 'string') {
     // Извлекаем числа из строки типа "10 шт" или "В наличии: 5"
     const match = stockStr.match(/\d+/)
-    return match ? parseInt(match[0], 10) : 0
+    return match ? parseInt(match[0], 10) : undefined
   }
-  return 0
+  return undefined
 }
 
 // Функция для преобразования backend cart items в frontend format
@@ -130,6 +130,39 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // GraphQL-based cart operations
   const addItem = async (item: Omit<CartItem, 'id' | 'selected' | 'favorite'>) => {
     try {
+      const existingItem = state.items.find(existing => {
+        if (item.offerKey && existing.offerKey) return existing.offerKey === item.offerKey
+        if (item.productId && existing.productId) return existing.productId === item.productId
+        if (item.article && item.brand && existing.article && existing.brand) {
+          return existing.article === item.article && existing.brand === item.brand
+        }
+        return false
+      })
+
+      const existingQuantity = existingItem?.quantity ?? 0
+      const stockSource = item.stock ?? existingItem?.stock
+      const availableStock = parseStock(stockSource)
+
+      if (availableStock !== undefined) {
+        if (availableStock <= 0) {
+          const errorMessage = 'Товара нет в наличии'
+          toast.error(errorMessage)
+          setError('')
+          return { success: false, error: errorMessage }
+        }
+
+        const totalRequested = existingQuantity + item.quantity
+        if (totalRequested > availableStock) {
+          const remaining = Math.max(availableStock - existingQuantity, 0)
+          const errorMessage = remaining > 0
+            ? `Можно добавить не более ${remaining} шт. этого товара`
+            : 'В корзине уже максимальное количество этого товара'
+          toast.error(errorMessage)
+          setError('')
+          return { success: false, error: errorMessage }
+        }
+      }
+
       setError('')
       setState(prev => ({ ...prev, isLoading: true }))
 
@@ -171,25 +204,23 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }))
         }
 
-  
-        
         // Refetch to ensure data consistency
         refetchCart()
         
         return { success: true }
       } else {
         const errorMessage = data?.addToCart?.error || 'Ошибка добавления товара'
+        toast.error(errorMessage)
         setError(errorMessage)
         setState(prev => ({ ...prev, isLoading: false }))
-        toast.error(errorMessage)
         return { success: false, error: errorMessage }
       }
     } catch (error) {
       console.error('❌ Error adding item to cart:', error)
       const errorMessage = 'Ошибка добавления товара в корзину'
+      toast.error(errorMessage)
       setError(errorMessage)
       setState(prev => ({ ...prev, isLoading: false }))
-      toast.error(errorMessage)
       return { success: false, error: errorMessage }
     }
   }
@@ -239,6 +270,38 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateQuantity = async (id: string, quantity: number) => {
     try {
       if (quantity < 1) return
+
+      const cartItem = state.items.find(item => item.id === id)
+      if (!cartItem) return
+
+      const availableStock = parseStock(cartItem.stock)
+      if (availableStock !== undefined) {
+        if (availableStock <= 0) {
+          const errorMessage = 'Товара нет в наличии'
+          toast.error(errorMessage)
+          setError('')
+          return
+        }
+
+        if (quantity > availableStock) {
+          const cappedQuantity = Math.max(1, availableStock)
+          const errorMessage = `Нельзя установить количество больше ${availableStock} шт.`
+          toast.error(errorMessage)
+          setError('')
+
+          setState(prev => {
+            const updatedItems = prev.items.map(item =>
+              item.id === id ? { ...item, quantity: cappedQuantity } : item
+            )
+            return {
+              ...prev,
+              items: updatedItems,
+              summary: calculateSummary(updatedItems)
+            }
+          })
+          return
+        }
+      }
 
       setError('')
       setState(prev => ({ ...prev, isLoading: true }))

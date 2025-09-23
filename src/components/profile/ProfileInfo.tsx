@@ -10,7 +10,7 @@ const crumbsMap: Record<string, string> = {
   "/profile-gar": "Гараж",
   "/profile-set": "Настройки аккаунта",
   "/profile-balance": "Баланс",
-  "/profile-req": "Реквизиты",
+  "/profile-req": "Реквизиты и юрлица",
   "/profile-settlements": "Взаиморасчеты",
   "/profile-acts": "Акты сверки",
 };

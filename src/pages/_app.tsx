@@ -14,6 +14,7 @@ import { CartProvider } from '@/contexts/CartContext';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import Layout from "@/components/Layout";
 import { Toaster } from 'react-hot-toast';
+import ToastLimiter from '@/components/ToastLimiter';
 import CookieConsent from '@/components/CookieConsent';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import AuthModal from "@/components/AuthModal";
@@ -101,6 +102,7 @@ export default function App({ Component, pageProps }: AppProps) {
               top: '80px', // Отступ для всего контейнера toast'ов
             }}
           />
+          <ToastLimiter limit={5} />
           <Script src="/js/webflow.js" strategy="beforeInteractive" />
           <Script
             src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"

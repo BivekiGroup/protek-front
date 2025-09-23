@@ -1,38 +1,20 @@
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
-import { useQuery } from '@apollo/client';
-import { GET_CLIENT_ME } from '@/lib/graphql';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import CatalogSubscribe from '@/components/CatalogSubscribe';
+import Footer from '@/components/Footer';
 import MobileMenuBottomSection from "@/components/MobileMenuBottomSection";
 import LKMenu from '@/components/LKMenu';
 import ProfileRequisitiesMain from '@/components/profile/ProfileRequisitiesMain';
 import ProfileInfo from '@/components/profile/ProfileInfo';
 import MetaTags from "../components/MetaTags";
 import { getMetaByPath } from "../lib/meta-config";
+import ProfileLegalEntitiesMain, { ProfileLegalEntitiesMainHandle } from '@/components/profile/ProfileLegalEntitiesMain';
 
 const ProfileRequisitiesPage = () => {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-
-  const { data: clientData, loading: clientLoading } = useQuery(GET_CLIENT_ME, {
-    skip: !isAuthenticated,
-    onCompleted: (data) => {
-      // Проверяем есть ли у клиента юридические лица
-      if (!data?.clientMe?.legalEntities?.length) {
-        // Если нет юридических лиц, перенаправляем на настройки
-        router.push('/profile-set');
-        return;
-      }
-    },
-    onError: (error) => {
-      console.error('Ошибка загрузки данных клиента:', error);
-      // Если ошибка авторизации, перенаправляем на главную
-      router.push('/');
-    }
-  });
+  const legalEntitiesRef = useRef<ProfileLegalEntitiesMainHandle>(null);
 
   useEffect(() => {
     // Проверяем авторизацию
@@ -45,7 +27,7 @@ const ProfileRequisitiesPage = () => {
   }, [router]);
 
   // Показываем загрузку пока проверяем авторизацию и данные
-  if (!isAuthenticated || clientLoading) {
+  if (!isAuthenticated) {
     return (
       <div className="page-wrapper">
         <div className="flex flex-col justify-center items-center min-h-[400px]">
@@ -59,6 +41,14 @@ const ProfileRequisitiesPage = () => {
 
   const metaConfig = getMetaByPath('/profile-req');
 
+  const handleCreateLegalEntity = () => {
+    legalEntitiesRef.current?.openCreateForm();
+    const section = document.getElementById('legal-entities-section');
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <div className="page-wrapper">
       <MetaTags 
@@ -71,9 +61,14 @@ const ProfileRequisitiesPage = () => {
       <ProfileInfo />
       <div className="flex flex-col pt-10 pb-16 max-md:px-5">
         
-      <div className="flex relative gap-8 items-start self-stretch max-md:gap-5 max-sm:flex-col max-sm:gap-4 justify-center mx-auto max-w-[1580px] w-full h-full">
+        <div className="flex relative gap-8 items-start self-stretch max-md:gap-5 max-sm:flex-col max-sm:gap-4 justify-center mx-auto max-w-[1580px] w-full h-full">
           <LKMenu />
-          <ProfileRequisitiesMain />
+          <div className="flex flex-col flex-1 gap-6 w-full">
+            <div id="legal-entities-section">
+              <ProfileLegalEntitiesMain ref={legalEntitiesRef} />
+            </div>
+            <ProfileRequisitiesMain onCreateLegalEntity={handleCreateLegalEntity} />
+          </div>
         </div>
       </div>
       <section className="section-3">

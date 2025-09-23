@@ -12,6 +12,16 @@ const ProductBuyBlock = ({ offer }: ProductBuyBlockProps) => {
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
 
+  const parseStock = (stock: any): number | undefined => {
+    if (stock === null || stock === undefined) return undefined;
+    if (typeof stock === 'number') return stock;
+    const match = String(stock).match(/\d+/);
+    return match ? parseInt(match[0], 10) : undefined;
+  };
+
+  const availableStock = parseStock(offer?.quantity);
+  const isOutOfStock = typeof availableStock === 'number' && availableStock <= 0;
+
   if (!offer) {
     return (
       <div className="w-layout-hflex add-to-cart-block-copy">
@@ -23,7 +33,13 @@ const ProductBuyBlock = ({ offer }: ProductBuyBlockProps) => {
   }
 
   const handleQuantityChange = (delta: number) => {
-    const newQuantity = Math.max(1, Math.min(offer.quantity || 999, quantity + delta));
+    if (isOutOfStock) {
+      toast.error('Товара нет в наличии');
+      return;
+    }
+
+    const maxAllowed = typeof availableStock === 'number' ? availableStock : 999;
+    const newQuantity = Math.max(1, Math.min(maxAllowed, quantity + delta));
     setQuantity(newQuantity);
   };
 
@@ -33,6 +49,11 @@ const ProductBuyBlock = ({ offer }: ProductBuyBlockProps) => {
     e.stopPropagation();
 
     try {
+      if (isOutOfStock) {
+        toast.error('Товара нет в наличии');
+        return;
+      }
+
       if (!offer.price || offer.price <= 0) {
         toast.error('Цена товара не найдена');
         return;
@@ -47,7 +68,7 @@ const ProductBuyBlock = ({ offer }: ProductBuyBlockProps) => {
         price: offer.price,
         currency: 'RUB',
         quantity: quantity,
-        stock: offer.quantity, // передаем информацию о наличии
+        stock: availableStock,
         image: offer.image || undefined,
         brand: offer.brand,
         article: offer.articleNumber,
@@ -84,16 +105,24 @@ const ProductBuyBlock = ({ offer }: ProductBuyBlockProps) => {
 
   return (
     <div className="w-layout-hflex add-to-cart-block-copy">
-      <div className="pcs-card">{offer.quantity || 0} шт</div>
+      <div className="pcs-card">{typeof availableStock === 'number' ? `${Math.max(availableStock, 0)} шт` : '—'}</div>
       <div className="price opencard">{totalPrice.toLocaleString('ru-RU')} ₽</div>
       <div className="w-layout-hflex pcs-copy">
-        <div className="minus-plus" onClick={() => handleQuantityChange(-1)}>
+        <div
+          className="minus-plus"
+          onClick={() => handleQuantityChange(-1)}
+          style={{ cursor: isOutOfStock ? 'not-allowed' : 'pointer' }}
+        >
           <img loading="lazy" src="images/minus_icon.svg" alt="" />
         </div>
         <div className="input-pcs">
           <div className="text-block-26">{quantity}</div>
         </div>
-        <div className="minus-plus" onClick={() => handleQuantityChange(1)}>
+        <div
+          className="minus-plus"
+          onClick={() => handleQuantityChange(1)}
+          style={{ cursor: isOutOfStock ? 'not-allowed' : 'pointer' }}
+        >
           <img loading="lazy" src="images/plus_icon.svg" alt="" />
         </div>
       </div>
@@ -101,11 +130,13 @@ const ProductBuyBlock = ({ offer }: ProductBuyBlockProps) => {
         className="button-icon w-inline-block" 
         onClick={handleAddToCart}
         style={{ 
-          cursor: 'pointer',
+          cursor: isOutOfStock ? 'not-allowed' : 'pointer',
           transition: 'transform 0.2s ease',
+          opacity: isOutOfStock ? 0.6 : 1,
         }}
         onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
         onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        aria-disabled={isOutOfStock}
       >
         <img loading="lazy" src="images/cart_icon.svg" alt="" className="image-11" />
       </div>

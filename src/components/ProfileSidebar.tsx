@@ -27,7 +27,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeItem }) => {
     { id: 'messages', icon: 'message', label: 'Оповещения', href: '/profile-messages' },
     { id: 'addresses', icon: 'location', label: 'Адреса доставки', href: '/profile-addresses' },
     { id: 'garage', icon: 'garage', label: 'Гараж', href: '/profile-garage' },
-    { id: 'settings', icon: 'settings', label: 'Настройки аккаунта', href: '/profile-set' }
+    { id: 'settings', icon: 'settings', label: 'Настройки аккаунта', href: '/profile-set' },
+    { id: 'requisites', icon: 'case', label: 'Реквизиты и юрлица', href: '/profile-req' }
   ];
 
   const handleLogout = () => {
@@ -41,7 +42,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeItem }) => {
 
   const financeItems = [
     { id: 'balance', icon: 'wallet', label: 'Баланс', href: '/profile-balance' },
-    { id: 'requisites', icon: 'case', label: 'Реквизиты', href: '/profile-req' },
     { id: 'mutual', icon: 'finance_check', label: 'Взаиморасчеты', href: '/profile-mutual' },
     { id: 'acts', icon: 'order', label: 'Акты сверки', href: '/profile-acts' }
   ];

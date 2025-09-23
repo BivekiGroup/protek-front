@@ -52,7 +52,7 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
   partsIndexPowered = false,
   hasStock = true
 }) => {
-  const { addItem } = useCart();
+  const { addItem, state: cartState } = useCart();
   const { addToFavorites, removeFromFavorites, isFavorite, favorites } = useFavorites();
   const [visibleOffersCount, setVisibleOffersCount] = useState(INITIAL_OFFERS_LIMIT);
   const [sortBy, setSortBy] = useState<'stock' | 'delivery' | 'price'>('price'); // Локальная сортировка для каждого товара
@@ -138,11 +138,63 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
 
   // Теперь используем isInCart флаг из backend вместо frontend проверки
 
+  const getExistingCartQuantity = (offer: CoreProductCardOffer): number => {
+    const existingItem = cartState.items.find(item => {
+      if (offer.offerKey && item.offerKey) return item.offerKey === offer.offerKey;
+      if (offer.productId && item.productId) return item.productId === offer.productId;
+      if (item.article && item.brand) {
+        return item.article === article && item.brand === brand;
+      }
+      return false;
+    });
+
+    return existingItem?.quantity ?? 0;
+  };
+
+  const getRemainingStock = (offer: CoreProductCardOffer): number | undefined => {
+    const parsedStock = parseStock(offer.pcs);
+
+    if (parsedStock === null || parsedStock === undefined || Number.isNaN(parsedStock)) {
+      return undefined;
+    }
+
+    if (parsedStock <= 0) {
+      return 0;
+    }
+
+    const existingQuantity = getExistingCartQuantity(offer);
+    return Math.max(parsedStock - existingQuantity, 0);
+  };
+
   const handleInputChange = (idx: number, val: string) => {
     setInputValues(prev => ({ ...prev, [idx]: val }));
     if (val === "") return;
-    const valueNum = Math.max(1, parseInt(val, 10) || 1);
-    setQuantities(prev => ({ ...prev, [idx]: valueNum }));
+
+    const offer = offers[idx];
+    const requested = Math.max(1, parseInt(val, 10) || 1);
+    const remainingStock = getRemainingStock(offer);
+
+    let finalQuantity = requested;
+    if (typeof remainingStock === 'number') {
+      finalQuantity = Math.min(requested, Math.max(remainingStock, 0));
+    }
+
+    if (finalQuantity < 1) {
+      finalQuantity = 1;
+    }
+
+    setQuantities(prev => ({ ...prev, [idx]: finalQuantity }));
+
+    if (typeof remainingStock === 'number' && requested > remainingStock) {
+      setQuantityErrors(prev => ({ ...prev, [idx]: `Доступно не более ${remainingStock} шт.` }));
+      setInputValues(prev => ({ ...prev, [idx]: String(finalQuantity) }));
+    } else {
+      setQuantityErrors(prev => {
+        if (!prev[idx]) return prev;
+        const { [idx]: _, ...rest } = prev;
+        return rest;
+      });
+    }
   };
 
   const handleInputBlur = (idx: number) => {
@@ -156,6 +208,11 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
     setQuantities(prev => {
       const newVal = Math.max(1, (prev[idx] || 1) - 1);
       setInputValues(vals => ({ ...vals, [idx]: newVal.toString() }));
+      setQuantityErrors(errors => {
+        if (!errors[idx]) return errors;
+        const { [idx]: _, ...rest } = errors;
+        return rest;
+      });
       return { ...prev, [idx]: newVal };
     });
   };
@@ -165,6 +222,11 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
       let newVal = (prev[idx] || 1) + 1;
       if (maxCount !== undefined) newVal = Math.min(newVal, maxCount);
       setInputValues(vals => ({ ...vals, [idx]: newVal.toString() }));
+      setQuantityErrors(errors => {
+        if (!errors[idx]) return errors;
+        const { [idx]: _, ...rest } = errors;
+        return rest;
+      });
       return { ...prev, [idx]: newVal };
     });
   };
@@ -173,9 +235,42 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
     setLocalInCart(prev => ({ ...prev, [index]: true }));
     const quantity = quantities[index] || 1;
     const availableStock = parseStock(offer.pcs);
+    const existingQuantity = getExistingCartQuantity(offer);
+    const remainingStock = typeof availableStock === 'number'
+      ? Math.max(availableStock - existingQuantity, 0)
+      : undefined;
     const inCart = offer.isInCart || false; // Use backend flag
     
     const numericPrice = parsePrice(offer.price);
+
+    if (typeof remainingStock === 'number') {
+      if (remainingStock !== undefined && remainingStock <= 0) {
+        const errorMessage = availableStock !== undefined && availableStock <= 0
+          ? 'Товара нет в наличии'
+          : 'В корзине уже максимальное количество этого товара';
+        toast.error(errorMessage);
+        setQuantityErrors(prev => ({ ...prev, [index]: errorMessage }));
+        setLocalInCart(prev => ({ ...prev, [index]: false }));
+        return;
+      }
+
+      if (quantity > remainingStock) {
+        const clampedQuantity = Math.max(1, remainingStock);
+        setQuantities(prev => ({ ...prev, [index]: clampedQuantity }));
+        setInputValues(prev => ({ ...prev, [index]: String(clampedQuantity) }));
+        const errorMessage = `Можно добавить не более ${remainingStock} шт.`;
+        setQuantityErrors(prev => ({ ...prev, [index]: errorMessage }));
+        toast.error(errorMessage);
+        setLocalInCart(prev => ({ ...prev, [index]: false }));
+        return;
+      }
+    }
+
+    setQuantityErrors(prev => {
+      if (!prev[index]) return prev;
+      const { [index]: _, ...rest } = prev;
+      return rest;
+    });
 
     const result = await addItem({
       productId: offer.productId,
@@ -214,6 +309,7 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
     } else {
       // Показываем ошибку
       toast.error(result.error || 'Ошибка при добавлении товара в корзину');
+      setLocalInCart(prev => ({ ...prev, [index]: false }));
     }
   };
 
@@ -411,9 +507,23 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
                 </div>
                 {displayedOffers.map((offer, idx) => {
                   const isLast = idx === displayedOffers.length - 1;
-                  const maxCount = parseStock(offer.pcs);
+                  const remainingStock = getRemainingStock(offer);
+                  const maxCountRaw = parseStock(offer.pcs);
+                  const maxCount = typeof remainingStock === 'number' ? remainingStock : maxCountRaw;
                   const inCart = offer.isInCart || false;
                   const isLocallyInCart = !!localInCart[idx];
+                  const cannotAddMore = typeof remainingStock === 'number' && remainingStock <= 0;
+                  const addDisabled = inCart || isLocallyInCart || cannotAddMore;
+                  const buttonTitle = cannotAddMore
+                    ? 'Добавление недоступно — нет свободного остатка'
+                    : inCart || isLocallyInCart
+                      ? 'Товар уже в корзине - нажмите для добавления еще'
+                      : 'Добавить в корзину';
+                  const buttonAriaLabel = cannotAddMore
+                    ? 'Добавление недоступно — нет свободного остатка'
+                    : inCart || isLocallyInCart
+                      ? 'Товар уже в корзине'
+                      : 'Добавить в корзину';
                   
                   // Backend now provides isInCart flag directly
                   
@@ -441,11 +551,11 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
                         <div className="price-s1">{offer.price}</div>
                       </div>
                       <div className="w-layout-hflex add-to-cart-block-s1">
-                        <div className="w-layout-hflex flex-block-82">
-                          <div className="w-layout-hflex pcs-cart-s1">
-                            <div
-                              className="minus-plus"
-                              onClick={() => handleMinus(idx)}
+                      <div className="w-layout-hflex flex-block-82">
+                        <div className="w-layout-hflex pcs-cart-s1">
+                          <div
+                            className="minus-plus"
+                            onClick={() => handleMinus(idx)}
                               style={{ cursor: 'pointer' }}
                               aria-label="Уменьшить количество"
                               tabIndex={0}
@@ -462,7 +572,7 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
                               <input
                                 type="number"
                                 min={1}
-                                max={maxCount}
+                                max={maxCount && maxCount > 0 ? maxCount : undefined}
                                 value={inputValues[idx]}
                                 onChange={e => handleInputChange(idx, e.target.value)}
                                 onBlur={() => handleInputBlur(idx)}
@@ -472,38 +582,44 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
                             </div>
                             <div
                               className="minus-plus"
-                              onClick={() => handlePlus(idx, maxCount)}
+                              onClick={() => handlePlus(idx, maxCount && maxCount > 0 ? maxCount : undefined)}
                               style={{ cursor: 'pointer' }}
                               aria-label="Увеличить количество"
                               tabIndex={0}
-                              onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && handlePlus(idx, maxCount)}
+                              onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && handlePlus(idx, maxCount && maxCount > 0 ? maxCount : undefined)}
                               role="button"
                             >
                               <div className="pluspcs w-embed">
                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                   <path d="M6 10.5V9.5H14V10.5H6ZM9.5 6H10.5V14H9.5V6Z" fill="currentColor" />
                                 </svg>
-                              </div>
                             </div>
                           </div>
-                          <div style={{ position: 'relative', display: 'inline-block' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleAddToCart(offer, idx)}
-                              className={`button-icon w-inline-block ${inCart || isLocallyInCart ? 'in-cart' : ''}`}
-                              style={{ 
-                                cursor: 'pointer',
-                                opacity: inCart || isLocallyInCart ? 0.5 : 1,
+                        </div>
+                        {quantityErrors[idx] && (
+                          <div style={{ color: '#ef4444', fontSize: 12, marginTop: 4 }}>
+                            {quantityErrors[idx]}
+                          </div>
+                        )}
+                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleAddToCart(offer, idx)}
+                            className={`button-icon w-inline-block ${inCart || isLocallyInCart ? 'in-cart' : ''}`}
+                            style={{ 
+                                cursor: addDisabled ? 'not-allowed' : 'pointer',
+                                opacity: addDisabled ? 0.5 : 1,
                                 backgroundColor: inCart || isLocallyInCart ? '#2563eb' : undefined
                               }}
-                              aria-label={inCart || isLocallyInCart ? "Товар уже в корзине" : "Добавить в корзину"}
-                              title={inCart || isLocallyInCart ? "Товар уже в корзине - нажмите для добавления еще" : "Добавить в корзину"}
-                            >
+                            aria-label={buttonAriaLabel}
+                            title={buttonTitle}
+                            disabled={addDisabled}
+                          >
                               <div className="div-block-26">
                                 <img 
                                   loading="lazy" 
                                   src="/images/cart_icon.svg" 
-                                  alt={inCart || isLocallyInCart ? "В корзине" : "В корзину"} 
+                                  alt={addDisabled ? 'Недоступно' : (inCart || isLocallyInCart ? 'В корзине' : 'В корзину')} 
                                   className="image-11"
                                   style={{ 
                                     filter: inCart || isLocallyInCart ? 'brightness(0.7)' : undefined 

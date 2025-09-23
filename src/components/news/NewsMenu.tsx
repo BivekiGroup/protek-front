@@ -1,14 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 
-const categories = [
-  "Все",
-  "Новости компании",
-  "Новые поступления",
-  "Другое"
-];
+interface NewsMenuProps {
+  categories: string[];
+}
 
-const NewsMenu = () => {
-  const [active, setActive] = useState<number | null>(0);
+const NewsMenu: React.FC<NewsMenuProps> = ({ categories }) => {
+  const menuCategories = useMemo(() => {
+    return categories.length ? categories : ["Все"];
+  }, [categories]);
+
+  const [active, setActive] = useState<number | null>(
+    menuCategories.length ? 0 : null
+  );
 
   const handleClick = (idx: number) => {
     setActive(active === idx ? null : idx);
@@ -16,7 +19,7 @@ const NewsMenu = () => {
 
   return (
     <div className="w-layout-hflex menu-category">
-      {categories.map((cat, idx) => (
+      {menuCategories.map((cat, idx) => (
         <div
           key={cat}
           className={

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import MetaTags from "../components/MetaTags";
 import { getMetaByPath } from "../lib/meta-config";
 import Header from "@/components/Header";
@@ -11,9 +12,24 @@ import { useQuery } from "@apollo/client";
 import { GET_NEWS_LIST } from "@/lib/graphql";
 
 export default function News() {
+  const PAGE_SIZE = 24;
   const metaConfig = getMetaByPath('/news');
-  const { data } = useQuery(GET_NEWS_LIST, { variables: { limit: 24, offset: 0 } });
+  const { data } = useQuery(GET_NEWS_LIST, { variables: { limit: PAGE_SIZE, offset: 0 } });
   const items = data?.newsList || [];
+  const categories = useMemo(() => {
+    const uniqueCategories: string[] = [];
+    const seen = new Set<string>();
+
+    items.forEach((item: any) => {
+      const rawCategory = typeof item?.category === 'string' ? item.category.trim() : '';
+      if (rawCategory && !seen.has(rawCategory)) {
+        seen.add(rawCategory);
+        uniqueCategories.push(rawCategory);
+      }
+    });
+
+    return ["Все", ...uniqueCategories];
+  }, [items]);
   
   return (
     <>
@@ -28,7 +44,7 @@ export default function News() {
       <section className="main">
         <div className="w-layout-blockcontainer container w-container">
           <div className="w-layout-vflex">
-            <NewsMenu />
+            <NewsMenu categories={categories} />
             <div className="w-layout-hflex main-news">
               {items.map((n: any) => (
                 <NewsCard
@@ -41,9 +57,11 @@ export default function News() {
                   slug={n.slug}
                 />
               ))}
-              <div className="w-layout-hflex pagination">
+              {items.length >= PAGE_SIZE && (
+                <div className="w-layout-hflex pagination">
                   <a href="#" className="button_strock w-button">Показать ещё</a>
-              </div>
+                </div>
+              )}
             </div>
 
           </div>
