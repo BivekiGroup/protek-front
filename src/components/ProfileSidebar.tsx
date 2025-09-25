@@ -18,7 +18,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeItem }) => {
   });
 
   // Проверяем есть ли у клиента юридические лица
-  const hasLegalEntities = clientData?.clientMe?.legalEntities && clientData.clientMe.legalEntities.length > 0;
+  const hasLegalEntities = (clientData?.clientMe?.legalEntities?.length ?? 0) > 0;
   
   const menuItems = [
     { id: 'orders', icon: 'order', label: 'Заказы', href: '/profile-orders' },
@@ -135,7 +135,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeItem }) => {
             <a
               key={item.id}
               href={item.href}
-              className={`sidebar-item ${activeItem === item.id ? 'active' : ''}`}
+              className={`sidebar-item ${activeItem === item.id ? 'active' : ''} ${!hasLegalEntities && item.id === 'requisites' ? 'accent' : ''}`}
             >
               <div className="sidebar-icon">
                 {renderIcon(item.icon, activeItem === item.id)}
@@ -146,28 +146,30 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeItem }) => {
         </div>
       </div>
 
-      {/* Раздел "Финансы" показываем только если есть юридические лица */}
-      {hasLegalEntities && (
-        <div className="sidebar-section">
-          <div className="sidebar-header">
-            <h3 className="sidebar-title">Финансы</h3>
-          </div>
-          <div className="sidebar-menu">
-            {financeItems.map((item) => (
-              <a
-                key={item.id}
-                href={item.href}
-                className={`sidebar-item ${activeItem === item.id ? 'active' : ''}`}
-              >
-                <div className="sidebar-icon">
-                  {renderIcon(item.icon, activeItem === item.id)}
-                </div>
-                <span className="sidebar-label">{item.label}</span>
-              </a>
-            ))}
-          </div>
+      <div className="sidebar-section">
+        <div className="sidebar-header">
+          <h3 className="sidebar-title">Финансы</h3>
         </div>
-      )}
+        {!hasLegalEntities && (
+          <p className="sidebar-hint">
+            Нет юридических лиц — начните с раздела «Реквизиты и юрлица», чтобы открыть остальные возможности.
+          </p>
+        )}
+        <div className="sidebar-menu">
+          {financeItems.map((item) => (
+            <a
+              key={item.id}
+              href={item.href}
+              className={`sidebar-item ${activeItem === item.id ? 'active' : ''}`}
+            >
+              <div className="sidebar-icon">
+                {renderIcon(item.icon, activeItem === item.id)}
+              </div>
+              <span className="sidebar-label">{item.label}</span>
+            </a>
+          ))}
+        </div>
+      </div>
 
       {/* Кнопка выхода */}
       <div className="logout-section">
@@ -219,6 +221,13 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeItem }) => {
           gap: 3px;
         }
 
+        .sidebar-hint {
+          padding: 6px 12px 0;
+          font-size: 12px;
+          line-height: 1.4;
+          color: rgba(236, 28, 36, 0.75);
+        }
+
         .sidebar-item {
           display: flex;
           align-items: center;
@@ -233,7 +242,21 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeItem }) => {
           width: 290px;
         }
 
-        .sidebar-item:hover {
+        .sidebar-item.accent {
+          border: 1px solid rgba(236, 28, 36, 0.2);
+          background: rgba(255, 240, 240, 0.9);
+          color: #EC1C24;
+        }
+
+        .sidebar-item.accent .sidebar-label {
+          color: #EC1C24;
+        }
+
+        .sidebar-item.accent:hover {
+          background: rgba(255, 224, 224, 0.95);
+        }
+
+        .sidebar-item:not(.accent):hover {
           background: #E6EDF6;
         }
 

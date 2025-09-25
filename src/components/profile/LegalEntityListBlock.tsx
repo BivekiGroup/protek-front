@@ -1,8 +1,9 @@
 import React from "react";
-import Image from "next/image";
-import { useRouter } from 'next/router';
-import { useMutation } from '@apollo/client';
-import { DELETE_CLIENT_LEGAL_ENTITY } from '@/lib/graphql';
+import type { ReactNode } from "react";
+import toast from "react-hot-toast";
+import { useMutation } from "@apollo/client";
+import { DELETE_CLIENT_LEGAL_ENTITY } from "@/lib/graphql";
+import LegalEntityBankDetails from "./LegalEntityBankDetails";
 
 interface LegalEntity {
   id: string;
@@ -28,6 +29,7 @@ interface LegalEntity {
     bankName: string;
     bik: string;
     correspondentAccount: string;
+    legalEntityId: string;
   }>;
 }
 
@@ -35,43 +37,106 @@ interface LegalEntityListBlockProps {
   legalEntities: LegalEntity[];
   onRefetch: () => void;
   onEdit?: (entity: LegalEntity) => void;
+  expandedEntityId?: string | null;
+  onToggleRequisites?: (entityId: string) => void;
+  onAddNew?: () => void;
+  formNode?: ReactNode | null;
+  editingEntityId?: string | null;
+  isCreatingNew?: boolean;
+  isFormVisible?: boolean;
 }
 
-const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({ legalEntities, onRefetch, onEdit }) => {
-  const router = useRouter();
-
+const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
+  legalEntities,
+  onRefetch,
+  onEdit,
+  expandedEntityId,
+  onToggleRequisites,
+  onAddNew,
+  formNode,
+  editingEntityId,
+  isCreatingNew,
+  isFormVisible,
+}) => {
   const [deleteLegalEntity] = useMutation(DELETE_CLIENT_LEGAL_ENTITY, {
     onCompleted: () => {
-      console.log('Юридическое лицо удалено');
+      console.log("Юридическое лицо удалено");
       onRefetch();
     },
     onError: (error) => {
-      console.error('Ошибка удаления юридического лица:', error);
-      alert('Ошибка удаления юридического лица');
-    }
+      console.error("Ошибка удаления юридического лица:", error);
+    },
   });
 
-  const handleDelete = async (id: string, name: string) => {
-    if (window.confirm(`Вы уверены, что хотите удалить юридическое лицо "${name}"?`)) {
-      try {
-        await deleteLegalEntity({
-          variables: { id }
-        });
-      } catch (error) {
-        console.error('Ошибка удаления:', error);
-      }
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
+
+  const handleDelete = (id: string, name: string) => {
+    setDeleteTarget({ id, name });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const toastId = toast.loading("Удаляем юрлицо…");
+    try {
+      await deleteLegalEntity({ variables: { id: deleteTarget.id } });
+      toast.success(`Юрлицо «${deleteTarget.name}» удалено`, { id: toastId });
+      setDeleteTarget(null);
+    } catch (error) {
+      console.error("Ошибка удаления:", error);
+      toast.error("Не удалось удалить юрлицо", { id: toastId });
+    } finally {
+      setDeleting(false);
     }
   };
 
+  React.useEffect(() => {
+    if (!deleteTarget) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !deleting) {
+        setDeleteTarget(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [deleteTarget, deleting]);
+
   if (legalEntities.length === 0) {
     return (
-      <div className="flex relative flex-col mt-5 gap-8 items-start self-stretch p-8 pl-8 bg-white rounded-2xl max-md:gap-5 max-md:p-5 max-sm:gap-4 max-sm:p-4">
+      <div className="flex relative flex-col mt-5 gap-6 items-start self-stretch p-8 pl-8 bg-white rounded-2xl max-md:gap-5 max-md:p-5 max-sm:gap-4 max-sm:p-4">
         <div className="text-3xl font-bold leading-8 text-gray-950 max-md:text-2xl max-sm:text-xl">
           Юридические лица
         </div>
         <div className="text-gray-600">
-          У вас пока нет добавленных юридических лиц. Нажмите кнопку "Добавить юридическое лицо" для создания первого.
+          У вас пока нет добавленных юридических лиц. Нажмите кнопку ниже, чтобы добавить первое.
         </div>
+        {onAddNew && (
+          <button
+            type="button"
+            onClick={onAddNew}
+            disabled={Boolean(formNode)}
+            className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-5 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 5V19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M5 12H19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            Добавить юридическое лицо
+          </button>
+        )}
+        {formNode && (
+          <div className="w-full rounded-2xl border border-dashed border-red-200 bg-white px-6 py-6 shadow-sm">
+            <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+              <span className="text-lg font-semibold text-gray-950">Новое юридическое лицо</span>
+              <span className="hidden h-3 w-px bg-slate-200 md:inline" aria-hidden="true" />
+              <span className="text-xs uppercase tracking-wide text-gray-400">Заполните форму и сохраните</span>
+            </div>
+            {formNode}
+          </div>
+        )}
       </div>
     );
   }
@@ -79,122 +144,266 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({ legalEntiti
   return (
     <div
       layer-name="Frame 2087324698"
-      className="flex relative flex-col mt-5 gap-8 items-start self-stretch p-8 pl-8 bg-white rounded-2xl max-md:gap-5 max-md:p-5 max-sm:gap-4 max-sm:p-4"
+      className="flex relative flex-col mt-5 gap-6 items-start self-stretch p-8 pl-8 bg-white rounded-2xl max-md:gap-5 max-md:p-5 max-sm:gap-4 max-sm:p-4"
     >
-      <div
-        layer-name="Юридические лица"
-        className="text-3xl font-bold leading-8 text-gray-950 max-md:text-2xl max-sm:text-xl"
-      >
-        Юридические лица
-      </div>
-      <div className="flex relative flex-col gap-2.5 items-start self-stretch">
-        {legalEntities.map((entity, idx) => (
-          <div
-            key={entity.id}
-            layer-name="legal"
-            className="flex relative flex-col gap-8 items-start self-stretch px-5 py-3 rounded-lg bg-slate-50 max-sm:px-4 max-sm:py-2.5 hover:bg-slate-200 transition-colors cursor-pointer"
+      <div className="flex w-full flex-wrap items-center justify-between gap-4">
+        <div
+          layer-name="Юридические лица"
+          className="text-3xl font-bold leading-8 text-gray-950 max-md:text-2xl max-sm:text-xl"
+        >
+          Юридические лица
+        </div>
+        {onAddNew && (
+          <button
+            type="button"
+            onClick={onAddNew}
+            disabled={isFormVisible}
+            className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300"
           >
-            <div className="flex relative justify-between items-center self-stretch max-sm:flex-col max-sm:gap-4 max-sm:items-start">
-              <div className="flex relative gap-5 items-center max-md:flex-wrap max-md:gap-4 max-sm:flex-col max-sm:gap-2.5 max-sm:items-start">
-                <div
-                  layer-name={entity.shortName}
-                  className="text-xl font-bold leading-5 text-gray-950 max-md:text-lg max-sm:text-base"
-                >
-                  {entity.shortName}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 5V19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M5 12H19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            Добавить юрлицо
+          </button>
+        )}
+      </div>
+
+      {formNode && isCreatingNew && (
+        <div className="w-full rounded-2xl border border-dashed border-red-200 bg-white px-6 py-6 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+            <span className="text-lg font-semibold text-gray-950">Новое юридическое лицо</span>
+            <span className="hidden h-3 w-px bg-slate-200 md:inline" aria-hidden="true" />
+            <span className="text-xs uppercase tracking-wide text-gray-400">Заполните форму и сохраните</span>
+          </div>
+          {formNode}
+        </div>
+      )}
+
+      <div className="flex relative flex-col gap-3 items-start self-stretch">
+        {legalEntities.map((entity) => {
+          const isEditingThis = Boolean(formNode && editingEntityId === entity.id);
+
+          return (
+            <div
+              key={entity.id}
+              layer-name="legal"
+              className="flex w-full flex-col gap-4 rounded-lg bg-slate-50 px-5 py-4 transition-colors hover:bg-slate-200 md:py-5"
+            >
+              {isEditingThis ? (
+                <div className="rounded-2xl border border-slate-200 bg-white px-6 py-6 shadow-sm">
+                  <div className="mb-3 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                    <span className="text-lg font-semibold text-gray-950">Редактирование</span>
+                    <span className="hidden h-3 w-px bg-slate-200 md:inline" aria-hidden="true" />
+                    <span className="text-xs uppercase tracking-wide text-gray-400">{entity.shortName}</span>
+                  </div>
+                  {formNode}
                 </div>
-                <div
-                  layer-name={`ИНН ${entity.inn}`}
-                  className="text-sm leading-5 text-gray-600"
-                >
-                  ИНН {entity.inn}
-                </div>
-                <div
-                  layer-name="link_control_element"
-                  className="flex relative gap-1.5 items-center cursor-pointer group"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => router.push('/profile-req')}
-                >
-                  <div
-                    layer-name="icon-wallet"
-                    className="relative aspect-[1/1] h-[18px] w-[18px]"
-                  >
-                    <div>
-                      <div
-                        dangerouslySetInnerHTML={{
-                          __html:
-                            "<svg id=\"I48:1881;1705:18944;1705:18492;1149:3355\" width=\"16\" height=\"15\" viewBox=\"0 0 16 15\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" class=\"wallet-icon\" style=\"width: 16px; height: 14px; flex-shrink: 0; fill: #424F60; position: absolute; left: 1px; top: 2px\"> <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M1.77778 3.16211C1.77778 3.04608 1.8246 2.9348 1.90795 2.85275C1.9913 2.7707 2.10435 2.72461 2.22222 2.72461H11.5556C11.7913 2.72461 12.0174 2.63242 12.1841 2.46833C12.3508 2.30423 12.4444 2.08167 12.4444 1.84961C12.4444 1.61754 12.3508 1.39499 12.1841 1.23089C12.0174 1.0668 11.7913 0.974609 11.5556 0.974609H2.22222C1.63285 0.974609 1.06762 1.20508 0.650874 1.61531C0.234126 2.02555 0 2.58195 0 3.16211V13.2246C0 13.6887 0.187301 14.1339 0.520699 14.462C0.854097 14.7902 1.30628 14.9746 1.77778 14.9746H14.2222C14.6937 14.9746 15.1459 14.7902 15.4793 14.462C15.8127 14.1339 16 13.6887 16 13.2246V5.34961C16 4.88548 15.8127 4.44036 15.4793 4.11217C15.1459 3.78398 14.6937 3.59961 14.2222 3.59961H2.22222C2.10435 3.59961 1.9913 3.55352 1.90795 3.47147C1.8246 3.38942 1.77778 3.27814 1.77778 3.16211ZM11.1111 10.5996C11.4647 10.5996 11.8039 10.4613 12.0539 10.2152C12.304 9.96905 12.4444 9.63521 12.4444 9.28711C12.4444 8.93901 12.304 8.60517 12.0539 8.35903C11.8039 8.11289 11.4647 7.97461 11.1111 7.97461C10.7575 7.97461 10.4184 8.11289 10.1683 8.35903C9.91825 8.60517 9.77778 8.93901 9.77778 9.28711C9.77778 9.63521 9.91825 9.96905 10.1683 10.2152C10.4184 10.4613 10.7575 10.5996 11.1111 10.5996Z\" fill=\"#424F60\"></path> </svg>",
-                        }}
-                      />
+              ) : (
+                <>
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div className="flex flex-wrap items-center gap-2 text-gray-600 md:gap-3">
+                      <span className="text-xl font-semibold leading-6 text-gray-950 md:text-lg">
+                        {entity.shortName}
+                      </span>
+                      <span className="hidden text-gray-300 sm:inline">•</span>
+                      <span className="text-sm leading-5 text-gray-500">
+                        ИНН {entity.inn}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 text-sm leading-5 text-gray-600">
+                      <button
+                        type="button"
+                        onClick={() => onToggleRequisites && onToggleRequisites(entity.id)}
+                        className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-red-200 hover:text-red-600"
+                        aria-expanded={expandedEntityId === entity.id}
+                      >
+                        <svg
+                          width="16"
+                          height="15"
+                          viewBox="0 0 16 15"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="text-gray-500 transition-colors group-hover:text-red-600"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            clipRule="evenodd"
+                            d="M1.778 3.162c0-.116.047-.227.13-.309c.083-.082.196-.128.314-.128h9.333c.236 0 .462-.092.629-.256c.167-.164.261-.387.261-.619s-.094-.222-.261-.386c-.167-.164-.393-.256-.629-.256H2.222c-.589 0-1.155.23-1.571.64C.234 2.026 0 2.582 0 3.162v10.062c0 .464.187.909.521 1.237c.333.328.785.512 1.257.512h12.444c.472 0 .924-.184 1.258-.512c.333-.329.52-.774.52-1.238V5.35c0-.464-.187-.909-.52-1.237c-.334-.329-.786-.513-1.258-.513H2.222a.443.443 0 0 1-.314-.128a.443.443 0 0 1-.13-.309Zm9.333 7.438c.353 0 .693-.138.943-.384c.25-.246.39-.58.39-.928c0-.348-.14-.681-.39-.927a1.33 1.33 0 0 0-.943-.384c-.353 0-.692.138-.943.384c-.25.246-.39.58-.39.928c0 .348.14.682.39.928c.251.246.59.384.943.384Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                        <span>{expandedEntityId === entity.id ? "Скрыть реквизиты" : "Реквизиты"}</span>
+                      </button>
+
+                      <div className="flex items-center gap-3 text-sm leading-5 text-gray-600">
+                        <button
+                          type="button"
+                          onClick={() => onEdit && onEdit(entity)}
+                          className="group inline-flex items-center gap-1.5 text-gray-600 transition-colors hover:text-red-600"
+                          aria-label="Редактировать юридическое лицо"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 text-slate-400 transition-colors group-hover:text-red-600"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="m16.862 3.487 3.651 3.651m-2.575-1.076-10.53 10.53a4.125 4.125 0 0 1-1.62 1.011l-3.068.86.86-3.068a4.125 4.125 0 0 1 1.011-1.62l10.53-10.53a2.625 2.625 0 1 1 3.712 3.712Z"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M10.5 6h-5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V13.5"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <span>Редактировать</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(entity.id, entity.shortName)}
+                          className="group inline-flex items-center gap-1.5 text-gray-600 transition-colors hover:text-red-600"
+                          aria-label="Удалить юридическое лицо"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 text-slate-400 transition-colors group-hover:text-red-600"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M3 6h18"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M8.25 6V4.5A2.25 2.25 0 0 1 10.5 2.25h3a2.25 2.25 0 0 1 2.25 2.25V6"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M18.75 6V19.5A2.25 2.25 0 0 1 16.5 21.75h-9A2.25 2.25 0 0 1 5.25 19.5V6"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M10.5 11.25v6"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M13.5 11.25v6"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <span>Удалить</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div
-                    layer-name="Редактировать"
-                    className="text-sm leading-5 text-gray-600 group-hover:text-red-600"
-                  >
-                    Реквизиты компании
-                  </div>
-                </div>
 
-              </div>
-              <div className="flex relative gap-5 items-center pr-2.5 max-md:gap-4 max-sm:flex-wrap max-sm:gap-2.5">
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className="flex relative gap-1.5 items-center cursor-pointer group"
-                  onClick={() => onEdit && onEdit(entity)}
-                  aria-label="Редактировать юридическое лицо"
-                >
-                  <div className="relative h-4 w-[18px]">
-                    <Image
-                      src="/images/edit.svg"
-                      alt="Редактировать"
-                      width={16}
-                      height={16}
-                      className="absolute left-0.5 top-0"
-                    />
-                  </div>
-                  <div className="text-sm leading-5 text-gray-600 group-hover:text-red-600">
-                    Редактировать
-                  </div>
-                </div>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className="flex relative gap-1.5 items-center cursor-pointer group"
-                  aria-label="Удалить юридическое лицо"
-                  onClick={() => handleDelete(entity.id, entity.shortName)}
-                  onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && handleDelete(entity.id, entity.shortName)}
-                  style={{ display: 'inline-flex', cursor: 'pointer', transition: 'color 0.2s' }}
-                  onMouseEnter={e => {
-                    const path = e.currentTarget.querySelector('path');
-                    if (path) path.setAttribute('fill', '#ec1c24');
-                  }}
-                  onMouseLeave={e => {
-                    const path = e.currentTarget.querySelector('path');
-                    if (path) path.setAttribute('fill', '#D0D0D0');
-                  }}
-                >
-                  <div className="relative h-4 w-4">
-                    <svg width="16" height="16" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        d="M4.625 17.5C4.14375 17.5 3.73192 17.3261 3.3895 16.9782C3.04708 16.6304 2.87558 16.2117 2.875 15.7222V4.16667H2V2.38889H6.375V1.5H11.625V2.38889H16V4.16667H15.125V15.7222C15.125 16.2111 14.9538 16.6298 14.6114 16.9782C14.269 17.3267 13.8568 17.5006 13.375 17.5H4.625ZM6.375 13.9444H8.125V5.94444H6.375V13.9444ZM9.875 13.9444H11.625V5.94444H9.875V13.9444Z"
-                        fill="#D0D0D0"
-                        style={{ transition: 'fill 0.2s' }}
-                      />
-                    </svg>
-                  </div>
-                  <div className="text-sm leading-5 text-gray-600 group-hover:text-red-600">
-                    Удалить
-                  </div>
-                </div>
+                  {expandedEntityId === entity.id && (
+                    <div className="border-t border-slate-200 pt-4">
+                      <LegalEntityBankDetails entity={entity} onRefetch={onRefetch} />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 py-8 backdrop-blur"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="legal-entity-delete-title"
+          onClick={() => (!deleting ? setDeleteTarget(null) : undefined)}
+        >
+          <div
+            className="w-full max-w-lg overflow-hidden rounded-3xl border border-red-100/60 bg-white shadow-[0_40px_80px_-25px_rgba(15,23,42,0.55)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center gap-4 border-b border-red-100/70 bg-red-50/80 px-6 py-5">
+              <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-white text-red-600 shadow-[0_8px_16px_-6px_rgba(220,38,38,0.45)]">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M12 8v5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M12 16h.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M4.93 19.07A10 10 0 1 1 19.07 4.93 10 10 0 0 1 4.93 19.07Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+              <div>
+                <h2 id="legal-entity-delete-title" className="text-xl font-semibold leading-tight text-gray-950">
+                  Удалить юридическое лицо
+                </h2>
+                <p className="mt-1 text-sm text-red-600/80">
+                  Проверьте, что «{deleteTarget.name}» действительно нужно удалить — действие необратимо.
+                </p>
               </div>
             </div>
+            <div className="px-6 py-6 text-sm text-gray-600">
+              После удаления карточка исчезнет из списка, а реквизиты станут недоступны для оформления счетов и печатных форм. 
+              Если нужно сохранить данные, скачайте документы заранее или отредактируйте карточку вместо удаления.
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-5">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:border-slate-300 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-200 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="inline-flex min-w-[140px] items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_-12px_rgba(220,38,38,0.65)] transition hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 disabled:cursor-not-allowed disabled:opacity-80"
+              >
+                {deleting ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
+                      <path className="opacity-75" d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                    Удаляем…
+                  </>
+                ) : (
+                  "Удалить навсегда"
+                )}
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default LegalEntityListBlock; 
+export default LegalEntityListBlock;

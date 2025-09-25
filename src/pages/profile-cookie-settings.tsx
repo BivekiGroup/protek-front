@@ -1,34 +1,39 @@
 import React from 'react';
 import Head from 'next/head';
 import LKMenu from '@/components/LKMenu';
+import ProfileInfo from '@/components/profile/ProfileInfo';
+import CatalogSubscribe from '@/components/CatalogSubscribe';
+import MobileMenuBottomSection from '@/components/MobileMenuBottomSection';
+import Footer from '@/components/Footer';
 import CookieSettings from '@/components/profile/CookieSettings';
 
 const ProfileCookieSettingsPage: React.FC = () => {
   return (
-    <>
+    <div className="page-wrapper h-full flex flex-col flex-1">
       <Head>
         <title>Настройки cookies | Личный кабинет | ПротекАвто</title>
         <meta name="description" content="Управление настройками файлов cookie в личном кабинете" />
         <meta name="robots" content="noindex, nofollow" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex gap-8 max-md:flex-col">
-            {/* Боковое меню */}
-            <div className="w-80 max-md:w-full">
-              <LKMenu />
-            </div>
+      <ProfileInfo />
 
-            {/* Основной контент */}
-            <div className="flex-1">
-              <CookieSettings />
-            </div>
+      <div className="flex flex-col pt-10 pb-16 max-md:px-5">
+        <div className="flex relative gap-8 items-start self-stretch max-md:gap-5 max-sm:flex-col max-sm:gap-4 justify-center mx-auto max-w-[1580px] w-full h-full">
+          <LKMenu />
+          <div className="flex flex-col flex-1 gap-6 w-full">
+            <CookieSettings />
           </div>
         </div>
       </div>
-    </>
+
+      <section className="section-3">
+        <CatalogSubscribe />
+      </section>
+      <MobileMenuBottomSection />
+      <Footer />
+    </div>
   );
 };
 
-export default ProfileCookieSettingsPage; 
+export default ProfileCookieSettingsPage;

@@ -1,20 +1,18 @@
 import * as React from "react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import CatalogSubscribe from '@/components/CatalogSubscribe';
 import Footer from '@/components/Footer';
 import MobileMenuBottomSection from "@/components/MobileMenuBottomSection";
 import LKMenu from '@/components/LKMenu';
-import ProfileRequisitiesMain from '@/components/profile/ProfileRequisitiesMain';
 import ProfileInfo from '@/components/profile/ProfileInfo';
 import MetaTags from "../components/MetaTags";
 import { getMetaByPath } from "../lib/meta-config";
-import ProfileLegalEntitiesMain, { ProfileLegalEntitiesMainHandle } from '@/components/profile/ProfileLegalEntitiesMain';
+import ProfileLegalEntitiesMain from '@/components/profile/ProfileLegalEntitiesMain';
 
 const ProfileRequisitiesPage = () => {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const legalEntitiesRef = useRef<ProfileLegalEntitiesMainHandle>(null);
 
   useEffect(() => {
     // Проверяем авторизацию
@@ -41,14 +39,6 @@ const ProfileRequisitiesPage = () => {
 
   const metaConfig = getMetaByPath('/profile-req');
 
-  const handleCreateLegalEntity = () => {
-    legalEntitiesRef.current?.openCreateForm();
-    const section = document.getElementById('legal-entities-section');
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   return (
     <div className="page-wrapper">
       <MetaTags 
@@ -65,9 +55,8 @@ const ProfileRequisitiesPage = () => {
           <LKMenu />
           <div className="flex flex-col flex-1 gap-6 w-full">
             <div id="legal-entities-section">
-              <ProfileLegalEntitiesMain ref={legalEntitiesRef} />
+              <ProfileLegalEntitiesMain />
             </div>
-            <ProfileRequisitiesMain onCreateLegalEntity={handleCreateLegalEntity} />
           </div>
         </div>
       </div>

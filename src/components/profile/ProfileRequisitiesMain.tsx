@@ -220,6 +220,19 @@ const ProfileRequisitiesMain: React.FC<ProfileRequisitiesMainProps> = ({ onCreat
     setShowAddForm(true);
   };
 
+  const clientData: ClientData | null = data?.clientMe || null;
+  const legalEntities = clientData?.legalEntities || [];
+
+  useEffect(() => {
+    if (legalEntities.length === 0) {
+      return;
+    }
+
+    if (!selectedLegalEntityId || !legalEntities.some(le => le.id === selectedLegalEntityId)) {
+      setSelectedLegalEntityId(legalEntities[0].id);
+    }
+  }, [legalEntities, selectedLegalEntityId]);
+
   if (loading) {
     return (
       <div className="flex flex-col flex-1 shrink justify-center basis-0 min-w-[240px] max-md:max-w-full">
@@ -250,20 +263,8 @@ const ProfileRequisitiesMain: React.FC<ProfileRequisitiesMainProps> = ({ onCreat
     );
   }
 
-  const clientData: ClientData | null = data?.clientMe || null;
-  const legalEntities = clientData?.legalEntities || [];
   const selectedLegalEntity = legalEntities.find(le => le.id === selectedLegalEntityId) || legalEntities[0] || null;
   const bankDetails = selectedLegalEntity?.bankDetails?.filter(bd => bd && bd.id) || [];
-
-  useEffect(() => {
-    if (legalEntities.length === 0) {
-      return;
-    }
-
-    if (!selectedLegalEntityId || !legalEntities.some(le => le.id === selectedLegalEntityId)) {
-      setSelectedLegalEntityId(legalEntities[0].id);
-    }
-  }, [legalEntities, selectedLegalEntityId]);
 
   if (legalEntities.length === 0) {
     return (

@@ -11,6 +11,7 @@ interface BankDetail {
   bankName: string;
   bik: string;
   correspondentAccount: string;
+  legalEntityId: string;
 }
 
 interface LegalEntity {
@@ -59,6 +60,7 @@ const ProfileLegalEntitiesMain = forwardRef<ProfileLegalEntitiesMainHandle>((_, 
 
   const [showLegalEntityForm, setShowLegalEntityForm] = useState(false);
   const [editingEntity, setEditingEntity] = useState<LegalEntity | null>(null);
+  const [expandedEntityId, setExpandedEntityId] = useState<string | null>(null);
 
   // Поля формы юридического лица
   const [inn, setInn] = useState("");
@@ -142,6 +144,10 @@ const ProfileLegalEntitiesMain = forwardRef<ProfileLegalEntitiesMainHandle>((_, 
     refetch();
   }, [refetch]);
 
+  const handleToggleRequisites = useCallback((entityId: string) => {
+    setExpandedEntityId(prev => (prev === entityId ? null : entityId));
+  }, []);
+
   useImperativeHandle(ref, () => ({ openCreateForm: handleAddEntity }), [handleAddEntity]);
 
   if (loading) {
@@ -176,65 +182,61 @@ const ProfileLegalEntitiesMain = forwardRef<ProfileLegalEntitiesMainHandle>((_, 
         legalEntities={legalEntities}
         onRefetch={refetch}
         onEdit={handleEditEntity}
+        expandedEntityId={expandedEntityId}
+        onToggleRequisites={handleToggleRequisites}
+        onAddNew={handleAddEntity}
+        formNode={showLegalEntityForm ? (
+          <LegalEntityFormBlock
+            inn={inn}
+            setInn={setInn}
+            form={form}
+            setForm={setForm}
+            isFormOpen={isFormOpen}
+            setIsFormOpen={setIsFormOpen}
+            formOptions={formOptions}
+            ogrn={ogrn}
+            setOgrn={setOgrn}
+            kpp={kpp}
+            setKpp={setKpp}
+            jurAddress={jurAddress}
+            setJurAddress={setJurAddress}
+            shortName={shortName}
+            setShortName={setShortName}
+            fullName={fullName}
+            setFullName={setFullName}
+            factAddress={factAddress}
+            setFactAddress={setFactAddress}
+            taxSystem={taxSystem}
+            setTaxSystem={setTaxSystem}
+            isTaxSystemOpen={isTaxSystemOpen}
+            setIsTaxSystemOpen={setIsTaxSystemOpen}
+            taxSystemOptions={taxSystemOptions}
+            nds={nds}
+            setNds={setNds}
+            isNdsOpen={isNdsOpen}
+            setIsNdsOpen={setIsNdsOpen}
+            ndsOptions={ndsOptions}
+            ndsPercent={ndsPercent}
+            setNdsPercent={setNdsPercent}
+            accountant={accountant}
+            setAccountant={setAccountant}
+            responsible={responsible}
+            setResponsible={setResponsible}
+            responsiblePosition={responsiblePosition}
+            setResponsiblePosition={setResponsiblePosition}
+            responsiblePhone={responsiblePhone}
+            setResponsiblePhone={setResponsiblePhone}
+            signatory={signatory}
+            setSignatory={setSignatory}
+            editingEntity={editingEntity}
+            onAdd={handleFormSaved}
+            onCancel={handleFormClose}
+          />
+        ) : null}
+        editingEntityId={editingEntity?.id ?? null}
+        isCreatingNew={showLegalEntityForm && !editingEntity}
+        isFormVisible={showLegalEntityForm}
       />
-
-      <div className="flex justify-end">
-        <button
-          onClick={handleAddEntity}
-          className="px-5 py-3 bg-red-600 text-white rounded-xl text-base font-medium hover:bg-red-700 transition-colors"
-        >
-          Добавить юридическое лицо
-        </button>
-      </div>
-
-      {showLegalEntityForm && (
-        <LegalEntityFormBlock
-          inn={inn}
-          setInn={setInn}
-          form={form}
-          setForm={setForm}
-          isFormOpen={isFormOpen}
-          setIsFormOpen={setIsFormOpen}
-          formOptions={formOptions}
-          ogrn={ogrn}
-          setOgrn={setOgrn}
-          kpp={kpp}
-          setKpp={setKpp}
-          jurAddress={jurAddress}
-          setJurAddress={setJurAddress}
-          shortName={shortName}
-          setShortName={setShortName}
-          fullName={fullName}
-          setFullName={setFullName}
-          factAddress={factAddress}
-          setFactAddress={setFactAddress}
-          taxSystem={taxSystem}
-          setTaxSystem={setTaxSystem}
-          isTaxSystemOpen={isTaxSystemOpen}
-          setIsTaxSystemOpen={setIsTaxSystemOpen}
-          taxSystemOptions={taxSystemOptions}
-          nds={nds}
-          setNds={setNds}
-          isNdsOpen={isNdsOpen}
-          setIsNdsOpen={setIsNdsOpen}
-          ndsOptions={ndsOptions}
-          ndsPercent={ndsPercent}
-          setNdsPercent={setNdsPercent}
-          accountant={accountant}
-          setAccountant={setAccountant}
-          responsible={responsible}
-          setResponsible={setResponsible}
-          responsiblePosition={responsiblePosition}
-          setResponsiblePosition={setResponsiblePosition}
-          responsiblePhone={responsiblePhone}
-          setResponsiblePhone={setResponsiblePhone}
-          signatory={signatory}
-          setSignatory={setSignatory}
-          editingEntity={editingEntity}
-          onAdd={handleFormSaved}
-          onCancel={handleFormClose}
-        />
-      )}
     </div>
   );
 });

@@ -40,7 +40,7 @@ const LKMenu = React.forwardRef<HTMLDivElement>((props, ref) => {
   });
 
   // Проверяем есть ли у клиента юридические лица
-  const hasLegalEntities = clientData?.clientMe?.legalEntities && clientData.clientMe.legalEntities.length > 0;
+  const hasLegalEntities = (clientData?.clientMe?.legalEntities?.length ?? 0) > 0;
 
   const handleLogout = () => {
     if (isClient) {
@@ -82,36 +82,52 @@ const LKMenu = React.forwardRef<HTMLDivElement>((props, ref) => {
           })}
         </div>
         
-        {/* Раздел "Финансы" показываем только если есть юридические лица */}
-        {hasLegalEntities && (
-          <>
-            <div className="gap-2.5 self-start px-2.5 pt-2.5 mt-3 whitespace-nowrap text-gray-950">
-              Финансы
-            </div>
-            <div className="flex flex-col mt-3 w-full text-base leading-snug text-gray-600">
-              {financeItems.map((item) => {
-                const isActive = normalizePath(router.asPath) === normalizePath(item.href);
-                return (
-                  <Link href={item.href} key={item.href}>
-                    <div
-                      className={`flex gap-2.5 items-center px-2.5 py-2 w-full whitespace-nowrap rounded-lg ${
-                        isActive ? 'bg-slate-200' : 'bg-white'
-                      } hover:bg-slate-200`}
-                    >
-                      <img
-                        loading="lazy"
-                        src={item.icon}
-                        className="object-contain shrink-0 self-stretch my-auto w-5 aspect-square"
-                        alt={item.label}
-                      />
-                      <div className="self-stretch my-auto text-gray-600">{item.label}</div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </>
+        <div className="gap-2.5 self-start px-2.5 pt-2.5 mt-3 whitespace-nowrap text-gray-950">
+          Финансы
+        </div>
+        {!hasLegalEntities && (
+          <div className="px-2.5 pt-1 text-xs text-red-500/80">
+            Нет юрлиц — начните с раздела «Реквизиты и юрлица», чтобы активировать остальное.
+          </div>
         )}
+        <div className="flex flex-col mt-3 w-full text-base leading-snug text-gray-600">
+          {financeItems.map((item) => {
+            const isActive = normalizePath(router.asPath) === normalizePath(item.href);
+            const highlight = !hasLegalEntities && item.href === '/profile-req';
+
+            return (
+              <Link href={item.href} key={item.href}>
+                <div
+                  className={`group flex gap-2.5 items-center px-2.5 py-2 w-full whitespace-nowrap rounded-lg border transition ${
+                    isActive
+                      ? 'border-transparent bg-slate-200 text-gray-900'
+                      : highlight
+                        ? 'border-red-200 bg-red-50/80 text-red-600 hover:border-red-300 hover:bg-red-100'
+                        : 'border-transparent bg-white text-gray-600 hover:bg-slate-200'
+                  }`}
+                >
+                  <img
+                    loading="lazy"
+                    src={item.icon}
+                    className="object-contain shrink-0 self-stretch my-auto w-5 aspect-square"
+                    alt={item.label}
+                  />
+                  <div
+                    className={`self-stretch my-auto ${
+                      isActive
+                        ? 'text-gray-900'
+                        : highlight
+                          ? 'text-red-600'
+                          : 'text-gray-600 group-hover:text-gray-700'
+                    }`}
+                  >
+                    {item.label}
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
         
         {/* Кнопка выхода */}
         <div className="mt-3">
