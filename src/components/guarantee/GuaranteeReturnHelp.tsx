@@ -70,7 +70,9 @@ const FaqAccordion: React.FC<{ items: FaqItem[] }> = ({ items }) => {
               </span>
             </button>
             <div
-              ref={el => (contentRefs.current[idx] = el)}
+              ref={(el) => {
+                contentRefs.current[idx] = el;
+              }}
               style={{
                 maxHeight: isOpen ? contentRefs.current[idx]?.scrollHeight : 0,
                 opacity: isOpen ? 1 : 0,
