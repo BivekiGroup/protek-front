@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -36,6 +37,14 @@ const nextConfig: NextConfig = {
         destination: 'http://localhost:3000/api/:path*',
       },
     ];
+  },
+
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      'lucide-react': path.resolve(__dirname, '../protek-cms/node_modules/lucide-react')
+    };
+    return config;
   },
 };
 

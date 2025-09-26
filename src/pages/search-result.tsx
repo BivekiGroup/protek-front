@@ -23,22 +23,33 @@ import { createProductMeta } from "@/lib/meta-config";
 
 const ANALOGS_CHUNK_SIZE = 5;
 
-// Функция для расчета даты доставки
-const calculateDeliveryDate = (deliveryDays: number): string => {
-  const today = new Date();
-  const deliveryDate = new Date(today);
-  deliveryDate.setDate(today.getDate() + deliveryDays);
-  
-  const months = [
-    'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-    'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-  ];
-  
-  const day = deliveryDate.getDate();
-  const month = months[deliveryDate.getMonth()];
-  const year = deliveryDate.getFullYear();
-  
-  return `${day} ${month} ${year}`;
+const formatDeliveryDuration = (deliveryDays?: number | string | null): string => {
+  if (deliveryDays === undefined || deliveryDays === null) {
+    return 'Уточняйте';
+  }
+
+  const numericValue = typeof deliveryDays === 'string' ? parseInt(deliveryDays, 10) : deliveryDays;
+
+  if (Number.isNaN(numericValue)) {
+    return 'Уточняйте';
+  }
+
+  if (numericValue <= 0) {
+    return 'В день заказа';
+  }
+
+  const days = Math.round(numericValue);
+  const lastDigit = days % 10;
+  const lastTwoDigits = days % 100;
+
+  let suffix = 'дней';
+  if (lastDigit === 1 && lastTwoDigits !== 11) {
+    suffix = 'день';
+  } else if (lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14)) {
+    suffix = 'дня';
+  }
+
+  return `${days} ${suffix}`;
 };
 
 // Функция для создания динамических фильтров
@@ -162,28 +173,32 @@ const createFilters = (result: any, loadedAnalogs: any): FilterConfig[] => {
 
 // Функция для получения лучших предложений по заданным критериям
 const getBestOffers = (offers: any[]) => {
-  const validOffers = offers.filter(offer => offer.price > 0 && typeof offer.deliveryDuration !== 'undefined');
-  if (validOffers.length === 0) return [];
+  const validOffers = offers.filter((offer) => offer.price > 0 && typeof offer.deliveryDuration !== 'undefined');
+  const baseOffers = validOffers.filter((offer) => !offer.isAnalog);
+  const analogOffers = validOffers.filter((offer) => offer.isAnalog);
+
+  if (baseOffers.length === 0 && analogOffers.length === 0) return [];
 
   const result: { offer: any; type: string }[] = [];
 
   // 1. Самая низкая цена (среди всех предложений)
-  const lowestPriceOffer = [...validOffers].sort((a, b) => a.price - b.price)[0];
+  const lowestPriceOffer = [...baseOffers].sort((a, b) => a.price - b.price)[0];
   if (lowestPriceOffer) {
     result.push({ offer: lowestPriceOffer, type: 'Самая низкая цена' });
   }
 
-  // 2. Самый дешевый аналог (только среди аналогов) - всегда показываем если есть аналоги
-  const analogOffers = validOffers.filter(offer => offer.isAnalog);
-  if (analogOffers.length > 0) {
-    const cheapestAnalogOffer = [...analogOffers].sort((a, b) => a.price - b.price)[0];
-    result.push({ offer: cheapestAnalogOffer, type: 'Самый дешевый аналог' });
-  }
-  
   // 3. Самая быстрая доставка (среди всех предложений)
-  const fastestDeliveryOffer = [...validOffers].sort((a, b) => a.deliveryDuration - b.deliveryDuration)[0];
+  const fastestDeliveryOffer = [...baseOffers].sort((a, b) => a.deliveryDuration - b.deliveryDuration)[0];
   if (fastestDeliveryOffer) {
     result.push({ offer: fastestDeliveryOffer, type: 'Самая быстрая доставка' });
+  }
+
+  // 4. Самый дешевый аналог (если есть аналоги)
+  if (analogOffers.length > 0) {
+    const cheapestAnalog = [...analogOffers].sort((a, b) => a.price - b.price)[0];
+    if (cheapestAnalog) {
+      result.push({ offer: cheapestAnalog, type: 'Самый дешевый аналог' });
+    }
   }
   
   return result;
@@ -221,16 +236,23 @@ const transformOffersForCard = (offers: any[], hasStock: boolean = true) => {
       productId: offer.productId,
       offerKey: offer.offerKey,
       pcs: `${offer.quantity} шт.`,
-      days: deliveryDays ? calculateDeliveryDate(deliveryDays) : 'Уточняйте',
+      days: formatDeliveryDuration(deliveryDays),
       recommended: !isExternal,
-      price: `${offer.price.toLocaleString('ru-RU')} ₽`,
+      price: `${new Intl.NumberFormat('ru-RU', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(offer.price || 0)} ₽`,
       count: "1",
       isExternal,
       currency: offer.currency || "RUB",
-      warehouse: offer.warehouse,
+      warehouse: offer.stock || offer.warehouse,
       supplier: offer.supplier,
       deliveryTime: deliveryDays,
       hasStock, // Добавляем информацию о наличии
+      brandName: offer.brand || '',
+      articleNumber: offer.articleNumber || offer.code || offer.article || '',
+      productName: offer.name || `${offer.brand || ''} ${offer.articleNumber || ''}`.trim(),
+      region: offer.region || 'Москва',
     };
   });
 };
@@ -653,7 +675,7 @@ export default function SearchResult() {
                   title={`${offer.brand} ${offer.articleNumber}${offer.isAnalog ? ' (аналог)' : ''}`}
                   description={offer.name}
                   price={`${offer.price.toLocaleString()} ₽`}
-                  delivery={offer.deliveryDuration ? calculateDeliveryDate(offer.deliveryDuration) : 'Уточняйте'}
+                  delivery={formatDeliveryDuration(offer.deliveryDuration)}
                   stock={`${offer.quantity} шт.`}
                   offer={offer}
                 />

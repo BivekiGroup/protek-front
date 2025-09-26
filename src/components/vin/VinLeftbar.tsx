@@ -64,9 +64,10 @@ const VinLeftbar: React.FC<VinLeftbarProps> = ({ vehicleInfo, onSearchResults, o
 
   // --- Синхронизация openedPath с URL ---
   // Обновляем openedPath и URL
-  const setOpenedPathAndUrl = (newPath: string[]) => {
+  const setOpenedPathAndUrl = (newPath: string[], options: { closeQuickGroup?: boolean } = {}) => {
+    const { closeQuickGroup = true } = options;
     setOpenedPath(newPath);
-    if (onCloseQuickGroup) onCloseQuickGroup();
+    if (closeQuickGroup && onCloseQuickGroup) onCloseQuickGroup();
     const params = new URLSearchParams(router.query as any);
     if (newPath.length > 0) {
       params.set('catpath', newPath.join(','));
@@ -212,51 +213,121 @@ const VinLeftbar: React.FC<VinLeftbarProps> = ({ vehicleInfo, onSearchResults, o
     );
   };
 
-  // Универсальный renderTree для поиска с поддержкой передачи пути
-  const renderTree = (nodes: any[], path: string[] = [], level = 0): React.ReactNode => nodes.map((node: any) => {
-    const id = node.quickgroupid || node.categoryid || node.id;
-    const hasChildren = node.children && node.children.length > 0;
-    const currentPath = [...path, id];
+  type TreeMode = 'manufacturer' | 'quickGroups';
+
+  const renderCategoryTree = (
+    nodes: any[],
+    options: { path?: string[]; level?: number; searchMode?: boolean; mode?: TreeMode } = {}
+  ): React.ReactNode => {
+    if (!nodes || nodes.length === 0) return null;
+
+    const { path = [], level = 0, searchMode = false, mode = 'manufacturer' } = options;
+
     return (
-      <a
-        href="#"
-        key={id}
-        className="dropdown-link-3 w-dropdown-link"
-        onClick={e => {
-          e.preventDefault();
-          // Для quickGroups: если есть link, вызываем onQuickGroupSelect, иначе onNodeSelect
-          if (typeof node.link !== 'undefined' && node.link && onQuickGroupSelect) {
-            onQuickGroupSelect(node);
-          } else if (onNodeSelect) {
-            // Для onNodeSelect всегда передаем unitid и name
-            const nodeToSelect = {
-              ...node,
-              unitid: node.unitid || node.quickgroupid || node.categoryid || node.id,
-              name: node.name,
-            };
-            onNodeSelect(nodeToSelect);
-          }
-          setSearchQuery('');
-          setOpenedPath(currentPath);
-        }}
-        style={{
-          fontWeight: hasChildren ? 500 : undefined,
-          paddingLeft: level > 0 ? 16 * level : undefined,
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        {hasChildren && (
-          <span style={{ display: 'inline-block', marginRight: 6, width: 12 }}>
-            <svg width="10" height="10" viewBox="0 0 20 20" fill="none" style={{ verticalAlign: 'middle' }}>
-              <path d="M6 8l4 4 4-4" stroke="#d32f2f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
-        )}
-        {highlightMatch(node.name, searchQuery)}
-      </a>
+      <ul className={`vin-tree${level === 0 ? ' vin-tree--root' : ''}`}>
+        {nodes.map((category: any) => {
+          const categoryId = category.quickgroupid || category.categoryid || category.id;
+          const currentPath = [...path, categoryId];
+          const childrenFromData = mode === 'manufacturer'
+            ? (category.children && category.children.length > 0
+                ? category.children
+                : unitsByCategory[categoryId] || [])
+            : (category.children || []);
+          const hasChildren = childrenFromData.length > 0;
+          const isOpen = searchMode ? true : openedPath[level] === categoryId;
+          const isActive = searchMode ? false : openedPath.includes(categoryId);
+          const isCurrentLevelActive = !searchMode && openedPath[level] === categoryId;
+          const labelContent = searchMode ? highlightMatch(category.name, searchQuery) : category.name;
+
+          const handleBranchToggle = (event: React.MouseEvent) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (searchMode) {
+              setOpenedPathAndUrl(currentPath, { closeQuickGroup: mode !== 'quickGroups' });
+              return;
+            }
+            if (mode === 'manufacturer') {
+              handleToggle(categoryId, level);
+            } else {
+              handleQuickGroupToggle(categoryId, level);
+            }
+          };
+
+          const handleLabelActivate = (event: React.MouseEvent<HTMLButtonElement>) => {
+            if (event) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+            if (hasChildren) {
+              if (searchMode) {
+                setOpenedPathAndUrl(currentPath, { closeQuickGroup: mode !== 'quickGroups' });
+              } else {
+                if (mode === 'manufacturer') {
+                  handleToggle(categoryId, level);
+                } else {
+                  handleQuickGroupToggle(categoryId, level);
+                }
+              }
+            } else if (mode === 'quickGroups') {
+              if (typeof category.link !== 'undefined' && category.link && onQuickGroupSelect) {
+                onQuickGroupSelect(category);
+                setOpenedPathAndUrl(currentPath, { closeQuickGroup: false });
+                setSearchQuery('');
+              } else if (!searchMode) {
+                setOpenedPathAndUrl(currentPath, { closeQuickGroup: false });
+              }
+            } else if (onNodeSelect) {
+              const nodeToSelect = {
+                ...category,
+                unitid: category.unitid || category.quickgroupid || category.categoryid || category.id
+              };
+              onNodeSelect(nodeToSelect);
+              setOpenedPathAndUrl(currentPath);
+            }
+          };
+
+          return (
+            <li
+              key={categoryId}
+              className={`vin-tree__item${hasChildren ? ' vin-tree__item--branch' : ' vin-tree__item--leaf'}${isActive ? ' vin-tree__item--active' : ''}`}
+            >
+              <div className={`vin-tree__row${level > 0 ? ' vin-tree__row--child' : ''}${isCurrentLevelActive ? ' vin-tree__row--active' : ''}`}>
+                {hasChildren ? (
+                  <button
+                    type="button"
+                    className={`vin-tree__toggle${isOpen ? ' vin-tree__toggle--open' : ''}`}
+                    onClick={handleBranchToggle}
+                    aria-expanded={isOpen}
+                    aria-label={isOpen ? 'Свернуть категорию' : 'Развернуть категорию'}
+                  >
+                    <svg className="vin-tree__chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+                      <path d="M4.5 2.5l3 3-3 3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                ) : (
+                  <span className="vin-tree__toggle vin-tree__toggle--placeholder" />
+                )}
+                <button
+                  type="button"
+                  className={`vin-tree__label-button${hasChildren ? ' vin-tree__label-button--branch' : ''}${isCurrentLevelActive ? ' vin-tree__label-button--active' : ''}`}
+                  onClick={handleLabelActivate}
+                >
+                  <span className={`vin-tree__label${isActive ? ' vin-tree__label--active' : ''}`}>
+                    {labelContent}
+                  </span>
+                </button>
+              </div>
+              {hasChildren && isOpen && (
+                <div className="vin-tree__children">
+                  {renderCategoryTree(childrenFromData, { path: currentPath, level: level + 1, searchMode, mode })}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     );
-  });
+  };
 
   // Если нет данных о транспортном средстве, показываем заглушку
   if (!vehicleInfo) {
@@ -355,154 +426,20 @@ const VinLeftbar: React.FC<VinLeftbarProps> = ({ vehicleInfo, onSearchResults, o
                   if (filtered.length === 0) {
                     return <div style={{ padding: 16, textAlign: 'center', color: '#888' }}>Ничего не найдено</div>;
                   }
-                  // Рекурсивный рендер с раскрытием всех веток
-                  const renderTree = (nodes: any[], path: string[] = [], level = 0): React.ReactNode => nodes.map((group: any) => {
-                    const hasChildren = group.children && group.children.length > 0;
-                    const currentPath = [...path, group.quickgroupid];
-                    return hasChildren ? (
-                      <div
-                        key={group.quickgroupid}
-                        data-hover="false"
-                        data-delay="0"
-                        className={`dropdown-4 w-dropdown w--open`}
-                      >
-                        <div
-                          className={`dropdown-toggle-3 w-dropdown-toggle w--open active`}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="w-icon-dropdown-toggle"></div>
-                          <div className="text-block-56">{highlightMatch(group.name, searchQuery)}</div>
-                        </div>
-                        <nav className={`dropdown-list-4 w-dropdown-list w--open`}>
-                          {renderTree(group.children, currentPath, level + 1)}
-                        </nav>
-                      </div>
-                    ) : (
-                      <a
-                        href="#"
-                        key={group.quickgroupid}
-                        className="dropdown-link-3 w-dropdown-link"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (group.link && onQuickGroupSelect) {
-                            onQuickGroupSelect(group);
-                          }
-                        }}
-                      >
-                        {highlightMatch(group.name, searchQuery)}
-                      </a>
-                    );
-                  });
-                  return renderTree(filtered);
+                  return (
+                    <div className="vin-tree-wrapper">
+                      {renderCategoryTree(filtered, { searchMode: true, mode: 'quickGroups' })}
+                    </div>
+                  );
                 } else {
-                  // Обычный рендер с openedPath (старое поведение)
-                  return quickGroups.map((group: any) => {
-                    const hasChildren = group.children && group.children.length > 0;
-                    const isOpen = openedPath.includes(group.quickgroupid);
-                    if (!hasChildren) {
-                      return (
-                        <a
-                          href="#"
-                          key={group.quickgroupid}
-                          className="dropdown-link-3 w-dropdown-link"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (group.link && onQuickGroupSelect) {
-                              onQuickGroupSelect(group);
-                            } else {
-                              handleQuickGroupToggle(group.quickgroupid, 0);
-                            }
-                          }}
-                        >
-                          {group.name}
-                        </a>
-                      );
-                    }
-                    return (
-                      <div
-                        key={group.quickgroupid}
-                        data-hover="false"
-                        data-delay="0"
-                        className={`dropdown-4 w-dropdown${isOpen ? " w--open" : ""}`}
-                      >
-                        <div
-                          className={`dropdown-toggle-3 w-dropdown-toggle${isOpen ? " w--open active" : ""}`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleQuickGroupToggle(group.quickgroupid, 0);
-                          }}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="w-icon-dropdown-toggle"></div>
-                          <div className="text-block-56">{group.name}</div>
-                        </div>
-                        <nav className={`dropdown-list-4 w-dropdown-list${isOpen ? " w--open" : ""}`}>
-                          {group.children?.map((child: any) => {
-                            const hasSubChildren = child.children && child.children.length > 0;
-                            const isChildOpen = openedPath.includes(child.quickgroupid);
-                            if (!hasSubChildren) {
-                              return (
-                                <a
-                                  href="#"
-                                  key={child.quickgroupid}
-                                  className="dropdown-link-3 w-dropdown-link"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    if (child.link && onQuickGroupSelect) {
-                                      onQuickGroupSelect(child);
-                                    } else {
-                                      handleQuickGroupToggle(child.quickgroupid, 1);
-                                    }
-                                  }}
-                                >
-                                  {child.name}
-                                </a>
-                              );
-                            }
-                            return (
-                              <div
-                                key={child.quickgroupid}
-                                data-hover="false"
-                                data-delay="0"
-                                className={`dropdown-4 w-dropdown pl-0${isChildOpen ? " w--open" : ""}`}
-                              >
-                                <div
-                                  className={`dropdown-toggle-card w-dropdown-toggle pl-0${isChildOpen ? " w--open active" : ""}`}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    handleQuickGroupToggle(child.quickgroupid, 2);
-                                  }}
-                                  style={{ cursor: "pointer" }}
-                                >
-                                  <div className="w-icon-dropdown-toggle"></div>
-                                  <div className="text-block-56">{child.name}</div>
-                                </div>
-                                <nav className={`dropdown-list-4 w-dropdown-list pl-0${isChildOpen ? " w--open" : ""}`}>
-                                  {child.children?.map((subChild: any) => (
-                                    <a
-                                      href="#"
-                                      key={subChild.quickgroupid}
-                                      className="dropdown-link-3 w-dropdown-link"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        if (subChild.link && onQuickGroupSelect) {
-                                          onQuickGroupSelect(subChild);
-                                        } else {
-                                          handleQuickGroupToggle(subChild.quickgroupid, 3);
-                                        }
-                                      }}
-                                    >
-                                      {subChild.name}
-                                    </a>
-                                  ))}
-                                </nav>
-                              </div>
-                            );
-                          })}
-                        </nav>
-                      </div>
-                    );
-                  });
+                  if (!quickGroups || quickGroups.length === 0) {
+                    return <div style={{ padding: 16, textAlign: 'center', color: '#888' }}>Группы отсутствуют</div>;
+                  }
+                  return (
+                    <div className="vin-tree-wrapper">
+                      {renderCategoryTree(quickGroups, { mode: 'quickGroups' })}
+                    </div>
+                  );
                 }
               })()}
             </>
@@ -520,124 +457,20 @@ const VinLeftbar: React.FC<VinLeftbarProps> = ({ vehicleInfo, onSearchResults, o
                   if (filtered.length === 0) {
                     return <div style={{ padding: 16, textAlign: 'center', color: '#888' }}>Ничего не найдено</div>;
                   }
-                  const renderTree = (nodes: any[], path: string[] = [], level = 0): React.ReactNode => nodes.map((category: any) => {
-                    const categoryId = category.quickgroupid || category.categoryid || category.id;
-                    const subcategories = category.children && category.children.length > 0
-                      ? category.children
-                      : unitsByCategory[categoryId] || [];
-                    const hasChildren = subcategories.length > 0;
-                    const currentPath = [...path, categoryId];
-                    return hasChildren ? (
-                      <div
-                        key={categoryId}
-                        data-hover="false"
-                        data-delay="0"
-                        className={`dropdown-4 w-dropdown w--open`}
-                      >
-                        <div
-                          className={`dropdown-toggle-3 w-dropdown-toggle w--open`}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="w-icon-dropdown-toggle"></div>
-                          <div className="text-block-56">{highlightMatch(category.name, searchQuery)}</div>
-                        </div>
-                        <nav className={`dropdown-list-4 w-dropdown-list w--open`}>
-                          {renderTree(subcategories, currentPath, level + 1)}
-                        </nav>
-                      </div>
-                    ) : (
-                      <a
-                        href="#"
-                        key={categoryId}
-                        className="dropdown-link-3 w-dropdown-link pl-0"
-                        onClick={e => {
-                          e.preventDefault();
-                          if (onNodeSelect) {
-                            const nodeToSelect = {
-                              ...category,
-                              unitid: category.unitid || category.quickgroupid || category.id
-                            };
-                            onNodeSelect(nodeToSelect);
-                          }
-                        }}
-                      >
-                        {highlightMatch(category.name, searchQuery)}
-                      </a>
-                    );
-                  });
-                  return renderTree(filtered);
+                  return (
+                    <div className="vin-tree-wrapper">
+                      {renderCategoryTree(filtered, { searchMode: true })}
+                    </div>
+                  );
                 } else {
-                  return categories.map((category: any, idx: number) => {
-                    const categoryId = category.quickgroupid || category.categoryid || category.id;
-                    const isOpen = openedPath.includes(categoryId);
-                    const subcategories = category.children && category.children.length > 0
-                      ? category.children
-                      : unitsByCategory[categoryId] || [];
-                    const hasChildren = subcategories.length > 0;
-                    return hasChildren ? (
-                      <div
-                        key={categoryId}
-                        data-hover="false"
-                        data-delay="0"
-                        className={`dropdown-4 w-dropdown${isOpen ? " w--open" : ""}`}
-                      >
-                        <div
-                          className={`dropdown-toggle-3 w-dropdown-toggle${isOpen ? " w--open" : ""}`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleToggle(categoryId, 0);
-                          }}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="w-icon-dropdown-toggle"></div>
-                          <div className="text-block-56">{category.name}</div>
-                        </div>
-                        <nav className={`dropdown-list-4 w-dropdown-list${isOpen ? " w--open" : ""}`}>
-                          {subcategories.length > 0 ? (
-                            subcategories.map((subcat: any) => (
-                              <a
-                                href="#"
-                                key={subcat.quickgroupid || subcat.unitid}
-                                className="dropdown-link-3 w-dropdown-link pl-0"
-                                onClick={e => {
-                                  e.preventDefault();
-                                  if (onNodeSelect) {
-                                    const nodeToSelect = {
-                                      ...subcat,
-                                      unitid: subcat.unitid || subcat.quickgroupid || subcat.id
-                                    };
-                                    onNodeSelect(nodeToSelect);
-                                  }
-                                }}
-                              >
-                                {subcat.name}
-                              </a>
-                            ))
-                          ) : (
-                            <span style={{ color: '#888', padding: 8 }}>Нет подкатегорий</span>
-                          )}
-                        </nav>
-                      </div>
-                    ) : (
-                      <a
-                        href="#"
-                        key={categoryId}
-                        className="dropdown-link-3 w-dropdown-link pl-0"
-                        onClick={e => {
-                          e.preventDefault();
-                          if (onNodeSelect) {
-                            const nodeToSelect = {
-                              ...category,
-                              unitid: category.unitid || category.quickgroupid || category.id
-                            };
-                            onNodeSelect(nodeToSelect);
-                          }
-                        }}
-                      >
-                        {category.name}
-                      </a>
-                    );
-                  });
+                  if (!categories || categories.length === 0) {
+                    return <div style={{ padding: 16, textAlign: 'center', color: '#888' }}>Категории отсутствуют</div>;
+                  }
+                  return (
+                    <div className="vin-tree-wrapper">
+                      {renderCategoryTree(categories)}
+                    </div>
+                  );
                 }
               })()}
             </>
