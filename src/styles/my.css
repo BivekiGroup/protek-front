@@ -3,6 +3,44 @@
 .start.end { margin-left: 0 !important; }
 .track.fill { margin-left: 0 !important; width: auto !important; background-color: var(--_button---primary) !important; }
 
+.payment-success__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.payment-success__button {
+  border-radius: 9999px;
+  padding: 14px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.payment-success__button--primary {
+  background-color: var(--_button---primary);
+  color: var(--_button---color);
+  border: 1px solid transparent;
+}
+
+.payment-success__button--primary:hover {
+  background-color: var(--_button---hover-red);
+}
+
+.payment-success__button--secondary {
+  background-color: transparent;
+  color: var(--_button---primary);
+  border: 1px solid var(--_button---primary);
+}
+
+.payment-success__button--secondary:hover {
+  background-color: var(--_button---primary);
+  color: var(--_button---color);
+  border-color: var(--_button---primary);
+}
+
 .dropdown-scroll-invisible {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE и Edge */
