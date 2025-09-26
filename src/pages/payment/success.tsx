@@ -16,7 +16,7 @@ import {
   Loader2,
   Mail,
   PackageCheck,
-} from "lucide-react";
+} from "@/components/icons";
 
 const CONFIRM_PAYMENT = gql`
   mutation ConfirmPayment($orderId: ID!) {
