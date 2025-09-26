@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ChevronsUpDown, ChevronUp, ChevronDown, Sparkles } from "lucide-react";
+import { ChevronsUpDown, ChevronUp, ChevronDown, Sparkles } from "./icons";
 import { useCart } from "@/contexts/CartContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import toast from "react-hot-toast";
