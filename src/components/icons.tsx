@@ -91,3 +91,26 @@ export const PackageCheck = createIcon(
     <path d="m9.5 15.5 2 2 4-4" />
   </>
 );
+
+export const ArrowRight = createIcon(
+  <>
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 5 19 12 12 19" />
+  </>
+);
+
+export const LockKeyhole = createIcon(
+  <>
+    <rect x="3" y="11" width="18" height="10" rx="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    <circle cx="12" cy="16" r="1.5" />
+  </>
+);
+
+export const PhoneCall = createIcon(
+  <>
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-4.57 19.79 19.79 0 0 1-4.57-8.63A2 2 0 0 1 7.62 8h2.54a2 2 0 0 1 2 1.72c.07.55.2 1.09.38 1.6a2 2 0 0 1-.45 2.05l-.7.7a16 16 0 0 0 5.66 5.66l.7-.7a2 2 0 0 1 2.05-.45c.51.18 1.05.31 1.6.38a2 2 0 0 1 1.72 2Z" />
+    <path d="M15.05 5A5 5 0 0 1 19 8.94" />
+    <path d="M15.05 1A9 9 0 0 1 23 8.94" />
+  </>
+);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Head from 'next/head'
-import { ArrowRight, LockKeyhole, Mail, PhoneCall } from 'lucide-react'
+import { ArrowRight, LockKeyhole, Mail, PhoneCall } from '@/components/icons'
 
 interface MaintenanceModeProps {
   onPasswordCorrect: () => void
