@@ -140,7 +140,7 @@ const MaintenanceMode: React.FC<MaintenanceModeProps> = ({ onPasswordCorrect }) 
                 </div>
                 <div className="flex items-center gap-2">
                   <PhoneCall className="h-4 w-4 text-slate-400" />
-                  <span className="text-slate-600">+7 (495) 640-03-22</span>
+                  <span className="text-slate-600">7(495)260-20-60</span>
                 </div>
               </div>
             </div>
