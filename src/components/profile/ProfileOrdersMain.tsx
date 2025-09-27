@@ -17,7 +17,9 @@ type OrderStatus =
   | 'PENDING'
   | 'PAID'
   | 'PROCESSING'
-  | 'SHIPPED'
+  | 'ASSEMBLING'
+  | 'IN_DELIVERY'
+  | 'AWAITING_PICKUP'
   | 'DELIVERED'
   | 'RETURN_REQUESTED'
   | 'CANCELED'
@@ -47,7 +49,7 @@ interface ProfileOrdersMainProps {}
 
 const tabs: Array<{ label: string; status: OrderStatus[] | null }> = [
   { label: "Все", status: null },
-  { label: "Текущие", status: ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'RETURN_REQUESTED'] },
+  { label: "Текущие", status: ['PENDING', 'PAID', 'PROCESSING', 'ASSEMBLING', 'IN_DELIVERY', 'AWAITING_PICKUP'] },
   { label: "Выполненные", status: ['DELIVERED'] },
   { label: "Возврат", status: ['RETURN_REQUESTED', 'REFUNDED'] },
   { label: "Отмененные", status: ['CANCELED'] }
@@ -56,26 +58,30 @@ const tabs: Array<{ label: string; status: OrderStatus[] | null }> = [
 const statusLabels: Record<OrderStatus, string> = {
   PENDING: 'Ожидает оплаты',
   PAID: 'Оплачен',
-  PROCESSING: 'В обработке',
-  SHIPPED: 'Отправлен',
+  PROCESSING: 'Обрабатывается',
+  ASSEMBLING: 'На сборке',
+  IN_DELIVERY: 'В доставке',
+  AWAITING_PICKUP: 'Ждет выдачи',
   DELIVERED: 'Доставлен',
   RETURN_REQUESTED: 'Возврат запрошен',
-  CANCELED: 'Отменен',
-  REFUNDED: 'Возвращен'
+  CANCELED: 'Отказ',
+  REFUNDED: 'Возврат оформлен'
 };
 
 const statusColors: Record<OrderStatus, string> = {
   PENDING: '#F59E0B',
   PAID: '#10B981',
   PROCESSING: '#3B82F6',
-  SHIPPED: '#8B5CF6',
+  ASSEMBLING: '#6366F1',
+  IN_DELIVERY: '#8B5CF6',
+  AWAITING_PICKUP: '#14B8A6',
   DELIVERED: '#10B981',
   RETURN_REQUESTED: '#F97316',
   CANCELED: '#EF4444',
   REFUNDED: '#6B7280'
 };
 
-const clientCancelableStatuses: OrderStatus[] = ['PENDING', 'PAID', 'PROCESSING'];
+const clientCancelableStatuses: OrderStatus[] = ['PENDING', 'PAID', 'PROCESSING', 'ASSEMBLING'];
 
 const formatPrice = (price: number, currency = 'RUB') =>
   `${price.toLocaleString('ru-RU')} ${currency === 'RUB' ? '₽' : currency}`;
