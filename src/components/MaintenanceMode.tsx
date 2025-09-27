@@ -1,197 +1,154 @@
-import React, { useState, useEffect } from 'react';
-import Head from 'next/head';
+import React, { useState, useEffect } from 'react'
+import Head from 'next/head'
+import { ArrowRight, LockKeyhole, Mail, PhoneCall } from 'lucide-react'
 
 interface MaintenanceModeProps {
-  onPasswordCorrect: () => void;
+  onPasswordCorrect: () => void
 }
 
 const MaintenanceMode: React.FC<MaintenanceModeProps> = ({ onPasswordCorrect }) => {
-  const [password, setPassword] = useState('');
-  const [isShaking, setIsShaking] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [password, setPassword] = useState('')
+  const [isInvalid, setIsInvalid] = useState(false)
+  const [progress, setProgress] = useState(0)
 
-  const correctPassword = 'protek2024'; // Замените на ваш пароль
-
-  // Дебаг информация (удалите в продакшене)
-  useEffect(() => {
-    console.log('Maintenance Mode Environment Variable:', process.env.NEXT_PUBLIC_MAINTENANCE_MODE);
-  }, []);
+  const correctPassword = 'protek2024'
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setProgress(prev => prev >= 100 ? 0 : prev + 1);
-    }, 100);
-    return () => clearInterval(interval);
-  }, []);
+      setProgress(prev => (prev >= 98 ? 12 : prev + 2))
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [])
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
     if (password === correctPassword) {
-      onPasswordCorrect();
+      onPasswordCorrect()
     } else {
-      setIsShaking(true);
-      setPassword('');
-      setTimeout(() => setIsShaking(false), 500);
+      setIsInvalid(true)
+      setPassword('')
+      setTimeout(() => setIsInvalid(false), 600)
     }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handlePasswordSubmit(e);
-    }
-  };
+  }
 
   return (
     <>
       <Head>
-        <title>Техническое обслуживание - Protek Auto</title>
-        <meta name="description" content="Сайт временно недоступен из-за технического обслуживания" />
+        <title>Protekauto — закрытый доступ</title>
+        <meta
+          name="description"
+          content="Предпросмотр закрытой витрины Protekauto. Авторизуйтесь кодом партнёра."
+        />
       </Head>
-      
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-800 flex items-center justify-center p-4 overflow-hidden relative">
-        {/* Анимированный фон */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-4 h-4 bg-yellow-400 rounded-full animate-pulse"></div>
-          <div className="absolute top-32 right-16 w-6 h-6 bg-red-400 rounded-full animate-bounce"></div>
-          <div className="absolute bottom-24 left-20 w-3 h-3 bg-green-400 rounded-full animate-ping"></div>
-          <div className="absolute bottom-40 right-12 w-5 h-5 bg-blue-400 rounded-full animate-pulse"></div>
-        </div>
 
-        <div className="max-w-2xl mx-auto text-center relative z-10">
-          {/* Логотип и автомобиль */}
-          <div className="mb-8">
-            <div className="relative">
-              {/* Анимированный автомобиль */}
-              <div className="mb-6 relative">
-                <div className="inline-block">
-                  <svg
-                    className="w-32 h-20 mx-auto text-blue-400 animate-bounce"
-                    fill="currentColor"
-                    viewBox="0 0 512 512"
-                  >
-                    <path d="M135.2 117.4L109.1 192H402.9l-26.1-74.6C372.3 104.6 360.2 96 346.6 96H165.4c-13.6 0-25.7 8.6-30.2 21.4zM39.6 196.8L74.8 96.3C88.3 57.8 124.6 32 165.4 32H346.6c40.8 0 77.1 25.8 90.6 64.3l35.2 100.5c23.2 9.6 39.6 32.5 39.6 59.2V304c0 8.8-7.2 16-16 16H448c-8.8 0-16-7.2-16-16V288H80v16c0 8.8-7.2 16-16 16H16c-8.8 0-16-7.2-16-16V256c0-26.7 16.4-49.6 39.6-59.2zM128 288a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zm288 32a32 32 0 1 0 0-64 32 32 0 1 0 0 64z"/>
-                  </svg>
-                </div>
-                
-                {/* Дым из выхлопной трубы */}
-                <div className="absolute -right-8 top-6">
-                  <div className="w-4 h-4 bg-gray-400 rounded-full opacity-60 animate-ping"></div>
-                  <div className="w-3 h-3 bg-gray-300 rounded-full opacity-40 animate-pulse absolute -top-2 -right-2"></div>
-                </div>
-              </div>
+      <div className="min-h-screen bg-[#f2f4f7] text-slate-900">
+        <div className="h-1 w-full bg-gradient-to-r from-[#ec1c24] via-[#c4121b] to-[#123057]" />
 
-              <h1 className="text-5xl font-bold text-white mb-4 tracking-wide">
-                PROTEK AUTO
+        <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl flex-col justify-center gap-16 px-6 py-16 lg:flex-row lg:items-center">
+          <section className="flex-1 space-y-10">
+            <div>
+              <span className="inline-flex items-center rounded-full bg-[#ec1c24]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#c3101b]">
+                beta build
+              </span>
+              <h1 className="mt-6 text-4xl font-semibold leading-tight sm:text-5xl">
+                Закрытая витрина Protekauto
               </h1>
-              
-              {/* Инструменты */}
-              <div className="flex justify-center items-center gap-4 mb-6">
-                <svg className="w-8 h-8 text-yellow-400 animate-spin" fill="currentColor" viewBox="0 0 512 512">
-                  <path d="M78.6 5C69.1-2.4 55.6-1.5 47 7L7 47c-8.5 8.5-9.4 22-2.1 31.6l80 104c4.5 5.9 11.6 9.4 19 9.4h54.1l109 109c-14.7 29-10 65.4 14.3 89.6l112 112c12.5 12.5 32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3l-112-112c-24.2-24.2-60.6-29-89.6-14.3l-109-109V104c0-7.5-3.5-14.5-9.4-19L78.6 5zM19.9 396.1C7.4 408.6 7.4 428.9 19.9 441.4l51.2 51.2c12.5 12.5 32.8 12.5 45.3 0l44.9-44.9c8.5-8.5 8.5-22.4 0-30.9l-65.4-65.4c-8.5-8.5-22.4-8.5-30.9 0L19.9 396.1z"/>
-                </svg>
-                <svg className="w-8 h-8 text-red-400 animate-pulse" fill="currentColor" viewBox="0 0 512 512">
-                  <path d="M78.6 5C69.1-2.4 55.6-1.5 47 7L7 47c-8.5 8.5-9.4 22-2.1 31.6l80 104c4.5 5.9 11.6 9.4 19 9.4h54.1l109 109c-14.7 29-10 65.4 14.3 89.6l112 112c12.5 12.5 32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3l-112-112c-24.2-24.2-60.6-29-89.6-14.3l-109-109V104c0-7.5-3.5-14.5-9.4-19L78.6 5z"/>
-                </svg>
-                <svg className="w-8 h-8 text-green-400 animate-bounce" fill="currentColor" viewBox="0 0 512 512">
-                  <path d="M256 0c4.6 0 9.2 1 13.4 2.9L457.7 82.8c22 9.3 38.4 31 38.3 57.2c-.5 99.2-41.3 280.7-213.6 363.2c-16.7 8-36.1 8-52.8 0C57.3 420.7 16.5 239.2 16 140c-.1-26.2 16.3-47.9 38.3-57.2L242.7 2.9C246.8 1 251.4 0 256 0z"/>
-                </svg>
+              <p className="mt-5 max-w-xl text-lg text-slate-600">
+                Каталог скоро будет открыт для просмотра всем посетителям, а закупки смогут оформлять юридические лица. Пока мы заканчиваем настройку, вход доступен по коду партнёра.
+              </p>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              {[{
+                title: 'OEM + aftermarket',
+                description: '190 000 позиций с валидацией остатков и цен.'
+              }, {
+                title: 'Онлайн-статусы',
+                description: 'Оплата, отгрузки и возвраты в одном кабинете.'
+              }, {
+                title: 'API-подключение',
+                description: 'Обмен прайсами и заказами без ручной рутины.'
+              }].map(item => (
+                <div
+                  key={item.title}
+                  className="rounded-2xl border border-white/60 bg-white/90 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur"
+                >
+                  <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+                  <p className="mt-2 text-sm text-slate-500">{item.description}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-2xl border border-white/60 bg-white/90 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur">
+              <div className="flex items-center justify-between text-sm text-slate-500">
+                <span>Сборка витрины</span>
+                <span>{progress}%</span>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-2 rounded-full bg-[#ec1c24] transition-all duration-1000"
+                  style={{ width: `${progress}%` }}
+                />
               </div>
             </div>
-          </div>
+          </section>
 
-          {/* Текст состояния */}
-          <div className="mb-8">
-            <h2 className="text-3xl font-semibold text-white mb-4">
-              🔧 Техническое обслуживание
-            </h2>
-            <p className="text-xl text-gray-300 mb-2">
-              Наш автосервис временно закрыт на профилактику
-            </p>
-            <p className="text-lg text-gray-400">
-              Мы настраиваем двигатель для лучшей производительности
-            </p>
-          </div>
+          <section className="w-full max-w-md">
+            <div className="rounded-[28px] border border-white bg-white p-8 shadow-[0_25px_60px_rgba(15,23,42,0.15)]">
+              <h2 className="text-2xl font-semibold">Введите код партнёра</h2>
+              <p className="mt-3 text-sm text-slate-500">
+                Код отправляет ваш менеджер. Он даёт временный доступ к разделу для юрлиц.
+              </p>
 
-          {/* Прогресс бар */}
-          <div className="mb-8">
-            <div className="bg-gray-700 rounded-full h-4 mb-4 overflow-hidden">
-              <div 
-                className="bg-gradient-to-r from-blue-500 to-green-400 h-full rounded-full transition-all duration-300 ease-out"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-            <p className="text-sm text-gray-400">Прогресс обслуживания: {progress}%</p>
-          </div>
+              <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+                <div className="relative">
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="●●●●●●"
+                    className={`w-full rounded-2xl border-2 bg-white px-5 py-4 text-base text-slate-900 outline-none transition-all duration-300 focus:border-[#ec1c24] focus:ring-2 focus:ring-[#ec1c24]/15 ${
+                      isInvalid ? 'border-[#ec1c24] bg-[#fde7e9]' : 'border-slate-200'
+                    }`}
+                    autoComplete="one-time-code"
+                  />
+                  <LockKeyhole className="pointer-events-none absolute right-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 transition-colors peer-focus:text-[#ec1c24]" />
+                </div>
 
-          {/* Форма ввода пароля */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700">
-            <h3 className="text-xl font-semibold text-white mb-4">
-              🔐 Код доступа для техперсонала
-            </h3>
-            
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div className="relative">
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Введите код доступа..."
-                  className={`w-full px-6 py-4 bg-gray-700 border-2 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-all duration-300 ${
-                    isShaking ? 'animate-pulse border-red-500 bg-red-900/20' : 'border-gray-600'
-                  }`}
-                  autoComplete="off"
-                  tabIndex={0}
-                  aria-label="Введите пароль для доступа к сайту"
-                />
-                
-                {/* Индикатор безопасности */}
-                <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                <button
+                  type="submit"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#ec1c24] px-6 py-4 text-base font-semibold text-white shadow-[0_15px_25px_rgba(236,28,36,0.35)] transition-transform duration-200 hover:-translate-y-[1px] hover:shadow-[0_20px_35px_rgba(236,28,36,0.4)] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ec1c24]/30"
+                >
+                  <span>Войти в витрину</span>
+                  <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </form>
+
+              {isInvalid && (
+                <p className="mt-4 text-sm text-[#c3101b]">Неверный код. Проверьте сообщение от менеджера и попробуйте снова.</p>
+              )}
+
+              <div className="mt-8 space-y-3 text-sm text-slate-500">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-slate-400" />
+                  <a
+                    href="mailto:support@protekauto.ru"
+                    className="text-slate-600 underline decoration-dotted underline-offset-4 hover:text-[#ec1c24]"
+                  >
+                    support@protekauto.ru
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <PhoneCall className="h-4 w-4 text-slate-400" />
+                  <span className="text-slate-600">+7 (495) 640-03-22</span>
                 </div>
               </div>
-              
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/50"
-                tabIndex={0}
-                aria-label="Войти в систему"
-              >
-                🚀 Запустить двигатель
-              </button>
-            </form>
-            
-            {isShaking && (
-              <p className="text-red-400 text-sm mt-4 animate-pulse">
-                ❌ Неверный код доступа! Попробуйте еще раз.
-              </p>
-            )}
-          </div>
-
-          {/* Контактная информация */}
-          <div className="mt-8 text-center">
-            <p className="text-gray-400 text-sm">
-              По вопросам обращайтесь к администратору системы
-            </p>
-            <div className="flex justify-center items-center gap-4 mt-4">
-              <span className="text-2xl">🛠️</span>
-              <span className="text-2xl">⚙️</span>
-              <span className="text-2xl">🔧</span>
             </div>
-          </div>
-        </div>
-
-        {/* Дополнительные анимационные элементы */}
-        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2">
-          <div className="flex space-x-2">
-            <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce"></div>
-            <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          </div>
+          </section>
         </div>
       </div>
     </>
-  );
-};
+  )
+}
 
-export default MaintenanceMode; 
+export default MaintenanceMode
