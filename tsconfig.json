@@ -15,7 +15,7 @@
     "incremental": true,
     "paths": {
       "@/*": ["./src/*"],
-      "lucide-react": ["../protek-cms/node_modules/lucide-react"]
+      "lucide-react": ["./node_modules/lucide-react"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
