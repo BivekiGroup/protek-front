@@ -726,7 +726,7 @@ export default function SearchResult() {
           <div className="w-layout-blockcontainer container w-container">
             <div className="w-layout-hflex flex-block-13-copy">
               {/* Фильтры для десктопа */}
-              <div style={{ width: '300px', marginRight: '20px', marginBottom: '80px' }}>
+              <div className="filters-desktop-wrapper">
                 <Filters 
                   filters={searchResultFilters}
                   onFilterChange={handleFilterChange}

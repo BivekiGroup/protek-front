@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { ChevronsUpDown, ChevronUp, ChevronDown, Sparkles } from "./icons";
+import { ChevronsUpDown, ChevronUp, ChevronDown } from "./icons";
+import { BadgeCheck } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import toast from "react-hot-toast";
@@ -558,10 +559,9 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
                   aria-label="Рекомендуем"
                   title="Рекомендуем"
                 >
-                  <Sparkles
+                  <BadgeCheck
                     className="core-offers-table__badge-icon"
                     aria-hidden="true"
-                    size={16}
                     strokeWidth={2.2}
                   />
                 </span>
@@ -587,8 +587,8 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
             </div>
           </div>
         </div>
-        <div className="core-offers-table__cell core-offers-table__cell--stock">{offer.pcs}</div>
         <div className="core-offers-table__cell core-offers-table__cell--delivery">{offer.days}</div>
+        <div className="core-offers-table__cell core-offers-table__cell--stock">{offer.pcs}</div>
         <div className="core-offers-table__cell core-offers-table__cell--price">
           <span className="core-offers-table__price-value">{priceDisplay}</span>
         </div>
@@ -735,8 +735,8 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
                 {renderStaticHeader('Производитель', 'core-offers-table__cell--brand')}
                 {renderStaticHeader('Артикул', 'core-offers-table__cell--article')}
                 {renderStaticHeader('Наименование', 'core-offers-table__cell--name')}
-                {renderSortHeader('Наличие', 'stock', 'core-offers-table__cell--stock')}
                 {renderSortHeader('Доставка', 'delivery', 'core-offers-table__cell--delivery')}
+                {renderSortHeader('Наличие', 'stock', 'core-offers-table__cell--stock')}
                 {renderSortHeader('Цена, ₽', 'price', 'core-offers-table__cell--price core-offers-table__cell--header-right')}
                 {renderStaticHeader('Кол-во', 'core-offers-table__cell--qty')}
               </div>
