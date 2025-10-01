@@ -58,18 +58,60 @@ const VehicleSearchResults: React.FC<VehicleSearchResultsProps> = ({
     )
   }
 
-  if (results.length === 0) {
+  const normalizedResults = React.useMemo(() => {
+    const seen = new Set<string>();
+    return results.reduce<LaximoVehicleSearchResult[]>((acc, vehicle) => {
+      const filteredAttributes = (vehicle.attributes || []).filter((attr) => {
+        const key = (attr.key || attr.name || '').toLowerCase();
+        return key !== 'sales_code';
+      });
+
+      const attributeSignature = filteredAttributes
+        .map((attr) => ({
+          key: attr.key?.trim() || '',
+          name: attr.name?.trim() || '',
+          value: attr.value?.trim() || '',
+        }))
+        .sort((a, b) => (a.name || a.key).localeCompare(b.name || b.key))
+        .map((attr) => `${attr.name}|${attr.key}|${attr.value}`)
+        .join('||');
+
+      const signature = JSON.stringify({
+        brand: vehicle.brand,
+        model: vehicle.model,
+        modification: vehicle.modification,
+        year: vehicle.year,
+        bodytype: vehicle.bodytype,
+        engine: vehicle.engine,
+        engine_info: vehicle.engine_info,
+        prodRange: vehicle.prodRange,
+        prodPeriod: vehicle.prodPeriod,
+        market: vehicle.market,
+        attributes: attributeSignature,
+      });
+
+      if (seen.has(signature)) {
+        return acc;
+      }
+
+      seen.add(signature);
+      acc.push({ ...vehicle, sales_code: undefined, attributes: filteredAttributes });
+      return acc;
+    }, []);
+  }, [results]);
+
+  if (normalizedResults.length === 0) {
     return null;
   }
 
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-900">
-        Найдено автомобилей: {results.length}
+        Найдено автомобилей: {normalizedResults.length}
       </h3>
       
       <div className="flex flex-wrap flex-1 gap-5 size-full max-md:max-w-full">
-        {results.map((vehicle, index) => (
+        {normalizedResults.map((vehicle, index) => (
           <div
             key={`${vehicle.vehicleid}-${index}`}
            className="flex flex-col flex-1 shrink p-8 bg-white rounded-lg border border-solid basis-0 border-stone-300 max-w-[504px] md:min-w-[370px] sm:min-w-[340px] min-w-[200px] max-md:px-5 cursor-pointer transition-shadow hover:shadow-lg"

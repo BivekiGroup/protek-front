@@ -1,6 +1,6 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useQuery, useLazyQuery } from "@apollo/client";
 import Header from "@/components/Header";
 import { emitAnalyticsSearch } from "@/lib/utils";
@@ -289,13 +289,22 @@ export default function SearchResult() {
   }, [article, brand]);
 
   // Подготавливаем данные корзины для отправки на backend
-  const cartItems = cartState.items.map(item => ({
-    productId: item.productId,
-    offerKey: item.offerKey,
-    article: item.article || '',
-    brand: item.brand || '',
-    quantity: item.quantity
-  }));
+  const cartSnapshotRef = useRef<{ productId?: string; offerKey?: string; article: string; brand: string; quantity: number }[] | null>(null);
+  const lastSnapshotSearchKey = useRef<string | null>(null);
+  const currentSnapshotKey = `${searchQuery || ''}__${brandQuery || ''}`;
+
+  if (cartSnapshotRef.current === null || lastSnapshotSearchKey.current !== currentSnapshotKey) {
+    cartSnapshotRef.current = cartState.items.map(item => ({
+      productId: item.productId,
+      offerKey: item.offerKey,
+      article: item.article || '',
+      brand: item.brand || '',
+      quantity: item.quantity
+    }));
+    lastSnapshotSearchKey.current = currentSnapshotKey;
+  }
+
+  const cartItems = cartSnapshotRef.current;
 
   const { data, loading, error } = useQuery(SEARCH_PRODUCT_OFFERS, {
     variables: {

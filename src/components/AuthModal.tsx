@@ -1,4 +1,5 @@
 import * as React from "react";
+import { X } from 'lucide-react';
 
 interface AuthModalProps {
   open: boolean;
@@ -39,16 +40,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onRequestLo
                 >
                   Войдите, чтобы продолжить
                 </div>
-                <div>
-                  <div
-                    onClick={onClose}
-                    style={{ cursor: "pointer" }}
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        '<svg id="154:4915" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" class="close-icon" style="width: 17.5px; height: 17.5px; fill: #000814; position: relative; cursor: pointer"><path d="M2.25 17.75L0.5 16L7.5 9L0.5 2L2.25 0.25L9.25 7.25L16.25 0.25L18 2L11 9L18 16L16.25 17.75L9.25 10.75L2.25 17.75Z" fill="#000814"></path></svg>',
-                    }}
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
+                  aria-label="Закрыть окно авторизации"
+                >
+                  <X className="h-5 w-5 text-gray-900" strokeWidth={1.8} />
+                </button>
               </div>
               <div
                 layer-name="Эта страница доступна только авторизованным пользователям. После входа вы сможете пользоваться всеми возможностями:"

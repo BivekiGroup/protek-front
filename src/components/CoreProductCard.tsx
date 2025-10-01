@@ -120,6 +120,12 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
     return match ? `${match[0]} дней` : daysStr;
   };
 
+  const formatDeliveryDisplay = (value?: string): string => {
+    if (!value) return '';
+    const trimmed = value.trim();
+    return trimmed.toLowerCase() === 'в день заказа' ? '1 день' : trimmed;
+  };
+
   // Функция сортировки предложений
   const sortOffers = (offers: CoreProductCardOffer[]) => {
     const sorted = [...offers];
@@ -238,6 +244,13 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
   };
 
   const handleAddToCart = async (offer: CoreProductCardOffer, index: number) => {
+    const isAuthenticated = typeof window !== 'undefined' ? Boolean(localStorage.getItem('authToken')) : true;
+
+    if (!isAuthenticated) {
+      toast.error('Авторизуйтесь, чтобы добавить товар в корзину');
+      return;
+    }
+
     setLocalInCart(prev => ({ ...prev, [index]: true }));
     const quantity = quantities[index] || 1;
     const availableStock = parseStock(offer.pcs);
@@ -312,6 +325,8 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
           icon: <CartIcon size={20} color="#fff" />,
         }
       );
+
+      setLocalInCart(prev => ({ ...prev, [index]: false }));
     } else {
       // Показываем ошибку
       toast.error(result.error || 'Ошибка при добавлении товара в корзину');
@@ -518,20 +533,25 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
     const remainingStock = getRemainingStock(offer);
     const maxCountRaw = parseStock(offer.pcs);
     const maxCount = typeof remainingStock === 'number' ? remainingStock : maxCountRaw;
+    const isAuthenticated = typeof window !== 'undefined' ? Boolean(localStorage.getItem('authToken')) : true;
     const inCart = offer.isInCart || false;
     const isLocallyInCart = !!localInCart[idx];
     const cannotAddMore = typeof remainingStock === 'number' && remainingStock <= 0;
-    const addDisabled = inCart || isLocallyInCart || cannotAddMore;
-    const buttonTitle = cannotAddMore
-      ? 'Добавление недоступно — нет свободного остатка'
-      : inCart || isLocallyInCart
-        ? 'Товар уже в корзине - нажмите для добавления еще'
-        : 'Добавить в корзину';
-    const buttonAriaLabel = cannotAddMore
-      ? 'Добавление недоступно — нет свободного остатка'
-      : inCart || isLocallyInCart
-        ? 'Товар уже в корзине'
-        : 'Добавить в корзину';
+    const addDisabled = !isAuthenticated || inCart || isLocallyInCart || cannotAddMore;
+    const buttonTitle = !isAuthenticated
+      ? 'Только для авторизованных пользователей'
+      : cannotAddMore
+        ? 'Добавление недоступно — нет свободного остатка'
+        : inCart || isLocallyInCart
+          ? 'Товар уже в корзине - нажмите для добавления еще'
+          : 'Добавить в корзину';
+    const buttonAriaLabel = !isAuthenticated
+      ? 'Только для авторизованных пользователей'
+      : cannotAddMore
+        ? 'Добавление недоступно — нет свободного остатка'
+        : inCart || isLocallyInCart
+          ? 'Товар уже в корзине'
+          : 'Добавить в корзину';
 
     const region = offer.region || 'Москва';
     const brandDisplay = offer.brandName || brand;
@@ -587,7 +607,7 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
             </div>
           </div>
         </div>
-        <div className="core-offers-table__cell core-offers-table__cell--delivery">{offer.days}</div>
+        <div className="core-offers-table__cell core-offers-table__cell--delivery">{formatDeliveryDisplay(offer.days)}</div>
         <div className="core-offers-table__cell core-offers-table__cell--stock">{offer.pcs}</div>
         <div className="core-offers-table__cell core-offers-table__cell--price">
           <span className="core-offers-table__price-value">{priceDisplay}</span>
@@ -619,8 +639,7 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
                   className={`button-icon w-inline-block ${inCart || isLocallyInCart ? 'in-cart' : ''}`}
                   style={{
                     cursor: addDisabled ? 'not-allowed' : 'pointer',
-                    opacity: addDisabled ? 0.5 : 1,
-                    backgroundColor: inCart || isLocallyInCart ? '#2563eb' : undefined
+                    opacity: addDisabled ? 0.5 : 1
                   }}
                   aria-label={buttonAriaLabel}
                   title={buttonTitle}

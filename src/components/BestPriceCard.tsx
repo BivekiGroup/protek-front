@@ -92,6 +92,13 @@ const BestPriceCard: React.FC<BestPriceCardProps> = ({
       return;
     }
 
+    const isAuthenticated = typeof window !== 'undefined' ? Boolean(localStorage.getItem('authToken')) : true;
+
+    if (!isAuthenticated) {
+      toast.error('Авторизуйтесь, чтобы добавить товар в корзину');
+      return;
+    }
+
     try {
       const result = await addItem({
         productId: offer.productId,
@@ -155,7 +162,7 @@ const BestPriceCard: React.FC<BestPriceCardProps> = ({
             <div className="w-layout-hflex flex-block-80">
               <div className="w-layout-vflex flex-block-106">
                 <div className="text-block-23">Срок</div>
-                <div className="text-block-24">{delivery}</div>
+                <div className="text-block-24">{delivery === 'В день заказа' ? '1 день' : delivery}</div>
               </div>
               <div className="w-layout-vflex flex-block-105">
                 <div className="text-block-23">Наличие</div>
@@ -166,7 +173,7 @@ const BestPriceCard: React.FC<BestPriceCardProps> = ({
               <button type="button" className="minus-plus" aria-label="Уменьшить количество" onClick={handleMinus}>
                 <div className="pluspcs w-embed"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 10.5V9.5H14V10.5H6Z" fill="currentColor"/></svg></div>
               </button>
-              <div className="input-pcs">
+              <div className="input-pcs w-16">
                 <input
                   type="number"
                   min={1}

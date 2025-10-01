@@ -45,6 +45,14 @@ const ProfileSupportPage = () => {
     if (data?.createSupportTicket?.id) router.push(`/profile-support/${data.createSupportTicket.id}`)
   }
 
+  React.useEffect(() => {
+    if (!router.isReady) return
+    const presetSubject = typeof router.query.subject === 'string' ? router.query.subject.trim() : ''
+    if (presetSubject) {
+      setSubject((prev) => (prev ? prev : presetSubject))
+    }
+  }, [router.isReady, router.query.subject])
+
   const tickets = data?.mySupportTickets || []
   const statusRu: Record<string, string> = { OPEN: 'Открыт', IN_PROGRESS: 'В работе', RESOLVED: 'Решён', CLOSED: 'Закрыт' }
 

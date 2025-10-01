@@ -4,6 +4,7 @@ import { apolloClient } from '@/lib/apollo'
 import PhoneInput from './PhoneInput'
 import CodeVerification from './CodeVerification'
 import UserRegistration from './UserRegistration'
+import { X } from 'lucide-react'
 import type { AuthState, AuthStep, ClientAuthResponse, VerificationResponse } from '@/types/auth'
 
 interface AuthModalProps {
@@ -127,29 +128,30 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 
   return (
     <ApolloProvider client={apolloClient}>
-      {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/10 z-40 transition-opacity duration-200 flex items-center justify-center"
-        aria-label="Затемнение фона"
-        tabIndex={-1}
+        className="fixed inset-0 z-50 flex items-center justify-center"
+        role="dialog"
+        aria-modal="true"
         onClick={handleClose}
-      />
-      {/* Модальное окно */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
+      >
         <div
-          className="flex relative flex-col gap-4 items-start bg-white rounded-3xl shadow-xl w-[650px] max-w-full min-h-[320px] px-12 py-10 max-md:px-6 max-md:py-8 max-sm:gap-8 max-sm:p-5"
-          style={{ marginTop: 0, position: 'relative' }}
+          className="absolute inset-0 bg-black/10 transition-opacity duration-200"
+          aria-label="Затемнение фона"
+          tabIndex={-1}
+        />
+        <div
+          className="relative z-10 flex flex-col gap-4 items-start bg-white rounded-3xl shadow-xl w-[650px] max-w-full min-h-[320px] px-12 py-10 max-md:px-6 max-md:py-8 max-sm:gap-8 max-sm:p-5"
+          style={{ marginTop: 0 }}
+          onClick={(event) => event.stopPropagation()}
         >
           {/* Кнопка закрытия */}
           <button
             onClick={handleClose}
-            className="absolute right-8 top-8 p-2 hover:opacity-70 focus:outline-none"
+            className="absolute right-5 top-5 inline-flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
             aria-label="Закрыть окно авторизации"
             tabIndex={0}
           >
-            <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-              <path d="M8 23.75L6.25 22L13.25 15L6.25 8L8 6.25L15 13.25L22 6.25L23.75 8L16.75 15L23.75 22L22 23.75L15 16.75L8 23.75Z" fill="#000814"/>
-            </svg>
+            <X className="h-5 w-5 text-gray-900" strokeWidth={1.8} />
           </button>
           {/* Заголовок */}
           <div className="flex relative justify-between items-start w-full max-sm:flex-col max-sm:gap-5">

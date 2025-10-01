@@ -155,7 +155,7 @@ const ProductOfDaySection: React.FC = () => {
         <div className="w-layout-hflex flex-block-108">
           <ProductOfDayBanner />
           
-          <div className="div-block-129">
+          <div className="div-block-129 product-of-day-card">
             <div className="w-layout-hflex flex-block-109">
               <h1 className="heading-18">ТОВАРЫ ДНЯ</h1>
               {hasDiscount && (

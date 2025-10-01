@@ -7,7 +7,7 @@ interface BestPriceItemProps {
   image: string;
   discount: string;
   price: string;
-  oldPrice: string;
+  oldPrice?: string;
   title: string;
   brand: string;
   article?: string;
@@ -20,7 +20,6 @@ const BestPriceItem: React.FC<BestPriceItemProps> = ({
   image,
   discount,
   price,
-  oldPrice,
   title,
   brand,
   article,
@@ -28,7 +27,7 @@ const BestPriceItem: React.FC<BestPriceItemProps> = ({
   onAddToCart,
   isInCart = false,
 }) => {
-  const { addItem, isInCart: isItemInCart, state: cartState } = useCart();
+  const { addItem, isInCart: isItemInCart } = useCart();
   const { addToFavorites, removeFromFavorites, isFavorite, favorites } = useFavorites();
   const [localInCart, setLocalInCart] = useState(false);
 
@@ -147,63 +146,61 @@ const BestPriceItem: React.FC<BestPriceItemProps> = ({
 
   return (
     <div
-      className="w-layout-vflex bestpriceitem"
+      className="w-layout-vflex flex-block-15-copy"
       onClick={handleOpenCard}
       role="link"
       tabIndex={0}
       style={{ cursor: 'pointer' }}
     >
-      <div 
-        className="favcardcat"
+      <div
+        className={`favcardcat${isItemFavorite ? ' favorite-active' : ''}`}
         onClick={handleFavoriteClick}
-        style={{ 
-          cursor: 'pointer',
-          color: isItemFavorite ? '#ef4444' : 'currentColor'
-        }}
+        style={{ cursor: 'pointer', color: isItemFavorite ? '#ef4444' : 'currentColor' }}
         title={isItemFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
       >
         <div className="icon-setting w-embed">
           <svg width="currenWidth" height="currentHeight" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path 
-              d="M13.5996 3.5C15.8107 3.5 17.5 5.1376 17.5 7.19629C17.5 8.46211 16.9057 9.65758 15.7451 11.0117C14.8712 12.0314 13.7092 13.1034 12.3096 14.3311L10.833 15.6143L10.832 15.6152L10 16.3369L9.16797 15.6152L9.16699 15.6143L7.69043 14.3311C6.29084 13.1034 5.12883 12.0314 4.25488 11.0117C3.09428 9.65758 2.50003 8.46211 2.5 7.19629C2.5 5.1376 4.18931 3.5 6.40039 3.5C7.6497 3.50012 8.85029 4.05779 9.62793 4.92188L10 5.33398L10.3721 4.92188C11.1497 4.05779 12.3503 3.50012 13.5996 3.5Z" 
-              fill={isItemFavorite ? 'currentColor' : 'none'} 
+            <path
+              d="M13.5996 3.5C15.8107 3.5 17.5 5.1376 17.5 7.19629C17.5 8.46211 16.9057 9.65758 15.7451 11.0117C14.8712 12.0314 13.7092 13.1034 12.3096 14.3311L10.833 15.6143L10.832 15.6152L10 16.3369L9.16797 15.6152L9.16699 15.6143L7.69043 14.3311C6.29084 13.1034 5.12883 12.0314 4.25488 11.0117C3.09428 9.65758 2.50003 8.46211 2.5 7.19629C2.5 5.1376 4.18931 3.5 6.40039 3.5C7.6497 3.50012 8.85029 4.05779 9.62793 4.92188L10 5.33398L10.3721 4.92188C11.1497 4.05779 12.3503 3.50012 13.5996 3.5Z"
+              fill={isItemFavorite ? 'currentColor' : 'none'}
               stroke="currentColor"
             />
           </svg>
         </div>
       </div>
-      <div className="imgitembp">
+      <div className="div-block-4">
         <img
+          src={image}
+          loading="lazy"
           width="auto"
           height="auto"
           alt={title}
-          src={image}
-          loading="lazy"
           className="image-5"
         />
-        <div className="saletagbp">{discount}</div>
+        <div className="text-block-7">{discount}</div>
       </div>
-      <div className="div-block-3 bp-item-info">
-        <div className="w-layout-hflex pricecartbp">
-          <div className="actualprice">{price}</div>
-          <div className="oldpricebp">{oldPrice}</div>
+      <div className="div-block-3">
+        <div className="w-layout-hflex flex-block-16">
+          <div className="text-block-8">{price}</div>
         </div>
-        <div className="w-layout-hflex flex-block-120">
-          
-            <div className="nameitembp">{title}</div>
-          
-          <a 
-            href="#" 
+        <div className="w-layout-hflex flex-block-122">
+          <div className="w-layout-vflex">
+            <div className="text-block-10">{title}</div>
+            {brand && <div className="text-block-11">{brand}</div>}
+          </div>
+          <a
+            href="#"
             className={`button-icon w-inline-block ${inCart || localInCart ? 'in-cart' : ''}`}
             onClick={inCart ? undefined : handleAddToCart}
-            style={{ 
-              cursor: inCart || localInCart ? 'default' : 'pointer', 
+            style={{
+              cursor: inCart || localInCart ? 'default' : 'pointer',
               textDecoration: 'none',
               opacity: inCart || localInCart ? 0.5 : 1,
-              backgroundColor: inCart || localInCart ? '#9ca3af' : undefined
+              backgroundColor: inCart || localInCart ? '#9ca3af' : undefined,
+              filter: inCart || localInCart ? 'grayscale(1)' : 'none'
             }}
-            aria-label={inCart || localInCart ? "Товар уже в корзине" : "Добавить в корзину"}
-            title={inCart || localInCart ? "Товар уже в корзине" : "Добавить в корзину"}
+            aria-label={inCart || localInCart ? 'Товар уже в корзине' : 'Добавить в корзину'}
+            title={inCart || localInCart ? 'Товар уже в корзине' : 'Добавить в корзину'}
           >
             <div className="div-block-26">
               <div className="icon-setting w-embed">

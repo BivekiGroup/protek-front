@@ -92,7 +92,6 @@ const BestPriceSection: React.FC = () => {
       image: item.product.images?.[0]?.url || "images/162615.webp", // Fallback изображение
       discount: `-${item.discount}%`,
       price: formatPrice(calculateDiscountedPrice(item.product.retailPrice, item.discount)),
-      oldPrice: formatPrice(item.product.retailPrice),
       title: item.product.name,
       brand: item.product.brand || "",
       article: item.product.article,
