@@ -140,22 +140,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
           tabIndex={-1}
         />
         <div
-          className="relative z-10 flex flex-col gap-4 items-start bg-white rounded-3xl shadow-xl w-[650px] max-w-full min-h-[320px] px-12 py-10 max-md:px-6 max-md:py-8 max-sm:gap-8 max-sm:p-5"
+          className="relative z-10 flex flex-col gap-6 items-start bg-white rounded-3xl shadow-xl w-[480px] max-w-[90vw] min-h-[280px] px-8 py-8 max-md:px-6 max-md:py-6 max-sm:gap-6 max-sm:p-5"
           style={{ marginTop: 0 }}
           onClick={(event) => event.stopPropagation()}
         >
           {/* Кнопка закрытия */}
           <button
             onClick={handleClose}
-            className="absolute right-5 top-5 inline-flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-300"
             aria-label="Закрыть окно авторизации"
             tabIndex={0}
           >
             <X className="h-5 w-5 text-gray-900" strokeWidth={1.8} />
           </button>
           {/* Заголовок */}
-          <div className="flex relative justify-between items-start w-full max-sm:flex-col max-sm:gap-5">
-            <div className="relative text-5xl font-bold  leading-[62.4px] text-gray-950 max-md:text-5xl max-sm:self-start max-sm:text-3xl">
+          <div className="flex relative justify-between items-start w-full max-sm:flex-col max-sm:gap-4">
+            <div className="relative text-[32px] font-semibold leading-[38px] text-gray-950 max-sm:self-start max-sm:text-[26px] max-sm:leading-[32px]">
               Вход или регистрация
             </div>
           </div>
@@ -175,4 +175,4 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
   )
 }
 
-export default AuthModal 
+export default AuthModal

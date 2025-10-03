@@ -88,23 +88,27 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ onSuccess, onError, onRegister 
   }
 
     return (
-    <div className="flex flex-col gap-5 w-full">
-      <label className="text-2xl leading-8 text-gray-950 mb-2 font-normal font-[Onest,sans-serif] "           
-      style={{
-            fontSize: '22px',
-            lineHeight: '1.4',
-            fontWeight: 400,
-            fontFamily: 'Onest, sans-serif',
-            color: '#000814'
-          }}>Введите номер телефона</label>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5 w-full">
-        <div className="flex gap-5 items-center w-full max-md:flex-col max-md:gap-4 max-sm:gap-3">
+    <div className="flex flex-col gap-4 w-full">
+      <label
+        className="text-xl leading-[30px] text-gray-950 font-normal font-[Onest,sans-serif]"
+        style={{
+          fontSize: '20px',
+          lineHeight: '1.4',
+          fontWeight: 400,
+          fontFamily: 'Onest, sans-serif',
+          color: '#000814'
+        }}
+      >
+        Введите номер телефона
+      </label>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
+        <div className="flex gap-4 items-center w-full max-md:flex-col max-md:gap-4 max-sm:gap-3">
           <input
             type="tel"
             value={`+7 ${phone}`}
             onChange={handlePhoneChange}
             placeholder="+7 (999) 999-99-99"
-            className="max-w-[360px] w-full h-[70px] px-[30px] py-[20px] text-[20px] leading-[1.4] font-[Onest,sans-serif] text-neutral-500 bg-white border border-stone-300 rounded focus:outline-none min-w-0 max-md:w-[300px] max-sm:w-full"
+            className="max-w-[320px] w-full h-[56px] px-5 py-4 text-[18px] leading-[1.4] font-[Onest,sans-serif] text-neutral-500 bg-white border border-stone-300 rounded-lg focus:outline-none min-w-0 max-md:w-[280px] max-sm:w-full"
             disabled={isLoading}
             required
             aria-label="Введите номер телефона"
@@ -112,7 +116,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ onSuccess, onError, onRegister 
           <button
             type="submit"
             disabled={isLoading || phone.replace(/\D/g, '').length !== 10}
-            className="flex items-center justify-center flex-shrink-0 bg-red-600 rounded-xl px-8 py-5 text-lg font-medium leading-5 text-white disabled:opacity-50 disabled:cursor-not-allowed h-[70px] max-sm:px-6 max-sm:py-4"
+            className="flex items-center justify-center flex-shrink-0 bg-red-600 rounded-lg px-6 py-4 text-base font-medium leading-5 text-white disabled:opacity-50 disabled:cursor-not-allowed h-[56px] max-sm:px-5 max-sm:py-3"
             style={{ color: 'white' }}
             aria-label="Получить код"
             tabIndex={0}
@@ -139,4 +143,4 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ onSuccess, onError, onRegister 
   )
 }
 
-export default PhoneInput 
+export default PhoneInput

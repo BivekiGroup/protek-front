@@ -26,7 +26,7 @@ test.describe('Редиректы неавторизованных', () => {
     await page.waitForURL(/\/login-required/, { waitUntil: 'commit', timeout: 15000 });
 
     await page.goto('/');
-    await header.getByRole('link', { name: 'Добавить в гараж' }).click();
+    await header.getByRole('link', { name: 'Гараж' }).click();
     await Promise.race([
       page.waitForURL(/\/login-required/, { waitUntil: 'commit' }),
       page.getByRole('heading', { name: 'Войдите, чтобы продолжить' }).waitFor({ state: 'visible' }),
@@ -45,6 +45,5 @@ test.afterEach(async ({ page }, testInfo) => {
   const full = await page.screenshot({ fullPage: true });
   await testInfo.attach('fullpage-screenshot', { body: full, contentType: 'image/png' });
 });
-
 
 

@@ -53,31 +53,31 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({
   }
 
   return (
-    <div className="flex flex-col gap-5 w-full">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5 w-full">
-        <div className="flex gap-5 items-end w-full max-md:flex-col max-md:gap-4 max-sm:gap-3">
+    <div className="flex flex-col gap-4 w-full">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
+        <div className="flex gap-4 items-end w-full max-md:flex-col max-md:gap-4 max-sm:gap-3">
           {/* Имя */}
-          <div className="flex flex-col gap-3 max-w-[360px] w-full">
-            <label className="text-2xl leading-8 text-gray-950 mb-2 font-normal font-[Onest,sans-serif]">Введите имя</label>
+          <div className="flex flex-col gap-2 max-w-[320px] w-full">
+            <label className="text-xl leading-[30px] text-gray-950 font-normal font-[Onest,sans-serif]">Введите имя</label>
             <input
               type="text"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder="Иван"
-              className="max-w-[360px] w-full h-[62px] px-6 py-4 text-[18px] leading-[1.4] font-normal font-[Onest,sans-serif] text-neutral-500 bg-white border border-stone-300 rounded focus:outline-none"
+              className="max-w-[320px] w-full h-[52px] px-5 py-3 text-[17px] leading-[1.4] font-normal font-[Onest,sans-serif] text-neutral-500 bg-white border border-stone-300 rounded-lg focus:outline-none"
               disabled={isLoading}
               required
             />
           </div>
           {/* Фамилия */}
-          <div className="flex flex-col gap-3 max-w-[360px] w-full">
-            <label className="text-2xl leading-8 text-gray-950 mb-2 font-normal font-[Onest,sans-serif]">Фамилию</label>
+          <div className="flex flex-col gap-2 max-w-[320px] w-full">
+            <label className="text-xl leading-[30px] text-gray-950 font-normal font-[Onest,sans-serif]">Фамилию</label>
             <input
               type="text"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               placeholder="Иванов"
-              className="max-w-[360px] w-full h-[62px] px-6 py-4 text-[18px] leading-[1.4] font-normal font-[Onest,sans-serif] text-neutral-500 bg-white border border-stone-300 rounded focus:outline-none"
+              className="max-w-[320px] w-full h-[52px] px-5 py-3 text-[17px] leading-[1.4] font-normal font-[Onest,sans-serif] text-neutral-500 bg-white border border-stone-300 rounded-lg focus:outline-none"
               disabled={isLoading}
               required
             />
@@ -86,7 +86,7 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({
           <button
             type="submit"
             disabled={isLoading || !firstName.trim() || !lastName.trim()}
-            className="flex items-center justify-center flex-shrink-0 bg-red-600 rounded-xl px-8 py-5 text-lg font-medium leading-5 text-white disabled:opacity-50 disabled:cursor-not-allowed h-[70px] max-sm:px-6 max-sm:py-4"
+            className="flex items-center justify-center flex-shrink-0 bg-red-600 rounded-lg px-6 py-4 text-base font-medium leading-5 text-white disabled:opacity-50 disabled:cursor-not-allowed h-[56px] max-sm:px-5 max-sm:py-3"
             style={{
               color: 'white'
             }}
@@ -102,4 +102,4 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({
   )
 }
 
-export default UserRegistration 
+export default UserRegistration

@@ -302,7 +302,7 @@ header.section-4 {
 
 .flex-block-6-copy-copy {
   overflow-x: auto !important;
-  overflow-y: hidden !important;
+  overflow-y: visible !important;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE и Edge */
 }
@@ -986,6 +986,7 @@ a.link-block-2.w-inline-block  {
   max-width: 100%;
   /* overflow: hidden; */
   padding-bottom: 24px;
+  padding-top: 12px;
   overflow: visible;
   
 }
