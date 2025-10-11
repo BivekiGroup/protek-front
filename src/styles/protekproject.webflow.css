@@ -1989,7 +1989,7 @@ body {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  max-width: 1920px;
+  max-width: 1580px;
   padding: 40px 60px;
   display: flex;
 }
@@ -4061,7 +4061,7 @@ body {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  max-width: 1920px;
+  max-width: 1580px;
   padding: 10px 60px;
   display: flex;
 }

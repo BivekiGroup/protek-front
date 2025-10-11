@@ -20,6 +20,7 @@ const BestPriceItem: React.FC<BestPriceItemProps> = ({
   image,
   discount,
   price,
+  oldPrice,
   title,
   brand,
   article,
@@ -146,7 +147,7 @@ const BestPriceItem: React.FC<BestPriceItemProps> = ({
 
   return (
     <div
-      className="w-layout-vflex flex-block-15-copy"
+      className="w-layout-vflex flex-block-15-copy best-price-card"
       onClick={handleOpenCard}
       role="link"
       tabIndex={0}
@@ -177,11 +178,12 @@ const BestPriceItem: React.FC<BestPriceItemProps> = ({
           alt={title}
           className="image-5"
         />
-        <div className="text-block-7">{discount}</div>
+        {discount ? <div className="text-block-7 best-price-discount">{discount}</div> : null}
       </div>
       <div className="div-block-3">
-        <div className="w-layout-hflex flex-block-16">
+        <div className="w-layout-hflex flex-block-16 best-price-price-row">
           <div className="text-block-8">{price}</div>
+          {oldPrice ? <div className="text-block-9 best-price-old-price">{oldPrice}</div> : null}
         </div>
         <div className="w-layout-hflex flex-block-122">
           <div className="w-layout-vflex">

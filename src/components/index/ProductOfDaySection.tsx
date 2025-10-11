@@ -60,7 +60,8 @@ const ProductOfDaySection: React.FC = () => {
   }, [activeProducts.length]);
 
   // Текущий товар для отображения
-  const currentProduct = activeProducts[currentSlide];
+  const hasProductOfDay = !loading && !error && activeProducts.length > 0;
+  const currentProduct = hasProductOfDay ? activeProducts[currentSlide] : null;
 
   // Функция для расчета цены со скидкой
   const calculateDiscountedPrice = (price: number, discount?: number) => {
@@ -98,50 +99,54 @@ const ProductOfDaySection: React.FC = () => {
 
   // Обработчики для навигации по товарам дня
   const handlePrevSlide = (e: React.MouseEvent) => {
+    if (activeProducts.length < 1) return;
     e.preventDefault();
     e.stopPropagation();
     setCurrentSlide(prev => prev === 0 ? activeProducts.length - 1 : prev - 1);
   };
 
   const handleNextSlide = (e: React.MouseEvent) => {
+    if (activeProducts.length < 1) return;
     e.preventDefault();
     e.stopPropagation();
     setCurrentSlide(prev => prev === activeProducts.length - 1 ? 0 : prev + 1);
   };
 
   const handlePrevSlideTouch = (e: React.TouchEvent) => {
+    if (activeProducts.length < 1) return;
     e.preventDefault();
     e.stopPropagation();
     setCurrentSlide(prev => prev === 0 ? activeProducts.length - 1 : prev - 1);
   };
 
   const handleNextSlideTouch = (e: React.TouchEvent) => {
+    if (activeProducts.length < 1) return;
     e.preventDefault();
     e.stopPropagation();
     setCurrentSlide(prev => prev === activeProducts.length - 1 ? 0 : prev + 1);
   };
 
   const handleSlideIndicator = (index: number) => {
+    if (index < 0 || index >= activeProducts.length) return;
     setCurrentSlide(index);
   };
 
-  // Если нет активных товаров дня, не показываем секцию
-  if (loading || error || activeProducts.length === 0) {
-    return null;
-  }
-
-  const product = currentProduct.product;
-  const productImage = getProductImage(product);
+  const product = currentProduct?.product;
+  const productImage = product ? getProductImage(product) : null;
   
-  const originalPrice = product.retailPrice || product.wholesalePrice || 0;
-  const discountedPrice = calculateDiscountedPrice(originalPrice, currentProduct.discount);
-  const hasDiscount = currentProduct.discount && currentProduct.discount > 0;
+  const originalPrice = product ? (product.retailPrice || product.wholesalePrice || 0) : 0;
+  const discountedPrice = currentProduct ? calculateDiscountedPrice(originalPrice, currentProduct.discount) : 0;
+  const hasDiscount = !!(currentProduct && currentProduct.discount && currentProduct.discount > 0);
 
   // Переход в карточку товара
-  const cardUrl = (product.article && product.brand)
-    ? `/card?article=${encodeURIComponent(product.article)}&brand=${encodeURIComponent(product.brand!)}&artId=${encodeURIComponent(product.id)}`
-    : `/card?artId=${encodeURIComponent(product.id)}`;
+  const cardUrl = product
+    ? ((product.article && product.brand)
+      ? `/card?article=${encodeURIComponent(product.article)}&brand=${encodeURIComponent(product.brand!)}&artId=${encodeURIComponent(product.id)}`
+      : `/card?artId=${encodeURIComponent(product.id)}`
+    )
+    : '';
   const openCard = (e?: React.MouseEvent) => {
+    if (!cardUrl) return;
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -152,9 +157,10 @@ const ProductOfDaySection: React.FC = () => {
   return (
     <section className="main">
       <div className="w-layout-blockcontainer batd w-container">
-        <div className="w-layout-hflex flex-block-108">
+        <div className="w-layout-hflex flex-block-108" style={!hasProductOfDay ? { width: '100%' } : undefined}>
           <ProductOfDayBanner />
           
+          {hasProductOfDay && currentProduct && product && (
           <div className="div-block-129 product-of-day-card">
             <div className="w-layout-hflex flex-block-109">
               <h1 className="heading-18">ТОВАРЫ ДНЯ</h1>
@@ -284,6 +290,7 @@ const ProductOfDaySection: React.FC = () => {
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
     </section>
