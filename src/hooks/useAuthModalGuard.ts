@@ -6,12 +6,19 @@ import { useAuthPrompt } from '@/contexts/AuthPromptContext';
 /**
  * Ensures protected pages trigger the global auth modal and only render when the user is authorised.
  */
-export function useAuthModalGuard() {
+export function useAuthModalGuard(enabled = true) {
   const router = useRouter();
   const { openAuthPrompt } = useAuthPrompt();
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(enabled ? null : true);
 
   useEffect(() => {
+    if (!enabled) {
+      setIsAuthorized(true);
+      return;
+    }
+
+    setIsAuthorized((prev) => (prev === null ? prev : null));
+
     if (!router.isReady) {
       return;
     }
@@ -47,7 +54,7 @@ export function useAuthModalGuard() {
         unsubscribe();
       }
     };
-  }, [router.isReady, router.asPath, openAuthPrompt]);
+  }, [enabled, router.isReady, router.asPath, openAuthPrompt]);
 
   return isAuthorized;
 }

@@ -7,6 +7,20 @@ interface VehicleSearchResultsProps {
   catalogInfo: LaximoCatalogInfo;
 }
 
+const ROW_DEFINITIONS: Array<{ label: string; keys: string[] }> = [
+  { label: 'Марка', keys: ['brand', 'марка'] },
+  { label: 'Название', keys: ['name', 'название'] },
+  { label: 'Модель', keys: ['model', 'модель'] },
+  { label: 'Код в каталоге', keys: ['catalog', 'catalog code', 'catalogcode', 'код в каталоге'] },
+  { label: 'Описание', keys: ['description', 'описание'] },
+  { label: 'displacement', keys: ['displacement', 'объем', 'объем двигателя'] },
+  { label: 'power', keys: ['power', 'мощность'] },
+  { label: 'drive', keys: ['drive', 'привод'] },
+  { label: 'bodyworkType', keys: ['bodyworktype', 'bodywork type', 'кузов', 'тип кузова'] },
+  { label: 'fuel', keys: ['fuel', 'fuel type', 'топливо', 'тип топлива'] },
+  { label: 'trimlevel', keys: ['trimlevel', 'trim level', 'комплектация'] },
+];
+
 const VehicleSearchResults: React.FC<VehicleSearchResultsProps> = ({
   results,
   catalogInfo
@@ -14,49 +28,18 @@ const VehicleSearchResults: React.FC<VehicleSearchResultsProps> = ({
   const router = useRouter();
 
   const handleSelectVehicle = (vehicle: LaximoVehicleSearchResult) => {
-    console.log('🚗 handleSelectVehicle вызвана для:', vehicle);
-    
-    // Формируем SSD из данных vehicle или берем из router query
     const routerSsd = Array.isArray(router.query.ssd) ? router.query.ssd[0] : router.query.ssd;
     const ssd = vehicle.ssd || routerSsd || '';
     const brand = router.query.brand || catalogInfo.code;
-    
-    console.log('🚗 Selected vehicle:', vehicle);
-    console.log('🔧 Vehicle SSD:', vehicle.ssd ? `${vehicle.ssd.substring(0, 50)}...` : 'отсутствует');
-    console.log('🔧 Router SSD:', routerSsd ? `${routerSsd.substring(0, 50)}...` : 'отсутствует');
-    console.log('🔧 Final SSD to pass:', ssd ? `${ssd.substring(0, 50)}...` : 'отсутствует');
-    console.log('🔧 SSD length:', ssd.length);
-    console.log('🔧 Brand для навигации:', brand);
-    console.log('🔧 Vehicle ID:', vehicle.vehicleid);
-    
-    // Переходим на страницу автомобиля с SSD
+
     if (ssd && ssd.trim() !== '') {
-      // Всегда используем localStorage для SSD, так как VW SSD очень длинные
-      console.log('💾 Сохраняем SSD в localStorage для безопасной передачи');
       const vehicleKey = `vehicle_ssd_${brand}_${vehicle.vehicleid}`;
-      console.log('💾 Ключ localStorage:', vehicleKey);
       localStorage.setItem(vehicleKey, ssd);
-      console.log('💾 SSD сохранен в localStorage');
-      
-      const targetUrl = `/vehicle-search/${brand}/${vehicle.vehicleid}?use_storage=1&ssd_length=${ssd.length}`;
-      console.log('🔗 Переходим по URL:', targetUrl);
-      router.push(targetUrl);
+      router.push(`/vehicle-search/${brand}/${vehicle.vehicleid}?use_storage=1&ssd_length=${ssd.length}`);
     } else {
-      console.log('⚠️ SSD отсутствует, переходим без него');
       router.push(`/vehicle-search/${brand}/${vehicle.vehicleid}`);
     }
   };
-
-  // Функция для условного отображения атрибута
-  const renderAttribute = (label: string, value: string | undefined) => {
-    if (!value || value === '' || value === 'undefined') return null
-    return (
-      <div className="flex justify-between py-1 border-b border-gray-100">
-        <span className="text-sm text-gray-600 font-medium">{label}:</span>
-        <span className="text-sm text-gray-900">{value}</span>
-      </div>
-    )
-  }
 
   const normalizedResults = React.useMemo(() => {
     const seen = new Set<string>();
@@ -111,96 +94,124 @@ const VehicleSearchResults: React.FC<VehicleSearchResultsProps> = ({
       </h3>
       
       <div className="flex flex-wrap flex-1 gap-5 size-full max-md:max-w-full">
-        {normalizedResults.map((vehicle, index) => (
-          <div
-            key={`${vehicle.vehicleid}-${index}`}
-           className="flex flex-col flex-1 shrink p-8 bg-white rounded-lg border border-solid basis-0 border-stone-300 max-w-[504px] md:min-w-[370px] sm:min-w-[340px] min-w-[200px] max-md:px-5 cursor-pointer transition-shadow hover:shadow-lg"
-            onClick={() => handleSelectVehicle(vehicle)}
-          >
-            {/* Заголовок автомобиля */}
-            <div className="">
-              <h4 className="text-lg font-semibold text-red-600 mb-1 truncate">
-                {vehicle.name || `${vehicle.brand} ${vehicle.model}`}
-              </h4>
-              {/* <p className="text-sm text-gray-500 truncate">
-                {vehicle.modification} ({vehicle.year})
-              </p> */}
-            </div>
+        {normalizedResults.map((vehicle, index) => {
+          const attributeMap: Record<string, string> = {};
+          (vehicle.attributes || []).forEach((attr) => {
+            const key = (attr.name || attr.key || '').trim().toLowerCase();
+            if (!key) return;
+            if (!attributeMap[key]) {
+              attributeMap[key] = attr.value;
+            }
+          });
 
-            {/* Основные характеристики */}
-            <div className="space-y-1 mb-4">
-              <h5 className="text-base font-semibold text-gray-900 mb-2">Основные характеристики</h5>
-              {renderAttribute('Марка', vehicle.brand)}
-              {renderAttribute('Модель', vehicle.model)}
-              {renderAttribute('Двигатель', vehicle.engine)}
-            </div>
+          const pickValue = (...keys: string[]): { value: string | null; matchedKey: string | null } => {
+            for (const rawKey of keys) {
+              const key = rawKey.trim();
+              const vehicleValue = (vehicle as Record<string, unknown>)[key];
+              if (typeof vehicleValue === 'string' && vehicleValue.trim()) {
+                return { value: vehicleValue.trim(), matchedKey: key.toLowerCase() };
+              }
+              const normalized = key.toLowerCase();
+              if (attributeMap[normalized]) {
+                return { value: attributeMap[normalized], matchedKey: normalized };
+              }
+            }
+            return { value: null, matchedKey: null };
+          };
 
-            {/* Все атрибуты из API */}
-            {vehicle.attributes && vehicle.attributes.length > 0 && (
-              <div className="space-y-1 mb-4">
-                <h5 className="text-base font-semibold text-gray-900 mb-2">Дополнительные характеристики</h5>
-                {vehicle.attributes.map((attr, attrIndex) => (
-                  <div key={attrIndex} className="flex justify-between py-1 border-b border-gray-100">
-                    <span className="text-sm text-gray-600 font-medium">{attr.name || attr.key}:</span>
-                    <span className="text-sm text-gray-900">{attr.value}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+          const handledKeys = new Set<string>();
 
-            {/* Технические характеристики (fallback для старых данных) */}
-            {(!vehicle.attributes || vehicle.attributes.length === 0) && (
-              <>
-                <div className="space-y-1 mb-4">
-                  <h5 className="text-base font-semibold text-gray-900 mb-2">Дополнительные характеристики</h5>
-                  {renderAttribute('Год', vehicle.year)}
-                  {renderAttribute('Кузов', vehicle.bodytype)}
-                  {renderAttribute('Трансмиссия', vehicle.transmission)}
-                  {renderAttribute('Класс', vehicle.grade)}
-                  {renderAttribute('Цвет кузова', vehicle.framecolor)}
-                  {renderAttribute('Цвет салона', vehicle.trimcolor)}
-                  {renderAttribute('Рынок', vehicle.market)}
-                  {renderAttribute('Регион производства', vehicle.creationregion)}
-                  {renderAttribute('Регион назначения', vehicle.destinationregion)}
+          const rows = ROW_DEFINITIONS
+            .map((row) => {
+              const { value, matchedKey } = pickValue(...row.keys);
+              if (!value) {
+                return null;
+              }
+              if (matchedKey) {
+                handledKeys.add(matchedKey);
+              }
+              row.keys.forEach((key) => {
+                handledKeys.add(key.trim().toLowerCase());
+              });
+              return { label: row.label, value };
+            })
+            .filter((row): row is { label: string; value: string } => Boolean(row));
+
+          const optionsResult = pickValue('options');
+          if (optionsResult.matchedKey) {
+            handledKeys.add(optionsResult.matchedKey);
+          }
+          handledKeys.add('options');
+          handledKeys.add('опции');
+          handledKeys.add('other options');
+
+          const additionalOptions =
+            optionsResult.value ||
+            (vehicle.attributes || [])
+              .filter((attr) => {
+                const key = (attr.name || attr.key || '').trim().toLowerCase();
+                if (!key) return false;
+                if (handledKeys.has(key)) return false;
+                return true;
+              })
+              .map((attr) => {
+                const title = attr.name || attr.key;
+                return title ? `${title.toUpperCase()}: ${attr.value}` : attr.value;
+              })
+              .join('\n');
+
+          const hasAdditional = Boolean(additionalOptions);
+
+          return (
+            <div
+              key={`${vehicle.vehicleid}-${index}`}
+              className="flex flex-col flex-1 shrink bg-white rounded-[20px] border border-[#E6EDF6] shadow-sm hover:shadow-md transition-shadow basis-0 max-w-[520px] md:min-w-[400px] sm:min-w-[320px] min-w-[220px] cursor-pointer"
+              onClick={() => handleSelectVehicle(vehicle)}
+            >
+              <div className="flex flex-col h-full p-[30px] gap-4">
+                <div className="w-full">
+                  <h4 className="text-[24px] leading-[120%] font-semibold text-black uppercase tracking-wide">
+                    {vehicle.name || `${vehicle.brand} ${vehicle.model}`}
+                  </h4>
                 </div>
 
-                <div className="space-y-1 mb-4">
-                  <h5 className="text-base font-semibold text-gray-900 mb-2">Технические характеристики</h5>
-                  {renderAttribute('Информация о двигателе', vehicle.engine_info)}
-                  {renderAttribute('Номер двигателя', vehicle.engineno)}
-                  {renderAttribute('Дата производства', vehicle.date)}
-                  {renderAttribute('Произведен', vehicle.manufactured)}
-                  {renderAttribute('Период производства', vehicle.prodPeriod)}
-                  {renderAttribute('Диапазон производства', vehicle.prodRange)}
-                </div>
-
-                <div className="space-y-1 mb-4">
-                  <h5 className="text-base font-semibold text-gray-900 mb-2">Даты и периоды</h5>
-                  {renderAttribute('Дата с', vehicle.datefrom)}
-                  {renderAttribute('Дата по', vehicle.dateto)}
-                  {renderAttribute('Модельный год с', vehicle.modelyearfrom)}
-                  {renderAttribute('Модельный год по', vehicle.modelyearto)}
-                </div>
-
-                {/* Опции и описание */}
-                {(vehicle.options || vehicle.description || vehicle.notes) && (
-                  <div className="space-y-1 mb-4">
-                    <h5 className="text-base font-semibold text-gray-900 mb-2">Опции и описание</h5>
-                    {renderAttribute('Опции', vehicle.options)}
-                    {renderAttribute('Описание', vehicle.description)}
-                    {renderAttribute('Примечания', vehicle.notes)}
+                {rows.length > 0 && (
+                  <div className="w-full space-y-2">
+                    {rows.map((row, rowIdx) => (
+                      <div
+                        key={`${row.label}-${rowIdx}`}
+                        className={`flex items-center justify-between gap-6 text-[16px] leading-[120%] ${rowIdx < rows.length - 1 ? 'pb-2 border-b border-[#E6EDF6]' : 'pb-2'}`}
+                      >
+                        <span className="font-medium text-[#424F60]">
+                          {row.label}
+                        </span>
+                        <span
+                          className="font-semibold text-[#181D23] truncate text-right"
+                          title={row.value || undefined}
+                        >
+                          {row.value}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
-              </>
-            )}
 
-            {/* Системная информация */}
+                {hasAdditional && (
+                  <div className="mt-auto pt-5 text-[16px] leading-[120%]">
+                    <div className="font-semibold text-[#181D23] mb-2">
+                      Другие опции
+                    </div>
+                    <div className="text-[#181D23] whitespace-pre-wrap">{additionalOptions}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
 
-          </div>
-        ))}
       </div>
     </div>
   );
 };
 
-export default VehicleSearchResults; 
+export default VehicleSearchResults;

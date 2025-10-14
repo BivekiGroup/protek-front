@@ -4,6 +4,7 @@ import { useQuery } from "@apollo/client";
 import { GET_LAXIMO_BRANDS } from "@/lib/graphql";
 import { LaximoBrand } from "@/types/laximo";
 import { Combobox } from '@headlessui/react';
+import { useAuthPrompt } from "@/contexts/AuthPromptContext";
 
 const tabs = [
   "Техническое обслуживание",
@@ -19,6 +20,7 @@ const BrandSelectionSection: React.FC = () => {
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [brandQuery, setBrandQuery] = useState('');
   const router = useRouter();
+  const { openAuthPrompt } = useAuthPrompt();
 
   const { data, loading, error } = useQuery<{ laximoBrands: LaximoBrand[] }>(GET_LAXIMO_BRANDS, {
     errorPolicy: 'all'
@@ -50,9 +52,19 @@ const BrandSelectionSection: React.FC = () => {
     return brands.filter(b => b.name.toLowerCase().includes(brandQuery.toLowerCase()));
   }, [brands, brandQuery]);
 
+  const navigateWithAuthCheck = (path: string) => {
+    const hasToken = typeof window !== 'undefined' && Boolean(localStorage.getItem('authToken'));
+    if (!hasToken) {
+      openAuthPrompt({ targetPath: path });
+      return false;
+    }
+    router.push(path);
+    return true;
+  };
+
   const handleBrandClick = (brand: Brand) => {
     if (brand.code) {
-      router.push(`/brands?selected=${brand.code}`);
+      navigateWithAuthCheck(`/brands?selected=${brand.code}`);
     } else {
       console.warn('Brand code not available for', brand.name);
     }
@@ -63,11 +75,11 @@ const BrandSelectionSection: React.FC = () => {
     if (selectedBrand) {
       const found = brands.find(b => b.code === selectedBrand.code || b.name === selectedBrand.name);
       if (found && found.code) {
-        router.push(`/brands?selected=${found.code}`);
+        navigateWithAuthCheck(`/brands?selected=${found.code}`);
         return;
       }
     }
-    router.push("/brands");
+    navigateWithAuthCheck("/brands");
   };
 
   if (loading) {
@@ -119,7 +131,7 @@ const BrandSelectionSection: React.FC = () => {
                 ))}
               </div>
               <button
-                onClick={() => router.push('/brands')}
+                onClick={() => navigateWithAuthCheck('/brands')}
                 className="w-layout-hflex flex-block-29 cursor-pointer hover:opacity-80 transition-opacity"
                 style={{ background: 'none', border: 'none', padding: 0 }}
               >

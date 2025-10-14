@@ -17,10 +17,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onRequestLo
   if (!open) return null;
   return (
     <>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-      />
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 bg-opacity-50 transition-opacity"
         onClick={onClose}

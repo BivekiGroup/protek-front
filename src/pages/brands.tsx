@@ -10,6 +10,7 @@ import { LaximoBrand } from "@/types/laximo";
 import BrandWizardSearchSection from "@/components/BrandWizardSearchSection";
 import MetaTags from "@/components/MetaTags";
 import { getMetaByPath } from "@/lib/meta-config";
+import useAuthModalGuard from '@/hooks/useAuthModalGuard';
 
 const InfoBrands = () => (
   <section className="section-info">
@@ -38,6 +39,7 @@ const BrandsPage = () => {
   const router = useRouter();
   const [selectedLetter, setSelectedLetter] = useState<string>('');
   const { data, loading, error } = useQuery<{ laximoBrands: LaximoBrand[] }>(GET_LAXIMO_BRANDS, { errorPolicy: 'all' });
+  const authStatus = useAuthModalGuard();
 
   const staticBrands = [
     { name: "Audi", code: "audi" },
@@ -88,6 +90,18 @@ const BrandsPage = () => {
   };
 
   const metaData = getMetaByPath('/brands');
+
+  if (authStatus === null) {
+    return null;
+  }
+
+  if (!authStatus) {
+    return (
+      <>
+        <MetaTags {...metaData} />
+      </>
+    );
+  }
 
   return (
     <>

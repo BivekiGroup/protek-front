@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useQuery } from "@apollo/client";
 import { GET_LAXIMO_BRANDS } from "@/lib/graphql";
 import { LaximoBrand } from "@/types/laximo";
+import { useAuthPrompt } from "@/contexts/AuthPromptContext";
 
 const tabs = [
   "Техническое обслуживание",
@@ -14,6 +15,7 @@ const tabs = [
 const CatalogSection = () => {
   const [activeTab, setActiveTab] = useState(0);
   const router = useRouter();
+  const { openAuthPrompt } = useAuthPrompt();
   
   const { data, loading, error } = useQuery<{ laximoBrands: LaximoBrand[] }>(GET_LAXIMO_BRANDS, {
     errorPolicy: 'all'
@@ -48,9 +50,19 @@ const CatalogSection = () => {
     console.warn('Laximo API недоступен, используются статические данные:', error.message);
   }
 
+  const navigateWithAuthCheck = (path: string) => {
+    const hasToken = typeof window !== 'undefined' && Boolean(localStorage.getItem('authToken'));
+    if (!hasToken) {
+      openAuthPrompt({ targetPath: path });
+      return false;
+    }
+    router.push(path);
+    return true;
+  };
+
   const handleBrandClick = (brand: { name: string; code?: string }) => {
     if (brand.code) {
-      router.push(`/brands?selected=${brand.code}`);
+      navigateWithAuthCheck(`/brands?selected=${brand.code}`);
     } else {
       console.warn('Brand code not available for', brand.name);
     }
@@ -107,7 +119,7 @@ const CatalogSection = () => {
                 ))}
               </div>
               <button 
-                onClick={() => router.push('/brands')}
+                onClick={() => navigateWithAuthCheck('/brands')}
                 className="w-layout-hflex flex-block-29 cursor-pointer hover:opacity-80 transition-opacity"
                 style={{ background: 'none', border: 'none', padding: 0 }}
               >

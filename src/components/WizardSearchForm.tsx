@@ -214,6 +214,12 @@ const WizardSearchForm: React.FC<WizardSearchFormProps> = ({
     step.allowlistvehicles && (step.determined || selectedParams[step.conditionid])
   );
 
+  // Сообщение скрывается только когда выбраны все доступные параметры
+  const allParamsSelected = wizardSteps.every(step => {
+    if (step.determined) return true;
+    return Boolean(selectedParams[step.conditionid]);
+  });
+
   // Скрывать кнопку и блок после поиска, показывать при изменении параметров
   React.useEffect(() => {
     setShowSearchButton(true);
@@ -386,20 +392,22 @@ const WizardSearchForm: React.FC<WizardSearchFormProps> = ({
           >
             Найти
           </button>
-          <div
-            layer-name="Выберите больше параметров для поиска автомобилей"
-            className="box-border inline-flex gap-5 items-center px-10 py-4 rounded-xl bg-slate-50 h-[52px] max-md:px-8 max-md:py-3.5 max-md:w-full max-md:h-auto max-md:max-w-[524px] max-md:min-h-[52px] max-sm:gap-3 max-sm:px-5 max-sm:py-3 max-sm:w-full max-sm:rounded-lg max-sm:justify-center"
-          >
-            <div>
-              <img src="/images/info.svg" alt="info" style={{ width: 18, height: 20, flexShrink: 0 }} />
-            </div>
+          {!allParamsSelected && (
             <div
               layer-name="Выберите больше параметров для поиска автомобилей"
-              className="relative text-base font-medium leading-5 text-center text-gray-950 max-md:text-sm max-sm:text-sm max-sm:leading-4 max-sm:text-center"
+              className="box-border inline-flex gap-5 items-center px-10 py-4 rounded-xl bg-slate-50 h-[52px] max-md:px-8 max-md:py-3.5 max-md:w-full max-md:h-auto max-md:max-w-[524px] max-md:min-h-[52px] max-sm:gap-3 max-sm:px-5 max-sm:py-3 max-sm:w-full max-sm:rounded-lg max-sm:justify-center"
             >
-              Выберите больше параметров для поиска автомобилей
+              <div>
+                <img src="/images/info.svg" alt="info" style={{ width: 18, height: 20, flexShrink: 0 }} />
+              </div>
+              <div
+                layer-name="Выберите больше параметров для поиска автомобилей"
+                className="relative text-base font-medium leading-5 text-center text-gray-950 max-md:text-sm max-sm:text-sm max-sm:leading-4 max-sm:text-center"
+              >
+                Выберите больше параметров для поиска автомобилей
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

@@ -14,6 +14,10 @@ export default function Document() {
         {/* Preconnect для производительности */}
         <link href="https://fonts.googleapis.com" rel="preconnect" />
         <link href="https://fonts.gstatic.com" rel="preconnect" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
         
         {/* Favicon */}
         <link href="/images/favicon.png" rel="shortcut icon" type="image/x-icon" />

@@ -9,11 +9,14 @@ import { GET_LAXIMO_CATALOG_INFO } from '@/lib/graphql';
 import { LaximoCatalogInfo } from '@/types/laximo';
 import MetaTags from '@/components/MetaTags';
 import { getMetaByPath } from '@/lib/meta-config';
+import useAuthModalGuard from '@/hooks/useAuthModalGuard';
 
 const VehicleSearchPage = () => {
   const router = useRouter();
   const { brand } = router.query;
   const [searchType, setSearchType] = useState<'vin' | 'wizard' | 'parts' | 'plate'>('vin');
+  const authStatus = useAuthModalGuard();
+  const metaData = getMetaByPath('/vehicle-search');
 
   // Получаем информацию о каталоге
   const { data: catalogData, loading: catalogLoading } = useQuery<{ laximoCatalogInfo: LaximoCatalogInfo }>(
@@ -25,7 +28,19 @@ const VehicleSearchPage = () => {
     }
   );
 
+  if (authStatus === null) {
+    return null;
+  }
 
+  if (!authStatus) {
+    return (
+      <>
+        <MetaTags {...metaData} />
+      </>
+    );
+  }
+
+  if (catalogLoading) {
 
   if (catalogLoading) {
     return (
@@ -70,8 +85,6 @@ const VehicleSearchPage = () => {
   }
 
   const catalogInfo = catalogData.laximoCatalogInfo;
-
-  const metaData = getMetaByPath('/vehicle-search');
 
   return (
     <>

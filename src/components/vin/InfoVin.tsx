@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useAuthPrompt } from "@/contexts/AuthPromptContext";
 import VehicleAttributesTooltip from './VehicleAttributesTooltip';
 
 interface VehicleAttribute {
@@ -22,6 +23,7 @@ const InfoVin: React.FC<InfoVinProps> = ({
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const iconRef = useRef<HTMLDivElement>(null);
+  const { openAuthPrompt } = useAuthPrompt();
 
   // Отладочный вывод атрибутов
   useEffect(() => {
@@ -91,6 +93,14 @@ const InfoVin: React.FC<InfoVinProps> = ({
     }
 
     return mainParams;
+  };
+
+  const handleBrandsLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    const hasToken = typeof window !== 'undefined' && Boolean(localStorage.getItem('authToken'));
+    if (!hasToken) {
+      event.preventDefault();
+      openAuthPrompt({ targetPath: '/brands' });
+    }
   };
 
   const mainParameters = getMainParameters(vehicleAttributes);
@@ -169,7 +179,7 @@ const InfoVin: React.FC<InfoVinProps> = ({
                 <div>Главная</div>
               </a>
               <div className="text-block-3">→</div>
-              <a href="/brands" className="link-block w-inline-block">
+              <a href="/brands" className="link-block w-inline-block" onClick={handleBrandsLinkClick}>
                 <div>Оригинальный каталог</div>
               </a>
               <div className="text-block-3">→</div>

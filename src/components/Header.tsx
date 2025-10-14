@@ -354,8 +354,18 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
     setSearchType(currentSearchType);
     
     if (currentSearchType === 'vin') {
-      // Переходим на страницу результатов поиска по VIN
-      router.push(`/vehicle-search-results?q=${encodeURIComponent(searchQuery.trim().toUpperCase())}`);
+      const sanitizedVin = searchQuery.trim().toUpperCase();
+      const targetPath = `/vehicle-search-results?q=${encodeURIComponent(sanitizedVin)}`;
+      const hasAuth =
+        Boolean(currentUser) ||
+        (typeof window !== 'undefined' && Boolean(localStorage.getItem('authToken')));
+
+      if (!hasAuth) {
+        openAuthPrompt({ targetPath });
+        return;
+      }
+
+      router.push(targetPath);
     } else if (currentSearchType === 'plate') {
       // Переходим на страницу результатов поиска по госномеру
       router.push(`/vehicle-search-results?q=${encodeURIComponent(searchQuery.trim().toUpperCase())}`);

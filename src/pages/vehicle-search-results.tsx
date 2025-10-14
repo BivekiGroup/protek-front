@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import { FIND_LAXIMO_VEHICLE, FIND_LAXIMO_VEHICLE_BY_PLATE_GLOBAL } from '@/lib/graphql';
 import { LaximoVehicleSearchResult } from '@/types/laximo';
 import Link from 'next/link';
+import useAuthModalGuard from '@/hooks/useAuthModalGuard';
 
 interface VehicleSearchResultsPageProps {}
 
@@ -17,6 +18,7 @@ const VehicleSearchResultsPage: React.FC<VehicleSearchResultsPageProps> = () => 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState<'vin' | 'plate' | ''>('');
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const queryValue = typeof routerQuery.q === 'string' ? routerQuery.q : '';
 
   // Query для поиска по VIN
   const [findVehicleByVin] = useLazyQuery(FIND_LAXIMO_VEHICLE, {
@@ -62,8 +64,26 @@ const VehicleSearchResultsPage: React.FC<VehicleSearchResultsPageProps> = () => 
     return platePatterns.some(pattern => pattern.test(cleanQuery));
   };
 
+  const requiresVinGuard = isVinNumber(queryValue);
+  const authStatus = useAuthModalGuard(requiresVinGuard);
+
+  useEffect(() => {
+    if (!requiresVinGuard) {
+      return;
+    }
+
+    if (authStatus === false) {
+      setIsLoading(false);
+      setVehicles([]);
+    }
+  }, [requiresVinGuard, authStatus]);
+
   // Выполняем поиск при загрузке страницы
   useEffect(() => {
+    if (requiresVinGuard && authStatus !== true) {
+      return;
+    }
+
     if (routerQuery.q && typeof routerQuery.q === 'string') {
       const query = routerQuery.q.trim();
       setSearchQuery(query);
@@ -88,7 +108,7 @@ const VehicleSearchResultsPage: React.FC<VehicleSearchResultsPageProps> = () => 
         setIsLoading(false);
       }
     }
-  }, [routerQuery.q, findVehicleByVin, findVehicleByPlate]);
+  }, [routerQuery.q, findVehicleByVin, findVehicleByPlate, requiresVinGuard, authStatus]);
 
   const handleVehicleSelect = useCallback((vehicle: LaximoVehicleSearchResult, skipToCategories = false) => {
     console.log('🚗 handleVehicleSelect вызвана для автомобиля:', vehicle, 'skipToCategories:', skipToCategories);
@@ -170,6 +190,14 @@ const VehicleSearchResultsPage: React.FC<VehicleSearchResultsPageProps> = () => 
   const handleCancelRedirect = () => {
     setIsRedirecting(false);
   };
+
+  if (requiresVinGuard && authStatus === null) {
+    return null;
+  }
+
+  if (requiresVinGuard && authStatus === false) {
+    return null;
+  }
 
   return (
     <>
