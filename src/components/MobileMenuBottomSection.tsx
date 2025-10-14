@@ -96,12 +96,6 @@ const MobileMenuBottomSection: React.FC<MobileMenuBottomSectionProps> = ({
             icon={CartIcon} 
             label="Корзина" 
             href="/cart" 
-            onClick={(event) => {
-              if (!isAuth) {
-                event.preventDefault();
-                handleAuthRequiredNavigation('/cart');
-              }
-            }}
             counter={cartCounter} 
             status={cartState.items.length > 0 ? "danger" : undefined}
           />

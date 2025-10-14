@@ -1,37 +1,15 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback } from "react";
 import { useRouter } from "next/router";
 import { useCart } from "@/contexts/CartContext";
-import { useAuthPrompt } from "@/contexts/AuthPromptContext";
-import { onAuthChanged } from "@/lib/authEvents";
 
 const CartButton: React.FC = () => {
   const { state } = useCart();
   const { summary } = state;
   const router = useRouter();
-  const { openAuthPrompt } = useAuthPrompt();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('authToken');
-    setIsAuthenticated(Boolean(token));
-    const unsubscribe = onAuthChanged(({ status }) => {
-      setIsAuthenticated(status === 'login');
-    });
-    return () => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
-      }
-    };
-  }, []);
 
   const handleClick = useCallback(() => {
-    if (!isAuthenticated) {
-      openAuthPrompt({ targetPath: '/cart' });
-      return;
-    }
     router.push('/cart');
-  }, [isAuthenticated, openAuthPrompt, router]);
+  }, [router]);
 
   return (
     <button type="button" className="button_h w-inline-block" onClick={handleClick}>

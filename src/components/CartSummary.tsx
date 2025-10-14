@@ -4,6 +4,8 @@ import { useCart } from "@/contexts/CartContext";
 import { useMutation, useQuery } from "@apollo/client";
 import { CREATE_ORDER, CREATE_PAYMENT, GET_CLIENT_ME, GET_CLIENT_DELIVERY_ADDRESSES } from "@/lib/graphql";
 import toast from "react-hot-toast";
+import { useAuthPrompt } from "@/contexts/AuthPromptContext";
+import { onAuthChanged } from "@/lib/authEvents";
 
 interface CartSummaryProps {
   step: number;
@@ -44,20 +46,47 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
   const [createPayment] = useMutation(CREATE_PAYMENT);
   // Убираем useMutation для GET_DELIVERY_OFFERS
 
-  // Получаем данные клиента
-  const { data: clientData, loading: clientLoading } = useQuery(GET_CLIENT_ME);
-  const { data: addressesData, loading: addressesLoading } = useQuery(GET_CLIENT_DELIVERY_ADDRESSES);
+  const { openAuthPrompt } = useAuthPrompt();
+  const [storedUserData, setStoredUserData] = useState<any>(null);
+  const isAuthenticated = Boolean(storedUserData);
 
-  // Получаем пользователя из localStorage для проверки авторизации
-  const [userData, setUserData] = useState<any>(null);
+  // Получаем данные клиента
+  const { data: clientData, loading: clientLoading } = useQuery(GET_CLIENT_ME, {
+    skip: !isAuthenticated
+  });
+  const { data: addressesData, loading: addressesLoading } = useQuery(GET_CLIENT_DELIVERY_ADDRESSES, {
+    skip: !isAuthenticated
+  });
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const storedUserData = localStorage.getItem('userData');
-      if (storedUserData) {
-        setUserData(JSON.parse(storedUserData));
+      const rawUserData = localStorage.getItem('userData');
+      if (rawUserData) {
+        try {
+          setStoredUserData(JSON.parse(rawUserData));
+        } catch (error) {
+          console.error('Ошибка чтения userData из localStorage:', error);
+          setStoredUserData(null);
+        }
       }
     }
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthChanged(({ status, user }) => {
+      if (status === 'login') {
+        setStoredUserData(user);
+      }
+      if (status === 'logout') {
+        setStoredUserData(null);
+      }
+    });
+
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
   }, []);
 
   // Загрузка состояния компонента из localStorage
@@ -167,8 +196,7 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
     }
 
     // Проверяем авторизацию
-    const userData = typeof window !== 'undefined' ? localStorage.getItem('userData') : null;
-    if (!userData) {
+    if (!storedUserData) {
       setError("Для оформления заказа необходимо войти в систему.");
       setShowAuthWarning(true);
       return;
@@ -179,7 +207,7 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
     setShowAuthWarning(false);
 
     try {
-      const user = JSON.parse(userData);
+      const user = storedUserData;
       const selectedItems = items.filter(item => item.selected);
 
       // Создаем заказ с clientId для авторизованных пользователей
@@ -271,6 +299,104 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
         return 'ЮКасса (банковские карты)';
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="w-layout-vflex cart-ditail">
+        <div className="cart-detail-info">
+          <div
+            className="w-layout-vflex flex-block-58"
+            style={{
+              position: 'relative',
+              overflow: 'hidden',
+              borderRadius: '14px',
+              padding: '24px',
+              background: 'linear-gradient(140deg, #131924 0%, #0A0E16 100%)',
+              color: '#fff',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}
+          >
+            <div
+              aria-hidden
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'radial-gradient(110% 110% at 90% 10%, rgba(236, 28, 36, 0.35) 0%, rgba(17, 24, 39, 0) 65%)',
+                pointerEvents: 'none'
+              }}
+            />
+            <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <span style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>
+                Только для юрлиц
+              </span>
+              <h3 style={{ margin: 0, fontSize: '20px', lineHeight: 1.3 }}>
+                Авторизуйтесь, чтобы оформить заказ
+              </h3>
+              <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.5, color: 'rgba(255,255,255,0.75)' }}>
+                После входа покажем корпоративные цены, адреса доставки и возможность оформить заказ.
+              </p>
+              <button
+                type="button"
+                onClick={() => openAuthPrompt({ targetPath: '/cart' })}
+                style={{
+                  background: '#EC1C24',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '11px 18px',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  alignSelf: 'flex-start',
+                  boxShadow: '0 10px 20px rgba(236, 28, 36, 0.22)'
+                }}
+              >
+                Войти
+              </button>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>
+                Нет учётной записи? Зарегистрируйтесь на странице входа в пару кликов.
+              </div>
+            </div>
+          </div>
+
+          <div className="px-line" style={{ margin: '20px 0' }}></div>
+
+          <div className="w-layout-vflex flex-block-60" style={{ gap: '8px' }}>
+            <div className="w-layout-hflex flex-block-59">
+              <div className="text-block-21-copy-copy">
+                Товары, {summary.totalItems} шт.
+              </div>
+              <div className="text-block-33">{formatPrice(summary.totalPrice)}</div>
+            </div>
+            {summary.totalDiscount > 0 && (
+              <div className="w-layout-hflex flex-block-59">
+                <div className="text-block-21-copy-copy">Моя скидка</div>
+                <div className="text-block-33">-{formatPrice(summary.totalDiscount)}</div>
+              </div>
+            )}
+            <div className="w-layout-hflex flex-block-59">
+              <div className="text-block-21-copy-copy">Доставка</div>
+              <div className="text-block-33">
+                Включена в стоимость товаров
+              </div>
+            </div>
+          </div>
+
+          <div className="px-line" style={{ margin: '20px 0' }}></div>
+
+          <div className="w-layout-hflex flex-block-59" style={{ alignItems: 'center' }}>
+            <div className="text-block-32">Итого</div>
+            <h4 className="heading-9-copy-copy">
+              {formatPrice(summary.totalPrice - summary.totalDiscount)}
+            </h4>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
 
   if (step === 1) {
     // Первый шаг - настройка доставки

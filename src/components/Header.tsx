@@ -13,6 +13,7 @@ import SearchHistoryDropdown from './SearchHistoryDropdown';
 import { GET_RECENT_SEARCH_QUERIES, PartsSearchHistoryItem } from '@/lib/graphql/search-history';
 import { onAuthChanged } from '@/lib/authEvents'
 import { useAuthPrompt } from '@/contexts/AuthPromptContext';
+import { History as HistoryIcon } from 'lucide-react';
 
 interface HeaderProps {
   onOpenAuthModal?: () => void;
@@ -518,43 +519,60 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
             </div>
             */}
           </div>
-              <div className="searcj w-form" style={{ position: 'relative' }} ref={searchDropdownRef}>
+              <div className="searcj w-form flex-1" style={{ position: 'relative' }} ref={searchDropdownRef}>
                 <form
                   id="custom-search-form"
                   name="custom-search-form"
                   data-custom-form="true"
-                  className="form"
+                  className="form custom-search-form"
                   autoComplete="off"
                   onSubmit={handleSearchSubmit}
                   ref={searchFormRef}
                 >
-                  <div className="link-block-3 w-inline-block" style={{cursor: 'pointer'}} onClick={() => searchFormRef.current?.requestSubmit()}> 
-                    <div className="code-embed-6 w-embed">
-                      {isSearching ? (
-                        <svg className="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      ) : (
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.5 17.5L13.8834 13.8833" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M9.16667 15.8333C12.8486 15.8333 15.8333 12.8486 15.8333 9.16667C15.8333 5.48477 12.8486 2.5 9.16667 2.5C5.48477 2.5 2.5 5.48477 2.5 9.16667C2.5 12.8486 5.48477 15.8333 9.16667 15.8333Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                      )}
+                  <div className="search-field-container">
+                    <input 
+                      ref={searchInputRef}
+                      className="text-field w-input search-field-input" 
+                      maxLength={256} 
+                      name="customSearch" 
+                      data-custom-input="true" 
+                      placeholder={showPlaceholder ? "Введите код запчасти, VIN номер или госномер автомобиля" : ""} 
+                      type="text" 
+                      id="customSearchInput" 
+                      value={searchQuery}
+                      onChange={handleInputChange}
+                      onFocus={handleInputFocus}
+                      onBlur={handleInputBlur}
+                      disabled={isSearching}
+                    />
+                    <div className="search-field-actions">
+                      <button
+                        type="submit"
+                        className="search-field-icon-button"
+                        disabled={isSearching}
+                      >
+                        {isSearching ? (
+                          <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        ) : (
+                          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17.5 17.5L13.8834 13.8833" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M9.16667 15.8333C12.8486 15.8333 15.8333 12.8486 15.8333 9.16667C15.8333 5.48477 12.8486 2.5 9.16667 2.5C5.48477 2.5 2.5 5.48477 2.5 9.16667C2.5 12.8486 5.48477 15.8333 9.16667 15.8333Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </button>
+                      <Link
+                        href="/profile-history"
+                        className="search-field-icon-button"
+                        onClick={(event) => handleProtectedNavigation(event, '/profile-history')}
+                        aria-label="История поиска"
+                      >
+                        <HistoryIcon className="h-5 w-5" strokeWidth={2.2} />
+                      </Link>
                     </div>
                   </div>
-                  <input 
-                    ref={searchInputRef}
-                    className="text-field w-input" 
-                    maxLength={256} 
-                    name="customSearch" 
-                    data-custom-input="true" 
-                    placeholder={showPlaceholder ? "Введите код запчасти, VIN номер или госномер автомобиля" : ""} 
-                    type="text" 
-                    id="customSearchInput" 
-                    value={searchQuery}
-                    onChange={handleInputChange}
-                    onFocus={handleInputFocus}
-                    onBlur={handleInputBlur}
-                    disabled={isSearching}
-                  />
                 </form>
                 
                 {/* История поиска */}
@@ -864,13 +882,6 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
                 </div>
               </div>
               <div className="w-layout-hflex flex-block-76">
-                <Link
-                  href="/profile-history"
-                  className="button_h w-inline-block"
-                  onClick={(event) => handleProtectedNavigation(event, '/profile-history')}
-                >
-                  <img src="/images/union.svg" alt="История заказов" width={20} />
-                </Link>
                 <Link
                   href="/profile-gar"
                   className="button_h w-inline-block"
