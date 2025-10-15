@@ -2096,10 +2096,13 @@ body {
   padding: 30px;
   display: flex;
   overflow: hidden;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
 .news:hover {
-  box-shadow: 0 0 10px #00000026;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
 .heading_news {

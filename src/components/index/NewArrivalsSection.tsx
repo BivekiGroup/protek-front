@@ -1,10 +1,9 @@
-import React, { useRef } from "react";
+import React from "react";
 import { useQuery } from '@apollo/client';
-import CatalogProductCard from "../CatalogProductCard";
-import CatalogProductCardSkeleton from "../CatalogProductCardSkeleton";
+import { useRouter } from "next/router";
+import TopSalesItem from "../TopSalesItem";
 import { GET_NEW_ARRIVALS } from "@/lib/graphql";
-
-const SCROLL_AMOUNT = 340; // px, ширина одной карточки + отступ
+import { useCart } from "@/contexts/CartContext";
 
 // Интерфейс для товара из GraphQL
 interface Product {
@@ -30,23 +29,14 @@ interface Product {
 }
 
 const NewArrivalsSection: React.FC = () => {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  
-  // Получаем новые поступления через GraphQL
   const { data, loading, error } = useQuery(GET_NEW_ARRIVALS, {
-    variables: { limit: 8 }
+    variables: { limit: 6 }
   });
+  const { isInCart: isItemInCart } = useCart();
+  const router = useRouter();
 
-  const scrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -SCROLL_AMOUNT, behavior: 'smooth' });
-    }
-  };
-
-  const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: SCROLL_AMOUNT, behavior: 'smooth' });
-    }
+  const handleNavigateToNewArrivals = () => {
+    router.push('/new-arrivals');
   };
 
   // Получаем изображения для товаров
@@ -57,140 +47,109 @@ const NewArrivalsSection: React.FC = () => {
     return "/images/162615.webp"; // fallback изображение
   };
 
+  const activeNewArrivals = data?.newArrivals?.slice(0, 6) || [];
+
+  if (loading) {
+    return (
+      <section className="main">
+        <div className="w-layout-blockcontainer container w-container">
+          <div className="w-layout-vflex inbt">
+            <button
+              className="w-layout-hflex flex-block-31 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={handleNavigateToNewArrivals}
+              style={{ background: 'none', border: 'none', padding: 0 }}
+            >
+              <h2 className="heading-4">Новое поступление</h2>
+              <img src="/images/Arrow_right.svg" loading="lazy" alt="Стрелка вправо" />
+            </button>
+            <div className="new-arrivals-grid">
+              {/* Loading state - empty grid */}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    console.error('Ошибка загрузки новых поступлений:', error);
+    return (
+      <section className="main">
+        <div className="w-layout-blockcontainer container w-container">
+          <div className="w-layout-vflex inbt">
+            <button
+              className="w-layout-hflex flex-block-31 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={handleNavigateToNewArrivals}
+              style={{ background: 'none', border: 'none', padding: 0 }}
+            >
+              <h2 className="heading-4">Новое поступление</h2>
+              <img src="/images/Arrow_right.svg" loading="lazy" alt="Стрелка вправо" />
+            </button>
+            <div className="new-arrivals-grid">
+              <div className="text-block-58">Ошибка загрузки</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (activeNewArrivals.length === 0) {
+    return (
+      <section className="main">
+        <div className="w-layout-blockcontainer container w-container">
+          <div className="w-layout-vflex inbt">
+            <button
+              className="w-layout-hflex flex-block-31 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={handleNavigateToNewArrivals}
+              style={{ background: 'none', border: 'none', padding: 0 }}
+            >
+              <h2 className="heading-4">Новое поступление</h2>
+              <img src="/images/Arrow_right.svg" loading="lazy" alt="Стрелка вправо" />
+            </button>
+            <div className="new-arrivals-grid">
+              <div className="text-block-58">Пока нет новых поступлений</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="main">
       <div className="w-layout-blockcontainer container w-container">
         <div className="w-layout-vflex inbt">
-          <div className="w-layout-hflex flex-block-31">
+          <button
+            className="w-layout-hflex flex-block-31 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={handleNavigateToNewArrivals}
+            style={{ background: 'none', border: 'none', padding: 0 }}
+          >
             <h2 className="heading-4">Новое поступление</h2>
-          </div>
-          <div className="carousel-row">
-            {/* Стили для стрелок как в BestPriceSection и TopSalesSection */}
-            <style>{`
-              .carousel-arrow {
-                width: 40px;
-                height: 40px;
-                border: none;
-                background: none;
-                padding: 0;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                opacity: 1;
-                transition: opacity 0.2s;
-                cursor: pointer;
-                margin: 0 8px;
-              }
-              .carousel-arrow-left {}
-              .carousel-arrow-right {}
-              .carousel-arrow .arrow-circle {
-                width: 36px;
-                height: 36px;
-                border-radius: 50%;
-                background: rgba(255,255,255,0.85);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: background 0.2s;
-              }
-              .carousel-arrow:hover .arrow-circle,
-              .carousel-arrow:focus .arrow-circle {
-                background: #ec1c24;
-              }
-              .carousel-arrow .arrow-svg {
-                width: 20px;
-                height: 20px;
-                display: block;
-                transition: stroke 0.2s;
-                stroke: #222;
-              }
-              .carousel-arrow:hover .arrow-svg,
-              .carousel-arrow:focus .arrow-svg {
-                stroke: #fff;
-              }
+            <img src="/images/Arrow_right.svg" loading="lazy" alt="Стрелка вправо" />
+          </button>
+          <div className="new-arrivals-grid">
+            {activeNewArrivals.map((product: Product) => {
+              const price = product.retailPrice ?? product.wholesalePrice ?? null;
+              const priceText = price ? `от ${price.toLocaleString('ru-RU')} ₽` : 'По запросу';
+              const image = getProductImage(product);
+              const brand = product.brand || 'Неизвестный бренд';
+              const isInCart = isItemInCart(product.id, undefined, product.article, brand);
 
-            `}</style>
-            <button 
-              className="carousel-arrow carousel-arrow-left" 
-              onClick={scrollLeft} 
-              aria-label="Прокрутить влево"
-              style={{ cursor: 'pointer' }}
-            >
-              <span className="arrow-circle">
-                <svg className="arrow-svg" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M16.6673 10H3.33398M3.33398 10L8.33398 5M3.33398 10L8.33398 15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-            </button>
-            
-            <div className="w-layout-hflex core-product-search carousel-scroll" ref={scrollRef}>
-              {loading ? (
-                // Показываем скелетоны во время загрузки
-                Array(8).fill(0).map((_, index) => (
-                  <CatalogProductCardSkeleton key={`skeleton-${index}`} />
-                ))
-              ) : error ? (
-                // Показываем сообщение об ошибке
-                <div className="error-message" style={{ 
-                  padding: '20px', 
-                  textAlign: 'center', 
-                  color: '#666',
-                  minWidth: '300px'
-                }}>
-                  <p>Не удалось загрузить новые поступления</p>
-                  <p style={{ fontSize: '14px', marginTop: '8px' }}>
-                    {error.message}
-                  </p>
-                </div>
-              ) : data?.newArrivals?.length ? (
-                data.newArrivals.map((product: Product, index: number) => {
-                  const price = product.retailPrice ?? product.wholesalePrice ?? null;
-                  const priceText = price ? `${price.toLocaleString('ru-RU')} ₽` : 'По запросу';
-                  const image = getProductImage(product);
-                  const brand = product.brand || 'Неизвестный бренд';
-                  const articleNumber = product.article || undefined;
-
-                  return (
-                    <CatalogProductCard
-                      key={product.id || `${articleNumber || 'article'}-${index}`}
-                      image={image}
-                      discount="Новинка"
-                      price={priceText}
-                      oldPrice=""
-                      title={product.name}
-                      brand={brand}
-                      articleNumber={articleNumber}
-                      brandName={product.brand}
-                      artId={product.id}
-                      productId={product.id}
-                    />
-                  );
-                })
-              ) : (
-                // Показываем сообщение о том, что товаров нет
-                <div className="no-products-message" style={{ 
-                  padding: '20px', 
-                  textAlign: 'center', 
-                  color: '#666',
-                  minWidth: '300px'
-                }}>
-                  <p>Пока нет новых поступлений</p>
-                </div>
-              )}
-            </div>
-            
-            <button 
-              className="carousel-arrow carousel-arrow-right" 
-              onClick={scrollRight} 
-              aria-label="Прокрутить вправо"
-              style={{ cursor: 'pointer' }}
-            >
-              <span className="arrow-circle">
-                <svg className="arrow-svg" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3.33398 10H16.6673M16.6673 10L11.6673 5M16.6673 10L11.6673 15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-            </button>
+              return (
+                <TopSalesItem
+                  key={product.id}
+                  image={image}
+                  price={priceText}
+                  title={product.name}
+                  brand={brand}
+                  article={product.article}
+                  productId={product.id}
+                  isInCart={isInCart}
+                  isNew={true} // Mark new arrivals as "NEW"
+                />
+              );
+            })}
           </div>
         </div>
       </div>

@@ -77,12 +77,8 @@ const CatalogSubscribe: React.FC = () => {
           {error && <div className="mt-2 text-red-600 text-sm">{error}</div>}
         </div>
         <div className="flex flex-row items-center mt-2 pl-0 justify-start">
-          <span className="text-[#8893A1] text-[12px] leading-snug select-none mr-4">
-            Я даю свое согласие на обработку персональных данных<br />
-            и соглашаюсь с условиями <a href="/privacy-policy" className="underline hover:text-[#6c7684]">Политики конфиденциальности</a>
-          </span>
           <div
-            className={`h-[24px] w-[24px] border border-[#8893A1] rounded-sm flex-shrink-0 flex items-center justify-center cursor-pointer transition-colors duration-150 ${consent ? 'bg-[#EC1C24]' : 'bg-transparent'}`}
+            className={`h-[24px] w-[24px] border border-[#8893A1] rounded-sm flex-shrink-0 flex items-center justify-center cursor-pointer transition-colors duration-150 mr-4 ${consent ? 'bg-[#EC1C24]' : 'bg-transparent'}`}
             onClick={() => setConsent((v) => !v)}
             role="checkbox"
             aria-checked={consent}
@@ -99,6 +95,10 @@ const CatalogSubscribe: React.FC = () => {
               <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
+          <span className="text-[#8893A1] text-[12px] leading-snug select-none">
+            Я даю свое согласие на обработку персональных данных<br />
+            и соглашаюсь с условиями <a href="/privacy-policy" className="underline hover:text-[#6c7684]">Политики конфиденциальности</a>
+          </span>
         </div>
       </div>
     </div>

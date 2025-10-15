@@ -28,7 +28,7 @@ interface BestPriceProductData {
   };
 }
 
-const SCROLL_AMOUNT = 240;
+const SCROLL_AMOUNT = 214; // 196px card width + 18px gap
 
 const formatPrice = (price?: number | null) => {
   if (price == null) {
@@ -178,8 +178,10 @@ const BestPriceSection: React.FC = () => {
 
   if (loading) {
     return renderHero(
-      <div className="best-price-carousel-wrapper flex items-center justify-center">
-        <div className="best-price-loading">Загрузка...</div>
+      <div className="best-price-carousel-wrapper">
+        <div className="w-layout-hflex flex-block-121 carousel-scroll-top best-price-carousel">
+          {/* Empty during loading */}
+        </div>
       </div>
     );
   }
@@ -206,23 +208,20 @@ const BestPriceSection: React.FC = () => {
         disabled={!canScrollLeft}
         type="button"
       >
-        <span className="best-price-arrow-circle">
-          <svg
-            className="best-price-arrow-icon"
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M16.6673 10H3.33398M3.33398 10L8.33398 5M3.33398 10L8.33398 15"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
+        <svg
+          className="best-price-arrow-icon"
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M16.6673 10H3.33398M3.33398 10L8.33398 5M3.33398 10L8.33398 15"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </button>
       <div
         className="w-layout-hflex flex-block-121 carousel-scroll-top best-price-carousel"
@@ -240,23 +239,20 @@ const BestPriceSection: React.FC = () => {
         disabled={!canScrollRight}
         type="button"
       >
-        <span className="best-price-arrow-circle">
-          <svg
-            className="best-price-arrow-icon"
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M3.33398 10H16.6673M16.6673 10L11.6673 5M16.6673 10L11.6673 15"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
+        <svg
+          className="best-price-arrow-icon"
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M3.33398 10H16.6673M16.6673 10L11.6673 5M16.6673 10L11.6673 15"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </button>
     </div>
   );
