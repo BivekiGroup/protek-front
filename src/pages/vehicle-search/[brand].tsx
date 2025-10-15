@@ -41,8 +41,6 @@ const VehicleSearchPage = () => {
   }
 
   if (catalogLoading) {
-
-  if (catalogLoading) {
     return (
       <>
         <Head>

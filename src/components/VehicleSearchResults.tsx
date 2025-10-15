@@ -107,7 +107,10 @@ const VehicleSearchResults: React.FC<VehicleSearchResultsProps> = ({
           const pickValue = (...keys: string[]): { value: string | null; matchedKey: string | null } => {
             for (const rawKey of keys) {
               const key = rawKey.trim();
-              const vehicleValue = (vehicle as Record<string, unknown>)[key];
+              const vehicleValue =
+                key && key in vehicle
+                  ? vehicle[key as keyof LaximoVehicleSearchResult]
+                  : undefined;
               if (typeof vehicleValue === 'string' && vehicleValue.trim()) {
                 return { value: vehicleValue.trim(), matchedKey: key.toLowerCase() };
               }
