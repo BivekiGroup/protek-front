@@ -4655,7 +4655,7 @@ body {
 
 .core-offers-table__row {
   display: grid;
-  grid-template-columns: minmax(150px, 1.3fr) minmax(130px, 1.1fr) minmax(250px, 2.5fr) minmax(110px, 1fr) minmax(100px, 0.9fr) minmax(120px, 1fr) minmax(120px, 1fr);
+  grid-template-columns: minmax(250px, 2.5fr) minmax(130px, 1.1fr) minmax(150px, 1.3fr) minmax(110px, 1fr) minmax(100px, 0.9fr) minmax(120px, 1fr) minmax(140px, 1.2fr);
   column-gap: 16px;
   align-items: stretch;
   padding: 0 20px;
@@ -5048,6 +5048,13 @@ body {
   color: #EC1414;
 }
 
+.core-offers-table__cell--delivery.core-offers-table__cell--sortable:hover .core-offers-table__header-icon,
+.core-offers-table__cell--delivery.core-offers-table__cell--sortable.is-active .core-offers-table__header-icon,
+.core-offers-table__cell--stock.core-offers-table__cell--sortable:hover .core-offers-table__header-icon,
+.core-offers-table__cell--stock.core-offers-table__cell--sortable.is-active .core-offers-table__header-icon {
+  color: #EC1414;
+}
+
 .core-offers-table__cell--qty {
   align-items: center;
   justify-content: flex-start;
@@ -5055,6 +5062,7 @@ body {
 
 .core-offers-table__price-value {
   font-variant-numeric: tabular-nums;
+  font-weight: bold;
 }
 
 .core-offers-table__cell--header-right {

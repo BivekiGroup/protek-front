@@ -26,14 +26,15 @@ const CustomTooltip = ({ children, text }: { children: React.ReactNode; text: st
             left: '50%',
             transform: 'translateX(-50%)',
             marginBottom: '8px',
-            backgroundColor: '#333',
-            color: 'white',
-            padding: '8px 12px',
-            borderRadius: '6px',
-            fontSize: '12px',
+            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.94))',
+            color: '#f8fafc',
+            padding: '10px 12px',
+            borderRadius: '8px',
+            fontSize: '13px',
+            lineHeight: '1.4',
             zIndex: 1000,
-            boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-            maxWidth: '250px',
+            boxShadow: '0 16px 32px rgba(15, 23, 42, 0.25)',
+            maxWidth: '320px',
             whiteSpace: 'normal' as any,
             wordWrap: 'break-word',
             textAlign: 'center' as any
@@ -564,13 +565,13 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
 
     const numericValue = parseFloat(numericCandidate);
     if (Number.isNaN(numericValue)) {
-      return withoutCurrency.replace(/\s+/g, ' ').trim();
+      return withoutCurrency.replace(/\s+/g, ' ').trim() + ' ₽';
     }
 
     return new Intl.NumberFormat('ru-RU', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(numericValue);
+    }).format(numericValue) + ' ₽';
   };
 
   const renderOfferRow = (offer: CoreProductCardOffer, idx: number) => {
@@ -615,10 +616,6 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
 
     return (
       <div className={rowClasses} key={rowKey}>
-        <div className="core-offers-table__cell core-offers-table__cell--brand">
-          {brandDisplay}
-        </div>
-        <div className="core-offers-table__cell core-offers-table__cell--article">{articleDisplay}</div>
         <div className="core-offers-table__cell core-offers-table__cell--name">
           <div className="core-offers-table__name-wrapper">
             <div
@@ -628,6 +625,10 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
               <span className="core-offers-table__product-name-text">{nameDisplay}</span>
             </div>
           </div>
+        </div>
+        <div className="core-offers-table__cell core-offers-table__cell--article">{articleDisplay}</div>
+        <div className="core-offers-table__cell core-offers-table__cell--brand">
+          {brandDisplay}
         </div>
         <div className="core-offers-table__cell core-offers-table__cell--delivery">{formatDeliveryDisplay(offer.days)}</div>
         <div className="core-offers-table__cell core-offers-table__cell--stock">{offer.pcs}</div>
@@ -776,9 +777,9 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
 
             <div className="core-offers-table">
               <div className="core-offers-table__row core-offers-table__row--head">
-                {renderStaticHeader('Производитель', 'core-offers-table__cell--brand')}
-                {renderStaticHeader('Артикул', 'core-offers-table__cell--article')}
                 {renderStaticHeader('Наименование', 'core-offers-table__cell--name')}
+                {renderStaticHeader('Артикул', 'core-offers-table__cell--article')}
+                {renderStaticHeader('Производитель', 'core-offers-table__cell--brand')}
                 {renderSortHeader('Доставка', 'delivery', 'core-offers-table__cell--delivery')}
                 {renderSortHeader('Наличие', 'stock', 'core-offers-table__cell--stock')}
                 {renderSortHeader('Цена, ₽', 'price', 'core-offers-table__cell--price core-offers-table__cell--header-right')}
