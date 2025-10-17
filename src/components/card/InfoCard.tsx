@@ -84,30 +84,32 @@ export default function InfoCard({
           </div>
           <div className="w-layout-hflex flex-block-bi">
             <div className="w-layout-hflex headingbi">
-              <h1 className="heading-bi">{name || "Название товара"} {brand || "БРЕНД"}</h1>
-              <div 
-                className="div-block-127" 
-                onClick={handleFavoriteClick}
-                style={{ 
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s ease',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              >
-                <div className="icon-setting w-embed">
-                  <svg width="currentwidth" height="currentheight" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <h1 className="heading-bi">{name || "Название товара"}</h1>
+              <div className="w-layout-hflex" style={{ alignItems: 'center', gap: '12px' }}>
+                <div className="text-block-5-copy">
+                  <span className="brand-name">{brand || "БРЕНД"}</span> 
+                  <strong className="bold-text">{articleNumber || "АРТИКУЛ"}</strong>
+                </div>
+                <div 
+                  className="heart-icon-only" 
+                  onClick={handleFavoriteClick}
+                  style={{ 
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path 
-                      d="M15 25L13.405 23.5613C7.74 18.4714 4 15.1035 4 10.9946C4 7.6267 6.662 5 10.05 5C11.964 5 13.801 5.88283 15 7.26703C16.199 5.88283 18.036 5 19.95 5C23.338 5 26 7.6267 26 10.9946C26 15.1035 22.26 18.4714 16.595 23.5613L15 25Z" 
-                      fill={isItemFavorite ? "#e53935" : "currentColor"}
-                      style={{ color: isItemFavorite ? "#e53935" : undefined }}
+                      d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                      fill={isItemFavorite ? "#e53935" : "#D0D0D0"}
                     />
                   </svg>
                 </div>
               </div>
-            </div>
-            <div className="w-layout-hflex rightbi">
-              <div className="text-block-5-copy">{brand || "БРЕНД"} <strong className="bold-text">{articleNumber || "АРТИКУЛ"}</strong></div>
             </div>
           </div>
         </div>

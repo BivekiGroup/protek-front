@@ -2216,7 +2216,7 @@ body {
   border-radius: 0px 0px 12px 12px;
   background-color: #FFFFFF;
   align-self: stretch;
-  padding: 10px 20px 12px;
+  padding: 16px 20px 20px;
 }
 
 .image-8 {
@@ -2256,7 +2256,7 @@ body {
 .flex-block-40::after {
   content: '';
   position: absolute;
-  bottom: 15px;
+  bottom: 0;
   left: 20px;
   right: 20px;
   height: 1px;
@@ -2354,7 +2354,7 @@ body {
 .text-block-21 {
   color: var(--_fonts---color--light-blue-grey);
   font-size: var(--_fonts---font-size--small-font-size);
-
+  margin-top: 4px;
 }
 
 .text-block-22 {
@@ -2720,14 +2720,21 @@ body {
 }
 
 .text-block-5-copy {
-  color: var(--_fonts---color--light-blue-grey);
-  font-size: var(--_fonts---font-size--core);
-  margin-bottom: 5px;
+  font-family: Onest, sans-serif;
+  font-size: 16px;
   font-weight: 600;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .bold-text {
-  color: var(--_button---primary);
+  color: #000814;
+}
+
+.brand-name {
+  color: #4DB45E;
 }
 
 .pcs-card {
@@ -2944,7 +2951,7 @@ body {
 
 .heading-9-copy {
   color: #000000;
-  font-size: 18px;
+  font-size: 22px;
   max-height: none;
   margin-top: 0;
   margin-bottom: 0;
@@ -5906,11 +5913,11 @@ body {
 }
 
 .headingbi {
-  grid-column-gap: 20px;
-  grid-row-gap: 20px;
-  flex: 0 auto;
-  justify-content: flex-start;
-  align-items: flex-start;
+  grid-column-gap: 14px;
+  grid-row-gap: 14px;
+  flex: 1;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .rightbi {
@@ -5932,10 +5939,11 @@ body {
 }
 
 .heading-bi {
-  font-family: var(--_fonts---font-family);
-  color: var(--_fonts---color--black);
-  font-size: var(--_fonts---h1);
-  font-weight: var(--_fonts---black-weight);
+  font-family: Onest, sans-serif;
+  color: #000814;
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1.2;
   flex: 0 auto;
   margin-top: 0;
   margin-bottom: 0;
