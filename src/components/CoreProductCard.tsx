@@ -7,6 +7,45 @@ import toast from "react-hot-toast";
 import CartIcon from "./CartIcon";
 import { isDeliveryDate } from "@/lib/utils";
 
+// Custom Tooltip Component
+const CustomTooltip = ({ children, text }: { children: React.ReactNode; text: string }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  return (
+    <div 
+      style={{ position: 'relative', display: 'inline-block' }}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      {children}
+      {showTooltip && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            marginBottom: '8px',
+            backgroundColor: '#333',
+            color: 'white',
+            padding: '8px 12px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            zIndex: 1000,
+            boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+            maxWidth: '250px',
+            whiteSpace: 'normal' as any,
+            wordWrap: 'break-word',
+            textAlign: 'center' as any
+          }}
+        >
+          {text}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const INITIAL_OFFERS_LIMIT = 5;
 
 type SortKey = 'stock' | 'delivery' | 'price';
@@ -376,11 +415,15 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
         <div className="w-layout-vflex core-product-s1">
           <div className="w-layout-vflex flex-block-47">
                 <div className="div-block-19">
-                  <div
-                    className="core-product-info-icon"
-                    data-tooltip="Оригинальные предложения Protek — рекомендуем для быстрого заказа"
-                    aria-hidden="true"
-                  />
+                  <CustomTooltip text="Оригинальные предложения Protek — рекомендуем для быстрого заказа">
+                    <img 
+                      src="/images/icons/filter-icon.svg" 
+                      alt="Оригинальные предложения Protek — рекомендуем для быстрого заказа"
+                      width="32"
+                      height="32"
+                      style={{ background: 'none', border: 'none', display: 'block', cursor: 'help' }}
+                    />
+                  </CustomTooltip>
                 </div>
             <div className="w-layout-vflex flex-block-50">
               <div className="w-layout-hflex flex-block-79">
@@ -405,7 +448,9 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
             <div className="w-layout-vflex core-product-s1">
                 <div className="w-layout-vflex flex-block-47">
                     <div className="div-block-19">
-                        <img src="/images/info.svg" loading="lazy" alt="info" className="image-9" />
+                        <CustomTooltip text="Оригинальные предложения Protek — рекомендуем для быстрого заказа">
+                          <img src="/images/icons/filter-icon.svg" loading="lazy" alt="Оригинальные предложения Protek — рекомендуем для быстрого заказа" className="image-9" width="32" height="32" style={{ background: 'none', border: 'none', display: 'block', cursor: 'help' }} />
+                        </CustomTooltip>
                     </div>
                     <div className="w-layout-vflex flex-block-50">
                         <div className="w-layout-hflex flex-block-79">
@@ -570,32 +615,9 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
 
     return (
       <div className={rowClasses} key={rowKey}>
-        <div className="core-offers-table__cell core-offers-table__cell--region">
-          <div className="core-offers-table__region">
-            <div className="core-offers-table__region-header">
-              {offer.recommended && (
-                <span
-                  className="core-offers-table__badge"
-                  aria-label="Рекомендуем"
-                  title="Рекомендуем"
-                >
-                  <BadgeCheck
-                    className="core-offers-table__badge-icon"
-                    aria-hidden="true"
-                    strokeWidth={2.2}
-                  />
-                </span>
-              )}
-              <div className="core-offers-table__region-info">
-                <span className="core-offers-table__region-title">{region}</span>
-                {warehouseDisplay && (
-                  <span className="core-offers-table__warehouse">{warehouseDisplay}</span>
-                )}
-              </div>
-            </div>
-          </div>
+        <div className="core-offers-table__cell core-offers-table__cell--brand">
+          {brandDisplay}
         </div>
-        <div className="core-offers-table__cell core-offers-table__cell--brand">{brandDisplay}</div>
         <div className="core-offers-table__cell core-offers-table__cell--article">{articleDisplay}</div>
         <div className="core-offers-table__cell core-offers-table__cell--name">
           <div className="core-offers-table__name-wrapper">
@@ -698,11 +720,15 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
             <div className="w-layout-vflex core-product-s1">
               <div className="w-layout-vflex flex-block-47">
                 <div className="div-block-19">
-                  <div
-                    className="core-product-info-icon"
-                    data-tooltip="Оригинальные предложения Protek — рекомендуем для быстрого заказа"
-                    aria-hidden="true"
-                  />
+                  <CustomTooltip text="Оригинальные предложения Protek — рекомендуем для быстрого заказа">
+                    <img 
+                      src="/images/icons/filter-icon.svg" 
+                      alt="Оригинальные предложения Protek — рекомендуем для быстрого заказа"
+                      width="32"
+                      height="32"
+                      style={{ background: 'none', border: 'none', display: 'block', cursor: 'help' }}
+                    />
+                  </CustomTooltip>
                 </div>
                 <div className="w-layout-vflex flex-block-50">
                   <div className="core-product-header-line">
@@ -750,7 +776,6 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
 
             <div className="core-offers-table">
               <div className="core-offers-table__row core-offers-table__row--head">
-                {renderStaticHeader('Регион поставщика', 'core-offers-table__cell--region')}
                 {renderStaticHeader('Производитель', 'core-offers-table__cell--brand')}
                 {renderStaticHeader('Артикул', 'core-offers-table__cell--article')}
                 {renderStaticHeader('Наименование', 'core-offers-table__cell--name')}
