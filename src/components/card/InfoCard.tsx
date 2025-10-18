@@ -83,7 +83,7 @@ export default function InfoCard({
             </a>
           </div>
           <div className="w-layout-hflex flex-block-bi">
-            <div className="w-layout-hflex headingbi">
+            <div className="w-layout-hflex headingbi" style={{ alignItems: 'center' }}>
               <h1 className="heading-bi">{name || "Название товара"}</h1>
               <div className="w-layout-hflex" style={{ alignItems: 'center', gap: '12px' }}>
                 <div className="text-block-5-copy">

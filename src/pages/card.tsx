@@ -14,7 +14,6 @@ import InfoCard from "@/components/card/InfoCard";
 import ProductImageGallery from "@/components/card/ProductImageGallery";
 import ProductSortHeader from "@/components/card/ProductSortHeader";
 import ProductList from "@/components/card/ProductList";
-import ShowMoreOffers from "@/components/card/ShowMoreOffers";
 import ProductCharacteristics from "@/components/card/ProductCharacteristics";
 import ProductDescriptionTabs from "@/components/card/ProductDescriptionTabs";
 import { SEARCH_PRODUCT_OFFERS, PARTS_INDEX_SEARCH_BY_ARTICLE, GET_ANALOG_OFFERS } from "@/lib/graphql";
@@ -326,8 +325,6 @@ export default function CardPage() {
                 <ProductList 
                   offers={visibleOffers}
                   isLoading={loading}
-                />
-                <ShowMoreOffers 
                   hasMoreOffers={hasMoreOffers}
                   onShowMore={handleShowMoreOffers}
                   remainingCount={allOffers.length - visibleOffersCount}

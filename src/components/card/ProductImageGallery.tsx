@@ -134,57 +134,127 @@ export default function ProductImageGallery({ imageUrl, images, partsIndexImages
   };
 
   return (
-    <div className="w-layout-vflex core-product-copy-copy">
-      {/* Основная картинка */}
-      <div className="div-block-20 relative" aria-label="Изображение товара">
-        <img src={selectedImage} loading="lazy" alt="Изображение товара" className="image-10-copy" />
-        {/* Кнопка увеличения */}
-        <button
-          type="button"
-          className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 shadow-lg"
-          aria-label="Открыть галерею"
-          onClick={() => openOverlay()}
+    <div style={{ display: 'flex', flexDirection: 'column', width: '507px', height: '438px' }}>
+      {/* Основная картинка - точно по размерам из Figma */}
+      <div 
+        className="relative" 
+        style={{ 
+          width: '507px', 
+          height: '340px',
+          backgroundColor: '#FFFFFF',
+          borderRadius: '12px',
+          cursor: 'pointer',
+          overflow: 'hidden'
+        }}
+        onClick={() => openOverlay()}
+      >
+        <img 
+          src={selectedImage} 
+          loading="lazy" 
+          alt="Изображение товара" 
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            objectFit: 'cover'
+          }} 
+        />
+        
+        {/* Expand icon - точно по дизайну из Figma */}
+        <div
+          className="absolute bottom-3 right-3"
+          style={{
+            width: '32px',
+            height: '32px',
+            backgroundColor: 'rgba(13, 51, 108, 0.04)',
+            borderRadius: '7px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '3px'
+          }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <svg 
+            width="18" 
+            height="18" 
+            viewBox="0 0 18 18" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path 
+              d="M6.75 2.25H2.25V6.75M11.25 2.25H15.75V6.75M15.75 11.25V15.75H11.25M6.75 15.75H2.25V11.25" 
+              stroke="rgba(77, 98, 125, 0.6)" 
+              strokeWidth="1.75" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            />
           </svg>
-        </button>
+        </div>
       </div>
-      {/* Миниатюры */}
-      <div className="w-layout-hflex flex-block-56 mt-2 gap-2">
+
+      {/* Миниатюры - точно по размерам из Figma */}
+      <div 
+        style={{ 
+          display: 'flex', 
+          flexDirection: 'row', 
+          gap: '10px',
+          marginTop: '20px',
+          width: '507px', // Растягиваем на всю ширину главной картинки
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none', // IE and Edge
+          paddingBottom: '5px' // Небольшой отступ снизу
+        }}
+        className="gallery-scroll"
+      >
+        <style jsx>{`
+          .gallery-scroll::-webkit-scrollbar {
+            display: none; /* Chrome, Safari and Opera */
+          }
+        `}</style>
         {galleryImages.map((img, idx) => (
-          <img
+          <div
             key={img + idx}
-            src={img}
-            loading="lazy"
-            alt={`Миниатюра ${idx + 1}`}
-            className={`small-img cursor-pointer border ${selectedImage === img ? 'border-blue-500' : 'border-transparent'} rounded transition`}
+            style={{
+              width: '92px',
+              height: '78px',
+              backgroundColor: '#FFFFFF',
+              padding: '14px',
+              cursor: 'pointer',
+              border: selectedImage === img ? '2px solid #e53935' : '2px solid transparent',
+              borderRadius: '8px',
+              flexShrink: 0 // Предотвращаем сжатие миниатюр
+            }}
             onClick={() => {
               setSelectedImage(img);
-              // Только меняем изображение, overlay не открываем
             }}
-            tabIndex={0}
-            aria-label={`Показать изображение ${idx + 1}`}
-            onKeyDown={e => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                setSelectedImage(img);
-                // overlay не открываем
-              }
-            }}
-          />
+          >
+            <img
+              src={img}
+              loading="lazy"
+              alt={`Миниатюра ${idx + 1}`}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                borderRadius: '4px'
+              }}
+            />
+          </div>
         ))}
       </div>
       {/* Overlay для просмотра картинки */}
       {isOverlayOpen && selectedImage && (
         <div
           ref={overlayRef}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
           onClick={handleOverlayClick}
           aria-modal="true"
           role="dialog"
+          style={{ animation: 'fadeIn 0.2s ease-in-out' }}
         >
           <button
-            onClick={() => setIsOverlayOpen(false)}
+            onClick={() => { setOverlayIndex(null); setIsOverlayOpen(false); }}
             className="absolute top-6 right-6 text-white bg-black/40 rounded-full p-2 hover:bg-black/70 focus:outline-none"
             aria-label="Закрыть просмотр изображения"
             tabIndex={0}
