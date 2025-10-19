@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useMutation } from '@apollo/client'
 import { REGISTER_NEW_CLIENT } from '@/lib/graphql'
 import type { VerificationResponse } from '@/types/auth'
+import { User } from 'lucide-react'
 
 interface UserRegistrationProps {
   phone: string
@@ -18,9 +19,24 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({
 }) => {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [login, setLogin] = useState('')
+  const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
   const [registerClient] = useMutation<{ registerNewClient: VerificationResponse }>(REGISTER_NEW_CLIENT)
+
+  const formatPhoneForDisplay = (value: string) => {
+    const digits = value.replace(/\D/g, '')
+    const trimmed = digits.length >= 10 ? digits.slice(-10) : digits
+    if (trimmed.length !== 10) {
+      return value
+    }
+    const part1 = trimmed.slice(0, 3)
+    const part2 = trimmed.slice(3, 6)
+    const part3 = trimmed.slice(6, 8)
+    const part4 = trimmed.slice(8, 10)
+    return `+7 ${part1} ${part2} ${part3} ${part4}`
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,6 +48,18 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({
       onError('Введите фамилию')
       return
     }
+    if (!login.trim()) {
+      onError('Введите логин')
+      return
+    }
+    if (!password.trim()) {
+      onError('Введите пароль')
+      return
+    }
+    if (password.length < 6) {
+      onError('Пароль должен содержать минимум 6 символов')
+      return
+    }
     setIsLoading(true)
     try {
       const fullName = `${firstName.trim()} ${lastName.trim()}`
@@ -39,66 +67,175 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({
         variables: {
           phone,
           name: fullName,
-          sessionId
+          sessionId,
+          login: login.trim(),
+          password: password
         }
       })
       if (data?.registerNewClient) {
         onSuccess(data.registerNewClient)
       }
     } catch (error) {
-      onError('Не удалось зарегистрировать пользователя')
+      if (error instanceof Error) {
+        onError(error.message)
+      } else {
+        onError('Не удалось зарегистрировать пользователя')
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex flex-col gap-4 w-full">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
-        <div className="flex gap-4 items-end w-full max-md:flex-col max-md:gap-4 max-sm:gap-3">
-          {/* Имя */}
-          <div className="flex flex-col gap-2 max-w-[320px] w-full">
-            <label className="text-xl leading-[30px] text-gray-950 font-normal font-[Onest,sans-serif]">Введите имя</label>
-            <input
-              type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Иван"
-              className="max-w-[320px] w-full h-[52px] px-5 py-3 text-[17px] leading-[1.4] font-normal font-[Onest,sans-serif] text-neutral-500 bg-white border border-stone-300 rounded-lg focus:outline-none"
-              disabled={isLoading}
-              required
-            />
-          </div>
-          {/* Фамилия */}
-          <div className="flex flex-col gap-2 max-w-[320px] w-full">
-            <label className="text-xl leading-[30px] text-gray-950 font-normal font-[Onest,sans-serif]">Фамилию</label>
-            <input
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder="Иванов"
-              className="max-w-[320px] w-full h-[52px] px-5 py-3 text-[17px] leading-[1.4] font-normal font-[Onest,sans-serif] text-neutral-500 bg-white border border-stone-300 rounded-lg focus:outline-none"
-              disabled={isLoading}
-              required
-            />
-          </div>
-          {/* Кнопка */}
-          <button
-            type="submit"
-            disabled={isLoading || !firstName.trim() || !lastName.trim()}
-            className="flex items-center justify-center flex-shrink-0 bg-red-600 rounded-lg px-6 py-4 text-base font-medium leading-5 text-white disabled:opacity-50 disabled:cursor-not-allowed h-[56px] max-sm:px-5 max-sm:py-3"
-            style={{
-              color: 'white'
-            }}
-            aria-label="Сохранить"
-            tabIndex={0}
-          >
-            {isLoading ? 'Сохраняем...' : 'Сохранить'}
-            {/* <img src="/images/Arrow_right.svg" alt="" className="ml-2 w-6 h-6" /> */}
-          </button>
+    <form onSubmit={handleSubmit} className="flex flex-col w-full max-w-[340px]" style={{ gap: '20px' }}>
+      {/* Номер телефона с иконкой */}
+      <div
+        className="flex flex-row items-center bg-[#F5F8FB] rounded-[12px]"
+        style={{ padding: '16px 24px', gap: '10px', height: '52px' }}
+      >
+        <div className="flex items-center justify-center w-[30px] h-[30px] rounded-full bg-[#EC1C24]">
+          <User className="w-[18px] h-[18px] text-white" strokeWidth={2.5} />
         </div>
-      </form>
-    </div>
+        <span
+          className="text-[#424F60]"
+          style={{
+            fontFamily: 'Onest, sans-serif',
+            fontSize: '16px',
+            fontWeight: 500,
+            lineHeight: '100%'
+          }}
+        >
+          {formatPhoneForDisplay(phone)}
+        </span>
+      </div>
+
+      {/* Имя */}
+      <input
+        type="text"
+        value={firstName}
+        onChange={(e) => setFirstName(e.target.value)}
+        placeholder="Имя"
+        className="w-full bg-[#F5F8FB] rounded-[12px] outline-none"
+        style={{
+          padding: '16px 24px',
+          height: '52px',
+          fontFamily: 'Onest, sans-serif',
+          fontSize: '16px',
+          fontWeight: 500,
+          lineHeight: '100%',
+          color: '#424F60'
+        }}
+        disabled={isLoading}
+        required
+      />
+
+      {/* Фамилия */}
+      <input
+        type="text"
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+        placeholder="Фамилия"
+        className="w-full bg-[#F5F8FB] rounded-[12px] outline-none"
+        style={{
+          padding: '16px 24px',
+          height: '52px',
+          fontFamily: 'Onest, sans-serif',
+          fontSize: '16px',
+          fontWeight: 500,
+          lineHeight: '100%',
+          color: '#424F60'
+        }}
+        disabled={isLoading}
+        required
+      />
+
+      {/* Подсказка */}
+      <div
+        className="w-full text-[#8893A2]"
+        style={{
+          fontFamily: 'Onest, sans-serif',
+          fontSize: '14px',
+          fontWeight: 500,
+          lineHeight: '130%'
+        }}
+      >
+        Создать логин и пароль для входа
+      </div>
+
+      {/* Логин */}
+      <input
+        type="text"
+        value={login}
+        onChange={(e) => setLogin(e.target.value)}
+        placeholder="Логин"
+        className="w-full bg-[#F5F8FB] rounded-[12px] outline-none"
+        style={{
+          padding: '16px 24px',
+          height: '52px',
+          fontFamily: 'Onest, sans-serif',
+          fontSize: '16px',
+          fontWeight: 500,
+          lineHeight: '100%',
+          color: '#424F60'
+        }}
+        disabled={isLoading}
+        autoComplete="username"
+        required
+      />
+
+      {/* Пароль */}
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="••••••••"
+        className="w-full bg-[#F5F8FB] rounded-[12px] outline-none"
+        style={{
+          padding: '16px 24px',
+          height: '52px',
+          fontFamily: 'Onest, sans-serif',
+          fontSize: '24px',
+          fontWeight: 700,
+          lineHeight: '100%',
+          color: '#8893A2'
+        }}
+        disabled={isLoading}
+        autoComplete="new-password"
+        required
+      />
+
+      {/* Кнопка */}
+      <button
+        type="submit"
+        disabled={isLoading || !firstName.trim() || !lastName.trim() || !login.trim() || !password.trim()}
+        className="flex items-center justify-center w-full bg-[#EC1C24] rounded-[12px] transition-all hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
+        style={{
+          padding: '14px 20px',
+          height: '50px',
+          fontFamily: 'Onest, sans-serif',
+          fontSize: '16px',
+          fontWeight: 500,
+          lineHeight: '120%',
+          textAlign: 'center',
+          color: '#FFFFFF'
+        }}
+      >
+        {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
+      </button>
+
+      {/* Текст внизу */}
+      <div
+        className="w-full text-[#8893A2]"
+        style={{
+          fontFamily: 'Onest, sans-serif',
+          fontSize: '14px',
+          fontWeight: 500,
+          lineHeight: '130%'
+        }}
+      >
+        Используйте реальные данные для корректной работы заказов и доставки
+      </div>
+    </form>
   )
 }
 

@@ -8,9 +8,10 @@ interface PhoneInputProps {
   onSuccess: (data: ClientAuthResponse, phone: string) => void
   onError: (error: string) => void
   onRegister: () => void
+  onSwitchToLoginPassword?: () => void
 }
 
-const PhoneInput: React.FC<PhoneInputProps> = ({ onSuccess, onError, onRegister }) => {
+const PhoneInput: React.FC<PhoneInputProps> = ({ onSuccess, onError, onRegister, onSwitchToLoginPassword }) => {
   const [phone, setPhone] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isConsentGiven, setIsConsentGiven] = useState(true)
@@ -111,6 +112,16 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ onSuccess, onError, onRegister 
         >
           {isLoading ? 'Проверяем...' : 'Войти'}
         </button>
+        {onSwitchToLoginPassword && (
+          <button
+            type="button"
+            onClick={onSwitchToLoginPassword}
+            disabled={isLoading}
+            className="w-full text-center text-[14px] font-medium leading-[18px] text-[#0A84FF] transition-colors hover:text-[#0066CC] disabled:opacity-60"
+          >
+            Войти по логину и паролю
+          </button>
+        )}
       </div>
       <label
         className="flex w-full max-w-[340px] items-start gap-[10px]"

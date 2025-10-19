@@ -24,7 +24,7 @@ export interface VerificationResponse {
   token?: string
 }
 
-export type AuthStep = 'phone' | 'code' | 'registration'
+export type AuthStep = 'phone' | 'code' | 'registration' | 'loginPassword'
 
 export interface AuthState {
   step: AuthStep

@@ -133,9 +133,25 @@ export const VERIFY_CODE = gql`
   }
 `
 
+export const LOGIN_BY_CREDENTIALS = gql`
+  mutation LoginByCredentials($login: String!, $password: String!) {
+    loginByCredentials(login: $login, password: $password) {
+      success
+      client {
+        id
+        clientNumber
+        name
+        phone
+        email
+      }
+      token
+    }
+  }
+`
+
 export const REGISTER_NEW_CLIENT = gql`
-  mutation RegisterNewClient($phone: String!, $name: String!, $sessionId: String!) {
-    registerNewClient(phone: $phone, name: $name, sessionId: $sessionId) {
+  mutation RegisterNewClient($phone: String!, $name: String!, $sessionId: String!, $login: String, $password: String) {
+    registerNewClient(phone: $phone, name: $name, sessionId: $sessionId, login: $login, password: $password) {
       success
       client {
         id
@@ -157,6 +173,7 @@ export const GET_CLIENT_ME = gql`
       name
       email
       phone
+      login
       emailNotifications
       smsNotifications
       pushNotifications

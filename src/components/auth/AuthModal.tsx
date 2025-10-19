@@ -4,6 +4,7 @@ import { apolloClient } from '@/lib/apollo'
 import PhoneInput from './PhoneInput'
 import CodeVerification from './CodeVerification'
 import UserRegistration from './UserRegistration'
+import LoginByCredentials from './LoginByCredentials'
 import { X } from 'lucide-react'
 import type { AuthState, ClientAuthResponse, VerificationResponse } from '@/types/auth'
 
@@ -74,6 +75,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
     setError('')
   }
 
+  const handleGoToLoginPassword = () => {
+    setAuthState(prev => ({
+      ...prev,
+      step: 'loginPassword'
+    }))
+    setError('')
+  }
+
+  const handleGoToPhone = () => {
+    setAuthState(prev => ({
+      ...prev,
+      step: 'phone'
+    }))
+    setError('')
+  }
+
   const handleClose = () => {
     setAuthState({
       step: 'phone',
@@ -104,6 +121,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
             }}
             onError={handleError}
             onRegister={handleGoToRegistration}
+            onSwitchToLoginPassword={handleGoToLoginPassword}
           />
         )
       case 'code':
@@ -127,6 +145,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
             onError={handleError}
           />
         )
+      case 'loginPassword':
+        return (
+          <LoginByCredentials
+            onSuccess={handleCodeSuccess}
+            onError={handleError}
+            onSwitchToPhone={handleGoToPhone}
+          />
+        )
       default:
         return null
     }
@@ -134,7 +160,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 
   const isPhoneStep = authState.step === 'phone'
   const isCodeStep = authState.step === 'code'
-  const isModernStep = isPhoneStep || isCodeStep
+  const isLoginPasswordStep = authState.step === 'loginPassword'
+  const isRegistrationStep = authState.step === 'registration'
+  const isModernStep = isPhoneStep || isCodeStep || isLoginPasswordStep || isRegistrationStep
 
   const title = (() => {
     switch (authState.step) {
@@ -143,7 +171,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
       case 'code':
         return 'Код из SMS'
       case 'registration':
-        return 'Завершите регистрацию'
+        return 'Регистрация'
+      case 'loginPassword':
+        return 'Войти по логину и паролю'
       default:
         return 'Авторизация'
     }

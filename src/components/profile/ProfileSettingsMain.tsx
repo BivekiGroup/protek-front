@@ -18,9 +18,19 @@ const ProfileSettingsMain: React.FC = () => {
   const [firstName, setFirstName] = React.useState("");
   const [lastName, setLastName] = React.useState("");
   const [phone, setPhone] = React.useState("");
+  const [login, setLogin] = React.useState("");
   const [email, setEmail] = React.useState("");
-  const [phoneError, setPhoneError] = React.useState("");
-  const [emailError, setEmailError] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [emailNotifications, setEmailNotifications] = React.useState(false);
+
+  // Сохраняем оригинальные значения после загрузки
+  const [originalValues, setOriginalValues] = React.useState({
+    firstName: '',
+    lastName: '',
+    login: '',
+    email: '',
+    emailNotifications: false
+  });
 
   const { data, loading, error, refetch } = useQuery(GET_CLIENT_ME, {
     onCompleted: (result) => {
@@ -30,19 +40,56 @@ const ProfileSettingsMain: React.FC = () => {
       }
 
       const nameParts = client.name?.split(' ') || [];
-      setFirstName(nameParts[0] || '');
-      setLastName(nameParts.slice(1).join(' ') || '');
+      const newFirstName = nameParts[0] || '';
+      const newLastName = nameParts.slice(1).join(' ') || '';
+      const newLogin = (client as any).login || '';
+      const newEmail = client.email || '';
+      const newEmailNotifications = client.emailNotifications || false;
+
+      setFirstName(newFirstName);
+      setLastName(newLastName);
       setPhone(client.phone || '');
-      setEmail(client.email || '');
+      setLogin(newLogin);
+      setEmail(newEmail);
+      setEmailNotifications(newEmailNotifications);
+
+      // Сохраняем оригинальные значения
+      setOriginalValues({
+        firstName: newFirstName,
+        lastName: newLastName,
+        login: newLogin,
+        email: newEmail,
+        emailNotifications: newEmailNotifications
+      });
     },
     onError: (err) => {
       console.error('Ошибка загрузки данных клиента:', err);
     }
   });
 
+  // Проверяем есть ли изменения
+  const hasChanges =
+    firstName !== originalValues.firstName ||
+    lastName !== originalValues.lastName ||
+    login !== originalValues.login ||
+    email !== originalValues.email ||
+    emailNotifications !== originalValues.emailNotifications ||
+    password.length > 0;
+
   const [updatePersonalData] = useMutation(UPDATE_CLIENT_PERSONAL_DATA, {
     onCompleted: () => {
       toast.success('Личные данные сохранены');
+      // Очищаем пароль
+      setPassword('');
+      // Обновляем originalValues сразу после успешного сохранения
+      setOriginalValues({
+        firstName,
+        lastName,
+        login,
+        email,
+        emailNotifications
+      });
+      // Также делаем refetch для синхронизации с сервером
       refetch();
     },
     onError: (err) => {
@@ -53,32 +100,43 @@ const ProfileSettingsMain: React.FC = () => {
 
   const handleSavePersonalData = async () => {
     try {
-      setPhoneError('');
-      setEmailError('');
-
-      if (!phone || phone.replace(/\D/g, '').length < 10) {
-        setPhoneError('Введите корректный номер телефона');
+      // Email и пароль необязательны
+      if (email && !email.includes('@')) {
+        toast.error('Введите корректный email');
         return;
       }
 
-      if (!email || !email.includes('@')) {
-        setEmailError('Введите корректный email');
+      // Если пароль указан, проверяем его длину
+      if (password && password.length < 6) {
+        toast.error('Пароль должен содержать минимум 6 символов');
         return;
+      }
+
+      const input: any = {
+        type: 'INDIVIDUAL',
+        name: `${firstName} ${lastName}`.trim(),
+        phone,
+        emailNotifications,
+        smsNotifications: false,
+        pushNotifications: false
+      };
+
+      // Добавляем login, email и password только если они указаны
+      if (login) {
+        input.login = login;
+      }
+      if (email) {
+        input.email = email;
+      }
+      if (password) {
+        input.password = password;
       }
 
       await updatePersonalData({
-        variables: {
-          input: {
-            type: 'INDIVIDUAL',
-            name: `${firstName} ${lastName}`.trim(),
-            phone,
-            email,
-            emailNotifications: false,
-            smsNotifications: false,
-            pushNotifications: false
-          }
-        }
+        variables: { input }
       });
+
+      // Пароль очищается в onCompleted мутации
     } catch (err) {
       console.error('Ошибка сохранения личных данных:', err);
       toast.error('Ошибка сохранения данных');
@@ -120,10 +178,15 @@ const ProfileSettingsMain: React.FC = () => {
         setLastName={setLastName}
         phone={phone}
         setPhone={setPhone}
+        login={login}
+        setLogin={setLogin}
         email={email}
         setEmail={setEmail}
-        phoneError={phoneError}
-        emailError={emailError}
+        password={password}
+        setPassword={setPassword}
+        emailNotifications={emailNotifications}
+        setEmailNotifications={setEmailNotifications}
+        hasChanges={hasChanges}
         onSave={handleSavePersonalData}
       />
     </div>
