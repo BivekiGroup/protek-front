@@ -175,14 +175,18 @@ const CodeVerification: React.FC<CodeVerificationProps> = ({
             aria-label="Введите код из SMS"
           />
           <div className="flex items-center justify-center gap-[12px] text-[24px] font-bold leading-[24px]">
-            {Array.from({ length: CODE_LENGTH }).map((_, index) => (
-              <span
-                key={index}
-                className={index < code.length ? 'text-[#424F60]' : 'text-[#8893A2]'}
-              >
-                •
-              </span>
-            ))}
+            {Array.from({ length: CODE_LENGTH }).map((_, index) => {
+              const digit = code[index] ?? ''
+              const isFilled = digit !== ''
+              return (
+                <span
+                  key={index}
+                  className={isFilled ? 'text-[#424F60]' : 'text-[#8893A2]'}
+                >
+                  {isFilled ? digit : '•'}
+                </span>
+              )
+            })}
           </div>
         </div>
         <div className="flex w-full flex-col gap-[12px]">

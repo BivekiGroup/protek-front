@@ -138,6 +138,13 @@ const LegalEntityFormBlock: React.FC<LegalEntityFormBlockProps> = (props) => {
   const [hasAutoData, setHasAutoData] = React.useState(false);
   const [showAutoDetails, setShowAutoDetails] = React.useState(false);
   const [isEditingDetails, setIsEditingDetails] = React.useState(false);
+  const addButtonRef = React.useRef<HTMLButtonElement | null>(null);
+
+  React.useEffect(() => {
+    if (hasAutoData && !isEditingDetails) {
+      addButtonRef.current?.focus();
+    }
+  }, [hasAutoData, isEditingDetails]);
 
   const [createLegalEntity, { loading: createLoading }] = useMutation(CREATE_CLIENT_LEGAL_ENTITY, {
     onCompleted: () => {
@@ -258,7 +265,7 @@ const LegalEntityFormBlock: React.FC<LegalEntityFormBlockProps> = (props) => {
       setForm(mappedForm);
 
       setHasAutoData(true);
-      setShowAutoDetails(false);
+      setShowAutoDetails(true);
       setValidationErrors({ inn: false, shortName: false, jurAddress: false, form: false, taxSystem: false });
       setIsEditingDetails(false);
     } catch (error: any) {
@@ -315,8 +322,11 @@ const LegalEntityFormBlock: React.FC<LegalEntityFormBlockProps> = (props) => {
                   ? 'cursor-wait bg-red-600/70 text-white'
                   : inn.trim().length < 10
                     ? 'cursor-not-allowed bg-slate-200 text-slate-500'
-                    : 'bg-red-600 text-white hover:bg-red-700'
+                    : hasAutoData && !isEditingDetails
+                      ? 'bg-red-600 text-white opacity-60 hover:opacity-70 focus-visible:opacity-70'
+                      : 'bg-red-600 text-white hover:bg-red-700'
               }`}
+              style={{ color: '#FFFFFF' }}
             >
               {daDataLoading ? 'Получаем…' : 'Заполнить по ИНН'}
             </button>
@@ -646,9 +656,11 @@ const LegalEntityFormBlock: React.FC<LegalEntityFormBlockProps> = (props) => {
           type="button"
           onClick={handleSave}
           disabled={loading}
-          className={`rounded-xl px-5 py-3 text-base font-semibold text-white transition ${
+          ref={addButtonRef}
+          className={`rounded-xl px-5 py-3 text-base font-semibold text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 ${
             loading ? 'cursor-wait bg-red-400' : 'bg-red-600 hover:bg-red-700'
           }`}
+          style={{ color: '#FFFFFF' }}
         >
           {editingEntity ? 'Сохранить' : 'Добавить'}
         </button>

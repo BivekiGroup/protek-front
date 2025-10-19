@@ -6,6 +6,8 @@ import MobileMenuBottomSection from "./MobileMenuBottomSection";
 import IndexTopMenuNav from "./index/IndexTopMenuNav";
 import { emitAuthChanged } from '@/lib/authEvents'
 import { AuthPromptProvider, useAuthPrompt } from '@/contexts/AuthPromptContext';
+import { apolloClient } from '@/lib/apollo';
+import { GET_CLIENT_ME } from '@/lib/graphql';
 
 const VIN_PATTERN = /^[A-HJ-NPR-Z0-9]{17}$/i;
 
@@ -159,7 +161,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const router = useRouter();
 
-  const handleAuthSuccess = (client: any, token?: string) => {
+  const handleAuthSuccess = async (client: any, token?: string) => {
     // Сохраняем токен и пользователя в localStorage
     if (typeof window !== "undefined") {
       if (token) {
@@ -170,7 +172,32 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     setAuthModalOpen(false);
     // Сообщаем приложению об успешной авторизации
     emitAuthChanged({ status: 'login', user: client })
-    router.push('/profile-orders');
+    
+    let redirectToRequisites = false;
+    const lastAuthExistingFlag =
+      typeof window !== 'undefined' ? localStorage.getItem('lastAuthExistingClient') : null;
+
+    try {
+      const { data } = await apolloClient.query({
+        query: GET_CLIENT_ME,
+        fetchPolicy: 'network-only'
+      });
+
+      const legalEntitiesCount = data?.clientMe?.legalEntities?.length ?? 0;
+      redirectToRequisites = legalEntitiesCount === 0;
+    } catch (error) {
+      console.error('Не удалось получить данные клиента после авторизации:', error);
+      if (lastAuthExistingFlag === '0') {
+        redirectToRequisites = true;
+      }
+    } finally {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('lastAuthExistingClient');
+      }
+    }
+
+    const targetRoute = redirectToRequisites ? '/profile-req' : '/profile-orders';
+    router.push(targetRoute);
   };
 
   // Открытие модалки авторизации через параметр ?openAuth=1

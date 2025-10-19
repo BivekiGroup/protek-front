@@ -2052,3 +2052,19 @@ export const CLEAR_CART = gql`
     }
   }
 `;
+
+export const SEARCH_PRODUCTS_BY_ARTICLE = gql`
+  query SearchProductsByArticle($article: String!, $limit: Int) {
+    productsByArticle(article: $article, limit: $limit) {
+      id
+      article
+      brand
+      name
+      images {
+        id
+        url
+        alt
+      }
+    }
+  }
+`;

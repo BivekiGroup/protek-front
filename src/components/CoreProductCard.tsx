@@ -12,7 +12,7 @@ const CustomTooltip = ({ children, text }: { children: React.ReactNode; text: st
   const [showTooltip, setShowTooltip] = useState(false);
 
   return (
-    <div 
+    <div
       style={{ position: 'relative', display: 'inline-block' }}
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
@@ -26,15 +26,16 @@ const CustomTooltip = ({ children, text }: { children: React.ReactNode; text: st
             left: '50%',
             transform: 'translateX(-50%)',
             marginBottom: '8px',
-            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.94))',
-            color: '#f8fafc',
-            padding: '10px 12px',
-            borderRadius: '8px',
+            background: '#FFFFFF',
+            color: '#0D336C',
+            padding: '8px 12px',
+            borderRadius: '10px',
             fontSize: '13px',
             lineHeight: '1.4',
             zIndex: 1000,
-            boxShadow: '0 16px 32px rgba(15, 23, 42, 0.25)',
-            maxWidth: '320px',
+            boxShadow: '0 4px 16px rgba(13, 51, 108, 0.15)',
+            border: '1px solid #E5E7EB',
+            maxWidth: '400px',
             whiteSpace: 'normal' as any,
             wordWrap: 'break-word',
             textAlign: 'center' as any
@@ -129,7 +130,6 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
   const [inputValues, setInputValues] = useState<{ [key: number]: string }>(
     offers.reduce((acc, _, index) => ({ ...acc, [index]: "1" }), {})
   );
-  const [quantityErrors, setQuantityErrors] = useState<{ [key: number]: string }>({});
   const [localInCart, setLocalInCart] = useState<{ [key: number]: boolean }>({});
 
   useEffect(() => {
@@ -265,14 +265,8 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
     setQuantities(prev => ({ ...prev, [idx]: finalQuantity }));
 
     if (typeof remainingStock === 'number' && requested > remainingStock) {
-      setQuantityErrors(prev => ({ ...prev, [idx]: `Доступно не более ${remainingStock} шт.` }));
+      toast.error(`Доступно не более ${remainingStock} шт.`);
       setInputValues(prev => ({ ...prev, [idx]: String(finalQuantity) }));
-    } else {
-      setQuantityErrors(prev => {
-        if (!prev[idx]) return prev;
-        const { [idx]: _, ...rest } = prev;
-        return rest;
-      });
     }
   };
 
@@ -308,7 +302,6 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
           ? 'Товара нет в наличии'
           : 'В корзине уже максимальное количество этого товара';
         toast.error(errorMessage);
-        setQuantityErrors(prev => ({ ...prev, [index]: errorMessage }));
         setLocalInCart(prev => ({ ...prev, [index]: false }));
         return;
       }
@@ -318,18 +311,11 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
         setQuantities(prev => ({ ...prev, [index]: clampedQuantity }));
         setInputValues(prev => ({ ...prev, [index]: String(clampedQuantity) }));
         const errorMessage = `Можно добавить не более ${remainingStock} шт.`;
-        setQuantityErrors(prev => ({ ...prev, [index]: errorMessage }));
         toast.error(errorMessage);
         setLocalInCart(prev => ({ ...prev, [index]: false }));
         return;
       }
     }
-
-    setQuantityErrors(prev => {
-      if (!prev[index]) return prev;
-      const { [index]: _, ...rest } = prev;
-      return rest;
-    });
 
     const result = await addItem({
       productId: offer.productId,
@@ -416,10 +402,10 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
         <div className="w-layout-vflex core-product-s1">
           <div className="w-layout-vflex flex-block-47">
                 <div className="div-block-19">
-                  <CustomTooltip text="Оригинальные предложения Protek — рекомендуем для быстрого заказа">
+                  <CustomTooltip text="Оригинальные предложения Protek — выделены зеленым фоном. Рекомендуем для быстрого заказа">
                     <img 
                       src="/images/icons/filter-icon.svg" 
-                      alt="Оригинальные предложения Protek — рекомендуем для быстрого заказа"
+                      alt="Оригинальные предложения Protek — выделены зеленым фоном"
                       width="32"
                       height="32"
                       style={{ background: 'none', border: 'none', display: 'block', cursor: 'help' }}
@@ -449,7 +435,7 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
             <div className="w-layout-vflex core-product-s1">
                 <div className="w-layout-vflex flex-block-47">
                     <div className="div-block-19">
-                        <CustomTooltip text="Оригинальные предложения Protek — рекомендуем для быстрого заказа">
+                        <CustomTooltip text="Оригинальные предложения Protek — выделены зеленым фоном. Рекомендуем для быстрого заказа">
                           <img src="/images/icons/filter-icon.svg" loading="lazy" alt="Оригинальные предложения Protek — рекомендуем для быстрого заказа" className="image-9" width="32" height="32" style={{ background: 'none', border: 'none', display: 'block', cursor: 'help' }} />
                         </CustomTooltip>
                     </div>
@@ -583,20 +569,29 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
     const inCart = offer.isInCart || false;
     const isLocallyInCart = !!localInCart[idx];
     const cannotAddMore = typeof remainingStock === 'number' && remainingStock <= 0;
-    const addDisabled = !isAuthenticated || inCart || isLocallyInCart || cannotAddMore;
+
+    // Проверяем, что цена не равна 0
+    const priceValue = parseFloat(offer.price.replace(/[^\d.]/g, '')) || 0;
+    const isPriceZero = priceValue === 0;
+
+    const addDisabled = !isAuthenticated || inCart || isLocallyInCart || cannotAddMore || isPriceZero;
     const buttonTitle = !isAuthenticated
       ? 'Только для авторизованных пользователей'
-      : cannotAddMore
-        ? 'Добавление недоступно — нет свободного остатка'
-        : inCart || isLocallyInCart
-          ? 'Товар уже в корзине - нажмите для добавления еще'
-          : 'Добавить в корзину';
+      : isPriceZero
+        ? 'Товар недоступен для заказа (цена не указана)'
+        : cannotAddMore
+          ? 'Добавление недоступно — нет свободного остатка'
+          : inCart || isLocallyInCart
+            ? 'Товар уже в корзине - нажмите для добавления еще'
+            : 'Добавить в корзину';
     const buttonAriaLabel = !isAuthenticated
       ? 'Только для авторизованных пользователей'
-      : cannotAddMore
-        ? 'Добавление недоступно — нет свободного остатка'
-        : inCart || isLocallyInCart
-          ? 'Товар уже в корзине'
+      : isPriceZero
+        ? 'Товар недоступен для заказа'
+        : cannotAddMore
+          ? 'Добавление недоступно — нет свободного остатка'
+          : inCart || isLocallyInCart
+            ? 'Товар уже в корзине'
           : 'Добавить в корзину';
 
     const region = offer.region || 'Москва';
@@ -650,11 +645,6 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
           aria-label="Количество"
         />
       </div>
-              {quantityErrors[idx] && (
-                <div className="core-offers-table__error">
-                  {quantityErrors[idx]}
-                </div>
-              )}
               <div style={{ position: 'relative', display: 'inline-block' }}>
                 <button
                   type="button"
@@ -721,10 +711,10 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
             <div className="w-layout-vflex core-product-s1">
               <div className="w-layout-vflex flex-block-47">
                 <div className="div-block-19">
-                  <CustomTooltip text="Оригинальные предложения Protek — рекомендуем для быстрого заказа">
+                  <CustomTooltip text="Оригинальные предложения Protek — выделены зеленым фоном. Рекомендуем для быстрого заказа">
                     <img 
                       src="/images/icons/filter-icon.svg" 
-                      alt="Оригинальные предложения Protek — рекомендуем для быстрого заказа"
+                      alt="Оригинальные предложения Protek — выделены зеленым фоном"
                       width="32"
                       height="32"
                       style={{ background: 'none', border: 'none', display: 'block', cursor: 'help' }}

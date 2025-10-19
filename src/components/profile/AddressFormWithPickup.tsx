@@ -11,7 +11,7 @@ interface AddressFormWithPickupProps {
   address: string;
   setAddress: (address: string) => void;
   onBack: () => void;
-  onSaved?: () => void;
+  onSaved?: (newAddressId?: string) => void;
   onCityChange: (cityName: string) => void;
   onPickupPointSelect: (point: YandexPickupPoint) => void;
   selectedPickupPoint?: YandexPickupPoint;
@@ -327,9 +327,10 @@ const AddressFormWithPickup = ({
   }, [])
 
   const [createAddress] = useMutation(CREATE_CLIENT_DELIVERY_ADDRESS, {
-    onCompleted: () => {
+    onCompleted: (data) => {
       toast.success('Адрес доставки сохранён');
-      if (onSaved) onSaved(); else onBack();
+      const newAddressId = data?.createClientDeliveryAddressMe?.id;
+      if (onSaved) onSaved(newAddressId); else onBack();
     },
     onError: (error) => {
       console.error('Ошибка сохранения адреса:', error);

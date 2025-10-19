@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@apollo/client";
 import {
   CREATE_CLIENT_BANK_DETAILS,
   UPDATE_CLIENT_BANK_DETAILS,
   DELETE_CLIENT_BANK_DETAILS,
 } from "@/lib/graphql";
+import toast from "react-hot-toast";
 
 interface BankDetail {
   id: string;
@@ -34,30 +35,45 @@ const emptyForm = {
   correspondentAccount: "",
 };
 
+type FormField = keyof typeof emptyForm;
+
 const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity, onRefetch }) => {
   const [formState, setFormState] = useState(emptyForm);
   const [showForm, setShowForm] = useState(false);
   const [editingDetail, setEditingDetail] = useState<BankDetail | null>(null);
+  const [errors, setErrors] = useState<Partial<Record<FormField, string>>>({});
+  const [pendingDelete, setPendingDelete] = useState<BankDetail | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const fieldRefs: Record<FormField, React.RefObject<HTMLInputElement | null>> = {
+    name: useRef<HTMLInputElement | null>(null),
+    accountNumber: useRef<HTMLInputElement | null>(null),
+    bankName: useRef<HTMLInputElement | null>(null),
+    bik: useRef<HTMLInputElement | null>(null),
+    correspondentAccount: useRef<HTMLInputElement | null>(null),
+  };
 
   const [createBankDetails] = useMutation(CREATE_CLIENT_BANK_DETAILS, {
     onCompleted: () => {
+      toast.success("Реквизиты добавлены");
       resetForm();
       onRefetch();
     },
     onError: (error) => {
       console.error("Ошибка создания банковских реквизитов:", error);
-      alert(`Ошибка создания банковских реквизитов: ${error.message}`);
+      toast.error(`Не удалось добавить реквизиты: ${error.message}`);
     },
   });
 
   const [updateBankDetails] = useMutation(UPDATE_CLIENT_BANK_DETAILS, {
     onCompleted: () => {
+      toast.success("Реквизиты обновлены");
       resetForm();
       onRefetch();
     },
     onError: (error) => {
       console.error("Ошибка обновления банковских реквизитов:", error);
-      alert(`Ошибка обновления банковских реквизитов: ${error.message}`);
+      toast.error(`Не удалось обновить реквизиты: ${error.message}`);
     },
   });
 
@@ -67,7 +83,6 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
     },
     onError: (error) => {
       console.error("Ошибка удаления банковских реквизитов:", error);
-      alert(`Ошибка удаления банковских реквизитов: ${error.message}`);
     },
   });
 
@@ -75,6 +90,7 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
     setFormState(emptyForm);
     setShowForm(false);
     setEditingDetail(null);
+    setErrors({});
   }, []);
 
   useEffect(() => {
@@ -87,33 +103,75 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
     }
   }, [entity.bankDetails, editingDetail, resetForm]);
 
-  const handleChange = (field: keyof typeof formState) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormState((prev) => ({ ...prev, [field]: event.target.value }));
+  useEffect(() => {
+    if (!pendingDelete) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !deleting) {
+        setPendingDelete(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [pendingDelete, deleting]);
+
+  const digitsOnly = (value: string, limit?: number) => {
+    const stripped = value.replace(/\D/g, "");
+    return typeof limit === "number" ? stripped.slice(0, limit) : stripped;
+  };
+
+  const handleChange = (field: FormField) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = event.target.value;
+    let nextValue = rawValue;
+
+    if (field === "accountNumber" || field === "correspondentAccount") {
+      nextValue = digitsOnly(rawValue, 20);
+    } else if (field === "bik") {
+      nextValue = digitsOnly(rawValue, 9);
+    }
+
+    setFormState((prev) => ({ ...prev, [field]: nextValue }));
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
   const validateForm = (): boolean => {
     const { name, accountNumber, bankName, bik, correspondentAccount } = formState;
+    const nextErrors: Partial<Record<FormField, string>> = {};
 
     if (!name.trim()) {
-      alert("Введите название счёта");
-      return false;
+      nextErrors.name = "Введите название счёта";
     }
-    if (!accountNumber.trim() || accountNumber.replace(/\D/g, "").length < 20) {
-      alert("Введите корректный номер расчётного счёта");
-      return false;
+
+    if (accountNumber.length !== 20) {
+      nextErrors.accountNumber = "Номер счёта должен содержать 20 цифр";
     }
-    if (!bik.trim() || bik.replace(/\D/g, "").length !== 9) {
-      alert("Введите корректный БИК (9 цифр)");
-      return false;
-    }
+
     if (!bankName.trim()) {
-      alert("Введите наименование банка");
+      nextErrors.bankName = "Укажите наименование банка";
+    }
+
+    if (bik.length !== 9) {
+      nextErrors.bik = "БИК должен содержать 9 цифр";
+    }
+
+    if (correspondentAccount.length !== 20) {
+      nextErrors.correspondentAccount = "Корреспондентский счёт должен содержать 20 цифр";
+    }
+
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      const firstError = Object.keys(nextErrors)[0] as FormField | undefined;
+      if (firstError) {
+        const ref = fieldRefs[firstError];
+        ref?.current?.focus();
+      }
       return false;
     }
-    if (!correspondentAccount.trim() || correspondentAccount.replace(/\D/g, "").length < 20) {
-      alert("Введите корректный корреспондентский счёт");
-      return false;
-    }
+
     return true;
   };
 
@@ -126,10 +184,10 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
       legalEntityId: entity.id,
       input: {
         name: formState.name.trim(),
-        accountNumber: formState.accountNumber.trim(),
+        accountNumber: formState.accountNumber,
         bankName: formState.bankName.trim(),
-        bik: formState.bik.trim(),
-        correspondentAccount: formState.correspondentAccount.trim(),
+        bik: formState.bik,
+        correspondentAccount: formState.correspondentAccount,
       },
     };
 
@@ -154,29 +212,43 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
     setEditingDetail(detail);
     setFormState({
       name: detail.name,
-      accountNumber: detail.accountNumber,
+      accountNumber: digitsOnly(detail.accountNumber, 20),
       bankName: detail.bankName,
-      bik: detail.bik,
-      correspondentAccount: detail.correspondentAccount,
+      bik: digitsOnly(detail.bik, 9),
+      correspondentAccount: digitsOnly(detail.correspondentAccount, 20),
     });
     setShowForm(true);
+    setErrors({});
   };
 
-  const handleDelete = async (detail: BankDetail) => {
-    if (window.confirm(`Удалить реквизиты «${detail.name}»?`)) {
-      try {
-        await deleteBankDetails({ variables: { id: detail.id } });
-      } catch (error) {
-        console.error("Ошибка удаления реквизитов:", error);
-      }
+  const handleDeleteRequest = (detail: BankDetail) => {
+    setPendingDelete(detail);
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    const toastId = toast.loading("Удаляем реквизиты…");
+    try {
+      await deleteBankDetails({ variables: { id: pendingDelete.id } });
+      toast.success(`Реквизиты «${pendingDelete.name}» удалены`, { id: toastId });
+      setPendingDelete(null);
+    } catch (error) {
+      console.error("Ошибка удаления реквизитов:", error);
+      toast.error("Не удалось удалить реквизиты", { id: toastId });
+    } finally {
+      setDeleting(false);
     }
   };
 
   const details = useMemo(() => entity.bankDetails || [], [entity.bankDetails]);
-  const inputClass = "rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-100";
+  const baseInputClass =
+    "rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-100";
+  const errorInputClass = "border-red-400 focus:border-red-500 focus:ring-red-100 text-red-700 placeholder:text-red-300";
 
   return (
-    <div className="flex flex-col gap-5">
+    <>
+      <div className="flex flex-col gap-5">
       {details.length === 0 && !showForm && (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-6 text-sm text-gray-600">
           У {entity.shortName} пока нет банковских реквизитов. Добавьте первый счёт, чтобы можно было оплачивать ваши заказы быстрее.
@@ -207,19 +279,19 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
                 <button
                   type="button"
                   onClick={() => handleEdit(detail)}
-                  className="inline-flex items-center gap-1.5 text-gray-600 transition-colors hover:text-red-600"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-transparent px-3 py-2 text-gray-600 transition-colors hover:border-red-100 hover:bg-red-50 hover:text-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-200"
                 >
                   <img src="/images/edit.svg" alt="Редактировать" className="h-4 w-4" />
                   Редактировать
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(detail)}
-                  className="inline-flex items-center gap-1.5 text-gray-600 transition-colors hover:text-red-600"
+                  onClick={() => handleDeleteRequest(detail)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-transparent px-3 py-2 text-gray-600 transition-colors hover:border-red-100 hover:bg-red-50 hover:text-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-200"
                 >
                   <img src="/images/delete.svg" alt="Удалить" className="h-4 w-4" />
                   Удалить
@@ -252,11 +324,13 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
                   type="text"
                   value={formState.name}
                   onChange={handleChange("name")}
-                  className={inputClass}
+                  ref={fieldRefs.name}
+                  className={`${baseInputClass} ${errors.name ? errorInputClass : ""}`}
                   autoComplete="off"
                   placeholder="Основной расчётный счёт"
                 />
                 <span className="text-xs text-gray-400">Отображается в списке счетов</span>
+                {errors.name ? <span className="text-xs font-medium text-red-500">{errors.name}</span> : null}
               </div>
 
               <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
@@ -265,11 +339,14 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
                   type="text"
                   value={formState.accountNumber}
                   onChange={handleChange("accountNumber")}
-                  className={inputClass}
+                  ref={fieldRefs.accountNumber}
+                  className={`${baseInputClass} ${errors.accountNumber ? errorInputClass : ""}`}
                   inputMode="numeric"
+                  maxLength={20}
                   placeholder="20 цифр"
                 />
                 <span className="text-xs text-gray-400">Только цифры, без пробелов</span>
+                {errors.accountNumber ? <span className="text-xs font-medium text-red-500">{errors.accountNumber}</span> : null}
               </div>
 
               <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
@@ -278,10 +355,12 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
                   type="text"
                   value={formState.bankName}
                   onChange={handleChange("bankName")}
-                  className={inputClass}
+                  ref={fieldRefs.bankName}
+                  className={`${baseInputClass} ${errors.bankName ? errorInputClass : ""}`}
                   placeholder="Наименование банка"
                 />
                 <span className="text-xs text-gray-400">Полное или краткое наименование</span>
+                {errors.bankName ? <span className="text-xs font-medium text-red-500">{errors.bankName}</span> : null}
               </div>
 
               <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
@@ -290,12 +369,14 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
                   type="text"
                   value={formState.bik}
                   onChange={handleChange("bik")}
-                  className={inputClass}
+                  ref={fieldRefs.bik}
+                  className={`${baseInputClass} ${errors.bik ? errorInputClass : ""}`}
                   inputMode="numeric"
                   maxLength={9}
                   placeholder="9 цифр"
                 />
                 <span className="text-xs text-gray-400">Проверочный код Банка России</span>
+                {errors.bik ? <span className="text-xs font-medium text-red-500">{errors.bik}</span> : null}
               </div>
 
               <div className="md:col-span-2 flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
@@ -304,11 +385,16 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
                   type="text"
                   value={formState.correspondentAccount}
                   onChange={handleChange("correspondentAccount")}
-                  className={inputClass}
+                  ref={fieldRefs.correspondentAccount}
+                  className={`${baseInputClass} ${errors.correspondentAccount ? errorInputClass : ""}`}
                   inputMode="numeric"
+                  maxLength={20}
                   placeholder="20 цифр"
                 />
                 <span className="text-xs text-gray-400">Обязателен для расчётов по БИК</span>
+                {errors.correspondentAccount ? (
+                  <span className="text-xs font-medium text-red-500">{errors.correspondentAccount}</span>
+                ) : null}
               </div>
             </div>
 
@@ -316,7 +402,8 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
               <button
                 type="button"
                 onClick={handleSubmit}
-                className="rounded-xl bg-red-600 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-red-700"
+                className="rounded-xl bg-red-600 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60"
+                style={{ color: "#FFFFFF" }}
               >
                 {editingDetail ? "Сохранить" : "Добавить"}
               </button>
@@ -338,6 +425,7 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
               setShowForm(true);
               setEditingDetail(null);
               setFormState(emptyForm);
+              setErrors({});
             }}
             className="inline-flex items-center gap-2 rounded-xl border border-dashed border-red-300 bg-red-50 px-5 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-100"
           >
@@ -345,7 +433,72 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
           </button>
         </div>
       )}
-    </div>
+      </div>
+      {pendingDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 py-8 backdrop-blur"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="bank-details-delete-title"
+          onClick={() => (!deleting ? setPendingDelete(null) : undefined)}
+        >
+          <div
+            className="w-full max-w-lg overflow-hidden rounded-3xl border border-red-100/60 bg-white shadow-[0_40px_80px_-25px_rgba(15,23,42,0.55)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center gap-4 border-b border-red-100/70 bg-red-50/80 px-6 py-5">
+              <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-white text-red-600 shadow-[0_8px_16px_-6px_rgba(220,38,38,0.45)]">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M12 8v5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M12 16h.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M4.93 19.07A10 10 0 1 1 19.07 4.93 10 10 0 0 1 4.93 19.07Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+              <div>
+                <h2 id="bank-details-delete-title" className="text-xl font-semibold leading-tight text-gray-950">
+                  Удалить банковские реквизиты
+                </h2>
+                <p className="mt-1 text-sm text-red-600/80">
+                  Реквизиты «{pendingDelete.name}» будут удалены и перестанут отображаться в профиле.
+                </p>
+              </div>
+            </div>
+            <div className="px-6 py-6 text-sm text-gray-600">
+              Убедитесь, что эти реквизиты больше не нужны для счетов и оплат. При необходимости вы всегда сможете добавить новые данные.
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-5">
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                disabled={deleting}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:border-slate-300 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-200 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="inline-flex min-w-[140px] items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_-12px_rgba(220,38,38,0.65)] transition hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 disabled:cursor-not-allowed disabled:opacity-80"
+                style={{ color: "#FFFFFF" }}
+              >
+                {deleting ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
+                      <path className="opacity-75" d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                    Удаляем…
+                  </>
+                ) : (
+                  "Удалить реквизиты"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

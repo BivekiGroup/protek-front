@@ -5,7 +5,7 @@ import Head from 'next/head';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileMenuBottomSection from '@/components/MobileMenuBottomSection';
-import { DOC_FIND_OEM, FIND_LAXIMO_VEHICLES_BY_PART_NUMBER } from '@/lib/graphql';
+import { DOC_FIND_OEM, FIND_LAXIMO_VEHICLES_BY_PART_NUMBER, SEARCH_PRODUCTS_BY_ARTICLE } from '@/lib/graphql';
 import { LaximoDocFindOEMResult, LaximoVehiclesByPartResult, LaximoVehicleSearchResult } from '@/types/laximo';
 import MetaTags from '@/components/MetaTags';
 import { getMetaByPath } from '@/lib/meta-config';
@@ -62,6 +62,17 @@ const SearchPage = () => {
     errorPolicy: 'all'
   });
 
+  // Проверяем наличие результатов из Laximo
+  const partsResult: LaximoDocFindOEMResult | null = partsData?.laximoDocFindOEM || null;
+  const hasPartsResults = partsResult && partsResult.details && partsResult.details.length > 0;
+
+  // Fallback поиск в собственной БД, если Laximo ничего не нашел
+  const { data: dbProductsData, loading: dbProductsLoading } = useQuery(SEARCH_PRODUCTS_BY_ARTICLE, {
+    variables: { article: searchQuery, limit: 50 },
+    skip: !searchQuery || searchMode !== 'parts' || partsLoading || !!hasPartsResults,
+    errorPolicy: 'all'
+  });
+
   const handleSearchModeChange = (mode: SearchMode) => {
     setSearchMode(mode);
     if (searchQuery) {
@@ -94,14 +105,14 @@ const SearchPage = () => {
     router.push(url);
   };
 
-  const isLoading = (searchMode === 'parts' && partsLoading) || (searchMode === 'vehicles' && vehiclesLoading);
+  const isLoading = (searchMode === 'parts' && (partsLoading || dbProductsLoading)) || (searchMode === 'vehicles' && vehiclesLoading);
   const hasError = (searchMode === 'parts' && partsError) || (searchMode === 'vehicles' && vehiclesError);
 
-  const partsResult: LaximoDocFindOEMResult | null = partsData?.laximoDocFindOEM || null;
   const vehiclesResult: LaximoVehiclesByPartResult | null = vehiclesData?.laximoFindVehiclesByPartNumber || null;
+  const dbProducts = dbProductsData?.productsByArticle || [];
 
-  const hasPartsResults = partsResult && partsResult.details && partsResult.details.length > 0;
   const hasVehiclesResults = vehiclesResult && vehiclesResult.totalVehicles > 0;
+  const hasDbProducts = dbProducts.length > 0;
 
   const metaData = getMetaByPath('/search');
 
@@ -190,7 +201,7 @@ const SearchPage = () => {
                   {/* Результаты поиска запчастей */}
                   {searchMode === 'parts' && (
                     <>
-                      {!hasPartsResults && (
+                      {!hasPartsResults && !hasDbProducts && (
                         <div className="bg-[#eaf0fa] border border-[#b3c6e6] rounded-2xl shadow p-10 text-center">
                           <svg className="w-16 h-16 mx-auto mb-4" style={{ color: '#0d336c' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.824-2.562M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -204,6 +215,36 @@ const SearchPage = () => {
                           <p className="text-sm" style={{ color: '#3b5a99' }}>
                             Попробуйте изменить запрос или проверьте правильность написания артикула.
                           </p>
+                        </div>
+                      )}
+
+                      {/* Результаты из собственной БД */}
+                      {!hasPartsResults && hasDbProducts && (
+                        <div className="bg-white rounded-2xl shadow p-10">
+                          <div className="border-b border-gray-200 pb-4">
+                            <h2 className="text-xl font-semibold text-gray-900">
+                              Поиск деталей по артикулу: {searchQuery}
+                            </h2>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Выберите нужную деталь
+                            </p>
+                          </div>
+                          <div className="divide-y divide-gray-200">
+                            {dbProducts.map((product: any) => (
+                              <div key={product.id}>
+                                <button
+                                  onClick={() => router.push(`/search-result?article=${encodeURIComponent(product.article)}&brand=${encodeURIComponent(product.brand)}`)}
+                                  className="w-full text-left p-4 hover:bg-slate-200 transition-colors block group"
+                                >
+                                  <div className="flex w-full items-center gap-2">
+                                    <div className="w-1/5 max-md:w-1/3 font-bold text-left truncate" style={{ color: 'rgb(77, 180, 94)' }}>{product.brand}</div>
+                                    <div className="w-1/5 max-md:text-center max-md:w-1/3 font-bold text-left truncate group-hover:text-[#EC1C24] transition-colors">{product.article}</div>
+                                    <div className="w-3/5 max-md:w-1/3 text-left truncate">{product.name}</div>
+                                  </div>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
 

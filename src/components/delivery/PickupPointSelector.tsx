@@ -26,14 +26,15 @@ const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [cityName, setCityName] = useState('Москва'); // По умолчанию Москва (где есть ПВЗ)
+  const [cityName, setCityName] = useState(''); // Не загружаем город по умолчанию
   const [showCitySelector, setShowCitySelector] = useState(false);
+  const [citySearchTerm, setCitySearchTerm] = useState(''); // Поисковый запрос для городов
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Запрос ПВЗ по городу
+  // Запрос ПВЗ по городу (только если город выбран)
   const { data: cityData, loading: cityLoading, error: cityError } = useQuery(YANDEX_PICKUP_POINTS_BY_CITY, {
     variables: { cityName },
-    skip: !cityName,
+    skip: !cityName, // Пропускаем запрос, если город не выбран
     errorPolicy: 'all' // Продолжаем работу даже при ошибках
   });
 
@@ -158,6 +159,11 @@ const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
   // Популярные города с ПВЗ Яндекса (расширенный список)
   const availableCities = Object.keys(cityCoordinates).sort();
 
+  // Фильтрация городов по поисковому запросу
+  const filteredCities = availableCities.filter(city =>
+    city.toLowerCase().includes(citySearchTerm.toLowerCase())
+  );
+
   // Фильтрация ПВЗ по поисковому запросу и типу
   const filteredPoints = pickupPoints.filter((point: YandexPickupPoint) => {
     const matchesSearch = point.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -196,6 +202,7 @@ const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setShowCitySelector(false);
+        setCitySearchTerm(''); // Очищаем поиск при закрытии
       }
     };
 
@@ -220,10 +227,17 @@ const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
         </label>
         <div className="relative">
           <button
-            onClick={() => setShowCitySelector(!showCitySelector)}
-            className="w-full gap-2.5 px-6 py-3 text-base leading-6 bg-white rounded border border-solid border-stone-300 h-[45px] text-gray-700 outline-none flex items-center justify-between hover:border-gray-400 transition-colors"
+            onClick={() => {
+              setShowCitySelector(!showCitySelector);
+              if (!showCitySelector) {
+                setIsOpen(false); // Закрываем дропдаун ПВЗ
+              }
+            }}
+            className="w-full gap-2.5 px-6 py-3 text-base leading-6 bg-white rounded border border-solid border-stone-300 h-[45px] outline-none flex items-center justify-between hover:border-gray-400 transition-colors"
           >
-            <span>{cityName}</span>
+            <span className={cityName ? 'text-gray-700' : 'text-gray-400'}>
+              {cityName || 'Выберите город'}
+            </span>
             <svg 
               width="16" 
               height="16" 
@@ -239,23 +253,46 @@ const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
 
           {/* Дропдаун с городами */}
           {showCitySelector && (
-            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-              {availableCities.map((city) => (
-                <div
-                  key={city}
-                  onClick={() => {
-                    setCityName(city);
-                    setShowCitySelector(false);
-                    setLocation(null); // Сбрасываем геолокацию при выборе города
-                    onCityChange?.(city); // Уведомляем родительский компонент
-                  }}
-                  className={`px-4 py-2 cursor-pointer hover:bg-gray-50 transition-colors ${
-                    cityName === city ? 'bg-red-50 text-red-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  {city}
-                </div>
-              ))}
+            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden">
+              {/* Поле поиска города */}
+              <div className="p-2 border-b border-gray-200 bg-gray-50">
+                <input
+                  type="text"
+                  value={citySearchTerm}
+                  onChange={(e) => setCitySearchTerm(e.target.value)}
+                  placeholder="Поиск города..."
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
+                  autoFocus
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+
+              {/* Список городов */}
+              <div className="max-h-48 overflow-y-auto">
+                {filteredCities.length > 0 ? (
+                  filteredCities.map((city) => (
+                    <div
+                      key={city}
+                      onClick={() => {
+                        setCityName(city);
+                        setShowCitySelector(false);
+                        setCitySearchTerm(''); // Очищаем поиск
+                        setLocation(null); // Сбрасываем геолокацию при выборе города
+                        onCityChange?.(city); // Уведомляем родительский компонент
+                      }}
+                      className={`px-4 py-2 cursor-pointer hover:bg-gray-50 transition-colors ${
+                        cityName === city ? 'bg-red-50 text-red-600 font-medium' : 'text-gray-700'
+                      }`}
+                    >
+                      {city}
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                    Город не найден
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -268,10 +305,16 @@ const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
           value={selectedPoint ? selectedPoint.name : searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
-            if (!isOpen) setIsOpen(true);
+            if (!isOpen) {
+              setIsOpen(true);
+              setShowCitySelector(false); // Закрываем селектор города
+            }
           }}
-          onFocus={() => setIsOpen(true)}
-          placeholder={`${placeholder} в г. ${cityName}`}
+          onFocus={() => {
+            setIsOpen(true);
+            setShowCitySelector(false); // Закрываем селектор города
+          }}
+          placeholder={cityName ? `${placeholder} в г. ${cityName}` : 'Сначала выберите город'}
           className="w-full gap-2.5 px-6 py-4 text-lg leading-6 bg-white rounded border border-solid border-stone-300 h-[55px] text-neutral-500 outline-none pr-20"
         />
         
@@ -280,6 +323,7 @@ const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
           onClick={() => {
             handleGetLocation();
             setIsOpen(true);
+            setShowCitySelector(false); // Закрываем селектор города
           }}
           className="absolute right-2 top-2 p-2 text-gray-400 hover:text-gray-600 transition-colors"
           title="Определить местоположение"
@@ -316,11 +360,18 @@ const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
             </div>
           ) : filteredPoints.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
-              {searchTerm ? (
+              {!cityName && !location ? (
+                <div>
+                  <div className="mb-2">Выберите город или используйте геолокацию</div>
+                  <div className="text-xs text-gray-400">
+                    Для поиска пунктов выдачи сначала укажите местоположение
+                  </div>
+                </div>
+              ) : searchTerm ? (
                 `Пункты выдачи не найдены по запросу "${searchTerm}"`
               ) : (
                 <div>
-                  <div className="mb-2">Нет доступных пунктов выдачи в г. {cityName}</div>
+                  <div className="mb-2">Нет доступных пунктов выдачи{cityName ? ` в г. ${cityName}` : ''}</div>
                   <div className="text-xs text-gray-400">
                     Попробуйте выбрать другой город или использовать геолокацию
                   </div>

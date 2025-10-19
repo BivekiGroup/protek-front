@@ -231,10 +231,17 @@ const transformOffersForCard = (offers: any[], hasStock: boolean = true) => {
   return offers.map((offer) => {
     const isExternal = offer.type === 'external';
     const deliveryDays = isExternal ? offer.deliveryTime : offer.deliveryDays;
+
+    // Создаем уникальный ключ для каждого предложения
+    // Комбинируем тип, id/offerKey, поставщика, склад, цену и срок доставки
+    const uniqueKey = isExternal
+      ? `ext-${offer.offerKey || offer.id}-${offer.supplier}-${offer.warehouse}-${offer.price}-${deliveryDays}`
+      : `int-${offer.productId || offer.id}`;
+
     return {
       id: offer.id,
       productId: offer.productId,
-      offerKey: offer.offerKey,
+      offerKey: uniqueKey, // Используем уникальный ключ вместо оригинального offerKey
       pcs: `${offer.quantity} шт.`,
       days: formatDeliveryDuration(deliveryDays),
       recommended: !isExternal,

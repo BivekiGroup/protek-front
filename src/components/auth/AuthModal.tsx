@@ -36,6 +36,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 
   const handleCodeSuccess = (data: VerificationResponse) => {
     if (data.success && data.client) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('lastAuthExistingClient', authState.isExistingClient ? '1' : '0')
+      }
       onSuccess(data.client, data.token)
       onClose()
     }
@@ -43,6 +46,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 
   const handleRegistrationSuccess = (data: VerificationResponse) => {
     if (data.success && data.client) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('lastAuthExistingClient', '0')
+      }
       onSuccess(data.client, data.token)
       onClose()
     }

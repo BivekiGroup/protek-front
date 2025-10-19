@@ -60,7 +60,7 @@ const ProfileLegalEntitiesMain = forwardRef<ProfileLegalEntitiesMainHandle>((_, 
 
   const [showLegalEntityForm, setShowLegalEntityForm] = useState(false);
   const [editingEntity, setEditingEntity] = useState<LegalEntity | null>(null);
-  const [expandedEntityId, setExpandedEntityId] = useState<string | null>(null);
+  const [expandedEntityIds, setExpandedEntityIds] = useState<string[]>([]);
 
   // Поля формы юридического лица
   const [inn, setInn] = useState("");
@@ -145,7 +145,11 @@ const ProfileLegalEntitiesMain = forwardRef<ProfileLegalEntitiesMainHandle>((_, 
   }, [refetch]);
 
   const handleToggleRequisites = useCallback((entityId: string) => {
-    setExpandedEntityId(prev => (prev === entityId ? null : entityId));
+    setExpandedEntityIds(prev => (
+      prev.includes(entityId)
+        ? prev.filter(id => id !== entityId)
+        : [...prev, entityId]
+    ));
   }, []);
 
   useImperativeHandle(ref, () => ({ openCreateForm: handleAddEntity }), [handleAddEntity]);
@@ -182,7 +186,7 @@ const ProfileLegalEntitiesMain = forwardRef<ProfileLegalEntitiesMainHandle>((_, 
         legalEntities={legalEntities}
         onRefetch={refetch}
         onEdit={handleEditEntity}
-        expandedEntityId={expandedEntityId}
+        expandedEntityIds={expandedEntityIds}
         onToggleRequisites={handleToggleRequisites}
         onAddNew={handleAddEntity}
         formNode={showLegalEntityForm ? (

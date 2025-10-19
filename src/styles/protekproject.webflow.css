@@ -4678,7 +4678,7 @@ body {
 .core-offers-table__row--data {
   font-size: 14px;
   color: #000000;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease;
   padding-top: 6px;
   padding-bottom: 6px;
 }
@@ -4686,13 +4686,18 @@ body {
 .core-offers-table__row--data:hover {
   background-color: #DAE5EF;
   border-radius: 10px;
-  margin: 0;
-  padding-left: 12px;
-  padding-right: 12px;
 }
 
 .core-offers-table__row--own {
   position: relative;
+  background-color: #F0F9F4;
+  border-left: 3px solid #4DB45E;
+  border-radius: 10px;
+  padding-left: 17px;
+}
+
+.core-offers-table__row--own:hover {
+  background-color: #E6F5EC;
 }
 
 .core-offers-table__row--last {

@@ -153,10 +153,11 @@ const ProfileAddressWayWithMap: React.FC<ProfileAddressWayWithMapProps> = ({ onB
     errorPolicy: 'all'
   });
 
-  // Загружаем ПВЗ для Москвы при первой загрузке (где есть много ПВЗ)
-  React.useEffect(() => {
-    loadPointsByCity({ variables: { cityName: 'Москва' } });
-  }, [loadPointsByCity]);
+  // Не загружаем ПВЗ автоматически при загрузке страницы
+  // ПВЗ будут загружены только когда пользователь:
+  // 1. Выберет город в селекторе
+  // 2. Использует геолокацию
+  // 3. Переключится на вкладку "Самовывоз"
 
   const handlePickupPointSelect = (point: YandexPickupPoint) => {
     setSelectedPickupPoint(point);
@@ -213,12 +214,23 @@ const ProfileAddressWayWithMap: React.FC<ProfileAddressWayWithMapProps> = ({ onB
           setAddress={setAddress}
         />
       ) : (
-        <AddressFormWithPickup 
-          onDetectLocation={handleDetectLocation} 
-          address={address} 
-          setAddress={setAddress} 
+        <AddressFormWithPickup
+          onDetectLocation={handleDetectLocation}
+          address={address}
+          setAddress={setAddress}
           onBack={onBack}
-          onSaved={() => { if (returnTo) router.push(returnTo); else onBack(); }}
+          onSaved={(newAddressId) => {
+            if (returnTo) {
+              // Добавляем ID нового адреса к returnTo URL
+              const separator = returnTo.includes('?') ? '&' : '?';
+              const urlWithAddressId = newAddressId
+                ? `${returnTo}${separator}newAddressId=${newAddressId}`
+                : returnTo;
+              router.push(urlWithAddressId);
+            } else {
+              onBack();
+            }
+          }}
           onCityChange={handleCityChange}
           onPickupPointSelect={handlePickupPointSelect}
           selectedPickupPoint={selectedPickupPoint}

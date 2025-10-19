@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useCart } from "@/contexts/CartContext";
 import { useMutation, useQuery } from "@apollo/client";
 import { CREATE_ORDER, CREATE_PAYMENT, GET_CLIENT_ME, GET_CLIENT_DELIVERY_ADDRESSES } from "@/lib/graphql";
@@ -13,12 +14,13 @@ interface CartSummaryProps {
 }
 
 const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
+  const router = useRouter();
   const { state, updateDelivery, updateOrderComment, clearCart } = useCart();
   const { summary, delivery, items, orderComment } = state;
   const legalEntityDropdownRef = useRef<HTMLDivElement>(null);
   const addressDropdownRef = useRef<HTMLDivElement>(null);
   const paymentDropdownRef = useRef<HTMLDivElement>(null);
-  
+
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -137,6 +139,39 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
       setRecipientPhone(clientData.clientMe.phone || '');
     }
   }, [clientData, recipientName, recipientPhone]);
+
+  // Автоматический выбор адреса после добавления из личного кабинета
+  useEffect(() => {
+    const newAddressId = router.query.newAddressId as string;
+
+    if (newAddressId && addressesData?.clientMe?.deliveryAddresses) {
+      // Находим адрес по ID
+      const newAddress = addressesData.clientMe.deliveryAddresses.find(
+        (addr: any) => addr.id === newAddressId
+      );
+
+      if (newAddress && newAddress.address !== selectedDeliveryAddress) {
+        // Автоматически выбираем новый адрес
+        setSelectedDeliveryAddress(newAddress.address);
+        updateDelivery({ address: newAddress.address });
+
+        // Показываем уведомление
+        toast.success('Адрес автоматически выбран');
+
+        // Очищаем параметр из URL
+        const { newAddressId: _, ...restQuery } = router.query;
+        router.replace(
+          {
+            pathname: router.pathname,
+            query: restQuery,
+          },
+          undefined,
+          { shallow: true }
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.query.newAddressId, addressesData]);
 
   // Закрытие dropdown при клике вне их
   useEffect(() => {

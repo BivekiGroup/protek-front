@@ -37,7 +37,7 @@ interface LegalEntityListBlockProps {
   legalEntities: LegalEntity[];
   onRefetch: () => void;
   onEdit?: (entity: LegalEntity) => void;
-  expandedEntityId?: string | null;
+  expandedEntityIds?: string[];
   onToggleRequisites?: (entityId: string) => void;
   onAddNew?: () => void;
   formNode?: ReactNode | null;
@@ -50,7 +50,7 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
   legalEntities,
   onRefetch,
   onEdit,
-  expandedEntityId,
+  expandedEntityIds = [],
   onToggleRequisites,
   onAddNew,
   formNode,
@@ -183,6 +183,7 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
       <div className="flex relative flex-col gap-3 items-start self-stretch">
         {legalEntities.map((entity) => {
           const isEditingThis = Boolean(formNode && editingEntityId === entity.id);
+          const isExpanded = expandedEntityIds.includes(entity.id);
 
           return (
             <div
@@ -217,7 +218,7 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
                         type="button"
                         onClick={() => onToggleRequisites && onToggleRequisites(entity.id)}
                         className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-red-200 hover:text-red-600"
-                        aria-expanded={expandedEntityId === entity.id}
+                        aria-expanded={isExpanded}
                       >
                         <svg
                           width="16"
@@ -234,7 +235,7 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
                             fill="currentColor"
                           />
                         </svg>
-                        <span>{expandedEntityId === entity.id ? "Скрыть реквизиты" : "Реквизиты"}</span>
+                        <span>{isExpanded ? "Скрыть реквизиты" : "Реквизиты"}</span>
                       </button>
 
                       <div className="flex items-center gap-3 text-sm leading-5 text-gray-600">
@@ -327,7 +328,7 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
                     </div>
                   </div>
 
-                  {expandedEntityId === entity.id && (
+                  {isExpanded && (
                     <div className="border-t border-slate-200 pt-4">
                       <LegalEntityBankDetails entity={entity} onRefetch={onRefetch} />
                     </div>
@@ -385,6 +386,7 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
                 onClick={confirmDelete}
                 disabled={deleting}
                 className="inline-flex min-w-[140px] items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_-12px_rgba(220,38,38,0.65)] transition hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 disabled:cursor-not-allowed disabled:opacity-80"
+                style={{ color: "#FFFFFF" }}
               >
                 {deleting ? (
                   <>

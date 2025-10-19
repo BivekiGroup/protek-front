@@ -134,7 +134,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (item.offerKey && existing.offerKey) return existing.offerKey === item.offerKey
         if (item.productId && existing.productId) return existing.productId === item.productId
         if (item.article && item.brand && existing.article && existing.brand) {
-          return existing.article === item.article && existing.brand === item.brand
+          // Fallback проверка по артикулу и бренду (не должна использоваться если offerKey есть)
+          return existing.article === item.article &&
+                 existing.brand === item.brand
         }
         return false
       })
