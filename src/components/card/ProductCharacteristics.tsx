@@ -8,6 +8,18 @@ interface ProductCharacteristicsProps {
 
 const ProductCharacteristics = ({ result }: ProductCharacteristicsProps) => {
   const [partsIndexData, setPartsIndexData] = useState<any>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Запрос к Parts Index для получения дополнительных характеристик
   const { data: partsIndexResult, loading: partsIndexLoading } = useQuery(PARTS_INDEX_SEARCH_BY_ARTICLE, {
@@ -97,40 +109,160 @@ const ProductCharacteristics = ({ result }: ProductCharacteristicsProps) => {
 
   return (
     <>
-      <div className="w-layout-hflex flex-block-52">
+      <div 
+        className="w-layout-hflex flex-block-52"
+        style={{
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? '16px' : '0'
+        } as React.CSSProperties}
+      >
         {result && (
           <>
             <div className="w-layout-vflex flex-block-53">
-              <div className="w-layout-hflex flex-block-55">
-                <span className="text-block-29">Бренд:</span>
-                <span className="text-block-28">{result.brand}</span>
+               <div 
+                 className="text-[24px] font-medium text-black mb-3"
+                 style={{
+                   fontSize: isMobile ? '20px' : '24px'
+                 } as React.CSSProperties}
+               >
+                 Характеристики
+               </div>
+              <div className="w-layout-hflex flex-block-55 " style={{
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: isMobile ? 'flex-start' : 'center',
+                gap: isMobile ? '4px' : '8px'
+              } as React.CSSProperties}>
+                <span 
+                  className="text-block-29"
+                  style={{
+                    fontSize: isMobile ? '14px' : '16px',
+                    minWidth: isMobile ? 'auto' : '120px'
+                  } as React.CSSProperties}
+                >
+                  Бренд:
+                </span>
+                <span 
+                  className="text-block-28"
+                  style={{
+                    fontSize: isMobile ? '14px' : '16px'
+                  } as React.CSSProperties}
+                >
+                  {result.brand}
+                </span>
               </div>
-              <div className="w-layout-hflex flex-block-55">
-                <span className="text-block-29">Артикул:</span>
-                <span className="text-block-28">{result.articleNumber}</span>
+              <div className="w-layout-hflex flex-block-55" style={{
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: isMobile ? 'flex-start' : 'center',
+                gap: isMobile ? '4px' : '8px'
+              } as React.CSSProperties}>
+                <span 
+                  className="text-block-29"
+                  style={{
+                    fontSize: isMobile ? '14px' : '16px',
+                    minWidth: isMobile ? 'auto' : '120px'
+                  } as React.CSSProperties}
+                >
+                  Артикул:
+                </span>
+                <span 
+                  className="text-block-28"
+                  style={{
+                    fontSize: isMobile ? '14px' : '16px'
+                  } as React.CSSProperties}
+                >
+                  {result.articleNumber}
+                </span>
               </div>
-              <div className="w-layout-hflex flex-block-55">
-                <span className="text-block-29">Название:</span>
-                <span className="text-block-28">{result.name}</span>
+              <div className="w-layout-hflex flex-block-55" style={{
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: isMobile ? 'flex-start' : 'center',
+                gap: isMobile ? '4px' : '8px'
+              } as React.CSSProperties}>
+                <span 
+                  className="text-block-29"
+                  style={{
+                    fontSize: isMobile ? '14px' : '16px',
+                    minWidth: isMobile ? 'auto' : '120px'
+                  } as React.CSSProperties}
+                >
+                  Название:
+                </span>
+                <span 
+                  className="text-block-28"
+                  style={{
+                    fontSize: isMobile ? '14px' : '16px'
+                  } as React.CSSProperties}
+                >
+                  {result.name}
+                </span>
               </div>
               {(typeof result.weight === 'number' && result.weight > 0) || derived.weightKg ? (
-                <div className="w-layout-hflex flex-block-55">
-                  <span className="text-block-29">Вес:</span>
-                  <span className="text-block-28">{(result.weight && result.weight > 0 ? result.weight : derived.weightKg)?.toLocaleString('ru-RU')} кг</span>
+                <div className="w-layout-hflex flex-block-55" style={{
+                  flexDirection: isMobile ? 'column' : 'row',
+                  alignItems: isMobile ? 'flex-start' : 'center',
+                  gap: isMobile ? '4px' : '8px'
+                } as React.CSSProperties}>
+                  <span 
+                    className="text-block-29"
+                    style={{
+                      fontSize: isMobile ? '14px' : '16px',
+                      minWidth: isMobile ? 'auto' : '120px'
+                    } as React.CSSProperties}
+                  >
+                    Вес:
+                  </span>
+                  <span 
+                    className="text-block-28"
+                    style={{
+                      fontSize: isMobile ? '14px' : '16px'
+                    } as React.CSSProperties}
+                  >
+                    {(result.weight && result.weight > 0 ? result.weight : derived.weightKg)?.toLocaleString('ru-RU')} кг
+                  </span>
                 </div>
               ) : null}
               {(result.dimensions || derived.dimensions) && (
-                <div className="w-layout-hflex flex-block-55">
-                  <span className="text-block-29">Габариты (Д×Ш×В):</span>
-                  <span className="text-block-28">{result.dimensions || derived.dimensions}</span>
+                <div className="w-layout-hflex flex-block-55" style={{
+                  flexDirection: isMobile ? 'column' : 'row',
+                  alignItems: isMobile ? 'flex-start' : 'center',
+                  gap: isMobile ? '4px' : '8px'
+                } as React.CSSProperties}>
+                  <span 
+                    className="text-block-29"
+                    style={{
+                      fontSize: isMobile ? '14px' : '16px',
+                      minWidth: isMobile ? 'auto' : '120px'
+                    } as React.CSSProperties}
+                  >
+                    Габариты (Д×Ш×В):
+                  </span>
+                  <span 
+                    className="text-block-28"
+                    style={{
+                      fontSize: isMobile ? '14px' : '16px'
+                    } as React.CSSProperties}
+                  >
+                    {result.dimensions || derived.dimensions}
+                  </span>
                 </div>
               )}
               {result.description && (
-                <div className="w-layout-vflex flex-block-53">
-                  <div className="w-layout-hflex flex-block-55">
-                    <span className="text-block-29">Описание:</span>
-                  </div>
-                  <div className="text-block-28" dangerouslySetInnerHTML={{ __html: sanitizeHtml(result.description) }} />
+                <div className="flex-block-53 mt-5">
+                    <span 
+                      className="text-[24px] font-medium text-black mb-3"
+                      style={{
+                        fontSize: isMobile ? '18px' : '24px'
+                      } as React.CSSProperties}
+                    >
+                      Описание
+                    </span>
+                  <div 
+                    className="mt-4" 
+                    style={{
+                      fontSize: isMobile ? '14px' : '16px'
+                    } as React.CSSProperties}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(result.description) }} 
+                  />
                 </div>
               )}
 
