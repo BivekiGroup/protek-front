@@ -44,7 +44,7 @@
 }
 
 .w-layout-blockcontainer {
-  max-width: 940px;
+  max-width: 1580px;
   margin-left: auto;
   margin-right: auto;
   display: block;
@@ -4199,7 +4199,7 @@ body {
 .core-product-card-copy {
   grid-column-gap: 20px;
   grid-row-gap: 20px;
-  flex: 0 auto;
+  flex: 1;
   justify-content: flex-start;
   align-self: stretch;
   align-items: flex-start;

@@ -12,7 +12,6 @@ import Header from "@/components/Header";
 import CartRecommended from "@/components/CartRecommended";
 import InfoCard from "@/components/card/InfoCard";  
 import ProductImageGallery from "@/components/card/ProductImageGallery";
-import ProductSortHeader from "@/components/card/ProductSortHeader";
 import ProductList from "@/components/card/ProductList";
 import ProductPriceHeader from "@/components/card/ProductPriceHeader";
 import ProductCharacteristics from "@/components/card/ProductCharacteristics";
@@ -315,14 +314,7 @@ export default function CardPage() {
                 imageUrl={mainImageUrl}
                 images={(result?.images?.map((img: any) => img.url)) || []}
               />
-              <div className="w-layout-vflex flex-block-48">
-                <ProductSortHeader 
-                  brand={result ? result.brand : brandQuery}
-                  articleNumber={result ? result.articleNumber : searchQuery}
-                  name={result ? result.name : "деталь"}
-                  sortBy={sortBy}
-                  onSortChange={handleSortChange}
-                />
+              <div className=" flex-block-48">
                 <ProductPriceHeader 
                   offers={allOffers}
                   brand={result ? result.brand : brandQuery}
