@@ -489,6 +489,29 @@ input.input-receiver:focus {
 .flex-block-122 .button-icon {
   margin-left: 0;
 }
+
+/* Уменьшаем минимальные ширины столбцов для адаптивности без скролла */
+.core-offers-table__row {
+  grid-template-columns: minmax(180px, 2.5fr) minmax(90px, 1.1fr) minmax(100px, 1.3fr) minmax(80px, 1fr) minmax(70px, 0.9fr) minmax(90px, 1fr) minmax(100px, 1.2fr) !important;
+}
+
+/* Добавляем постоянный border-radius к строкам таблицы чтобы убрать дергание при hover */
+.core-offers-table__row--data {
+  border-radius: 10px !important;
+}
+
+.core-offers-table__row--own {
+  border-radius: 10px !important;
+}
+
+/* Разрешаем тултипам выходить за пределы контейнеров */
+.product-list-search,
+.product-list-search-s1,
+.core-product-s1,
+.flex-block-47 {
+  overflow: visible !important;
+}
+
 .core-offers-table .button-icon {
   padding: 8px 16px !important;
 }
@@ -576,6 +599,17 @@ input.input-receiver:focus {
 
 .core-product-card, .cart-list, .flex-block-48, .product-list-cart{
   min-height: 100%;
+}
+
+/* Разрешаем flex контейнерам сжиматься и предотвращаем overflow */
+.flex-block-48,
+.core-product-card-copy > * {
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+}
+
+.flex-block-48 {
+  overflow: hidden;
 }
 
 .filter-red {
@@ -1188,7 +1222,8 @@ a.link-block-2.w-inline-block  {
 }
 
 .best-price-card .button-icon:hover {
-  background: #D81B21 !important;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(236, 28, 36, 0.3);
 }
 
 .best-price-card .button-icon.in-cart {

@@ -15,6 +15,7 @@ export const GET_BEST_PRICE_PRODUCTS = gql`
         brand
         retailPrice
         wholesalePrice
+        stock
         images {
           url
           alt
@@ -37,6 +38,8 @@ export const GET_TOP_SALES_PRODUCTS = gql`
         article
         brand
         retailPrice
+        wholesalePrice
+        stock
         images {
           url
           alt
@@ -1894,6 +1897,7 @@ export const GET_NEW_ARRIVALS = gql`
       brand
       retailPrice
       wholesalePrice
+      stock
       createdAt
       images {
         id

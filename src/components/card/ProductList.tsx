@@ -1,46 +1,64 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/router";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { ChevronsUpDown, ChevronUp, ChevronDown } from "../icons";
 import ProductItemCard from "./ProductItemCard";
 import ProductListSkeleton from "./ProductListSkeleton";
 
-// Custom Tooltip Component (same as CoreProductCard)
+// Custom Tooltip Component with Portal for better z-index handling
 const CustomTooltip = ({ children, text }: { children: React.ReactNode; text: string }) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const triggerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (showTooltip && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.top + window.scrollY - 60, // 60px above the trigger
+        left: rect.left + window.scrollX + rect.width / 2
+      });
+    }
+  }, [showTooltip]);
 
   return (
-    <div 
-      style={{ position: 'relative', display: 'inline-block' }}
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-    >
-      {children}
-      {showTooltip && (
+    <>
+      <div
+        ref={triggerRef}
+        style={{ position: 'relative', display: 'inline-block' }}
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
+        {children}
+      </div>
+      {showTooltip && typeof window !== 'undefined' && createPortal(
         <div
           style={{
             position: 'absolute',
-            bottom: '100%',
-            left: '50%',
+            top: `${position.top}px`,
+            left: `${position.left}px`,
             transform: 'translateX(-50%)',
-            marginBottom: '8px',
             background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.94))',
             color: '#f8fafc',
             padding: '10px 12px',
             borderRadius: '8px',
             fontSize: '13px',
             lineHeight: '1.4',
-            zIndex: 1000,
+            zIndex: 999999,
             boxShadow: '0 16px 32px rgba(15, 23, 42, 0.25)',
             maxWidth: '320px',
             whiteSpace: 'normal' as any,
             wordWrap: 'break-word',
-            textAlign: 'center' as any
+            textAlign: 'center' as any,
+            pointerEvents: 'none'
           }}
         >
           {text}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 };
 
@@ -76,13 +94,15 @@ interface ProductListProps {
   remainingCount?: number;
 }
 
-const ProductList = ({ 
-  offers = [], 
-  isLoading = false, 
-  hasMoreOffers = false, 
-  onShowMore, 
-  remainingCount = 0 
+const ProductList = ({
+  offers = [],
+  isLoading = false,
+  hasMoreOffers = false,
+  onShowMore,
+  remainingCount = 0
 }: ProductListProps) => {
+  const router = useRouter();
+
   // Sorting state
   const [sortBy, setSortBy] = useState<SortKey>('price');
   const [sortDirection, setSortDirection] = useState<SortDirection>(DEFAULT_SORT_DIRECTION['price']);
@@ -360,8 +380,8 @@ const ProductList = ({
             color: '#000000'
           } as React.CSSProperties}
           onClick={() => {
-            // Handle search analogs functionality
-            console.log('Search analogs clicked');
+            // Navigate to search page with brand and article number
+            router.push(`/search-result?article=${encodeURIComponent(articleNumber)}&brand=${encodeURIComponent(brand)}`);
           }}
         >
           Поиск аналогов

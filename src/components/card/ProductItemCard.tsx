@@ -1,8 +1,83 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "react-hot-toast";
 import CartIcon from "../CartIcon";
 import { isDeliveryDate } from "@/lib/utils";
+
+// Tooltip for truncated text - only shows when text is actually truncated
+const TextWithTooltip = ({ text }: { text: string }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [isTruncated, setIsTruncated] = useState(false);
+  const textRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (showTooltip && textRef.current) {
+      const rect = textRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.top + window.scrollY - 45,
+        left: rect.left + window.scrollX + rect.width / 2
+      });
+    }
+  }, [showTooltip]);
+
+  const handleMouseEnter = () => {
+    if (textRef.current) {
+      // Check if text is truncated by comparing scrollWidth with clientWidth
+      const truncated = textRef.current.scrollWidth > textRef.current.clientWidth;
+      setIsTruncated(truncated);
+      if (truncated) {
+        setShowTooltip(true);
+      }
+    }
+  };
+
+  return (
+    <>
+      <span
+        ref={textRef}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={() => setShowTooltip(false)}
+        style={{
+          cursor: 'default',
+          display: 'block',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
+        }}
+      >
+        {text}
+      </span>
+      {showTooltip && isTruncated && typeof window !== 'undefined' && createPortal(
+        <div
+          style={{
+            position: 'absolute',
+            top: `${position.top}px`,
+            left: `${position.left}px`,
+            transform: 'translateX(-50%)',
+            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.94))',
+            color: '#f8fafc',
+            padding: '8px 12px',
+            borderRadius: '8px',
+            fontSize: '13px',
+            lineHeight: '1.4',
+            zIndex: 999999,
+            boxShadow: '0 16px 32px rgba(15, 23, 42, 0.25)',
+            maxWidth: '320px',
+            whiteSpace: 'normal' as any,
+            wordWrap: 'break-word',
+            textAlign: 'center' as any,
+            pointerEvents: 'none'
+          }}
+        >
+          {text}
+        </div>,
+        document.body
+      )}
+    </>
+  );
+};
 
 interface ProductItemCardProps {
   isLast?: boolean;
@@ -212,18 +287,18 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
         <div className="core-offers-table__name-wrapper">
           <div className="core-offers-table__product-name">
             <span className="core-offers-table__product-name-text">
-              {offer.name || `${offer.brand} ${offer.articleNumber}`}
+              <TextWithTooltip text={offer.name || `${offer.brand} ${offer.articleNumber}`} />
             </span>
           </div>
         </div>
       </div>
-      
+
       <div className="core-offers-table__cell core-offers-table__cell--article">
-        {offer.articleNumber}
+        <TextWithTooltip text={offer.articleNumber} />
       </div>
-      
+
       <div className="core-offers-table__cell core-offers-table__cell--brand">
-        {offer.brand}
+        <TextWithTooltip text={offer.brand} />
       </div>
       
       <div className="core-offers-table__cell core-offers-table__cell--delivery">

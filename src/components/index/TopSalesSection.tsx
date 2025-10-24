@@ -16,6 +16,7 @@ interface TopSalesProductData {
     article?: string;
     brand?: string;
     retailPrice?: number;
+    stock?: number;
     images: { url: string; alt?: string }[];
   };
 }
@@ -151,17 +152,18 @@ const TopSalesSection: React.FC = () => {
           <div className="top-sales-grid">
             {activeTopSalesProducts.map((item: TopSalesProductData) => {
               const product = item.product;
-              const price = product.retailPrice 
+              const price = product.retailPrice
                 ? `от ${product.retailPrice.toLocaleString('ru-RU')} ₽`
                 : 'По запросу';
-              
-              const image = product.images && product.images.length > 0 
-                ? product.images[0].url 
+
+              const image = product.images && product.images.length > 0
+                ? product.images[0].url
                 : '/images/162615.webp'; // Fallback изображение
 
               const title = product.name;
               const brand = product.brand || 'Неизвестный бренд';
               const isInCart = isItemInCart(product.id, undefined, product.article, brand);
+              const hasStock = (product.stock ?? 0) > 0;
 
               return (
                 <TopSalesItem
@@ -173,6 +175,7 @@ const TopSalesSection: React.FC = () => {
                   article={product.article}
                   productId={product.id}
                   isInCart={isInCart}
+                  outOfStock={!hasStock}
                 />
               );
             })}

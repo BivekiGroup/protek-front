@@ -131,31 +131,58 @@ export default function CardPage() {
     }
   }, [q, article, router.query]);
 
-  // Собираем и сортируем все предложения (БЕЗ аналогов)
-  const allOffers = useMemo(() => {
+  // Собираем ВСЕ предложения (включая внутренние) для ProductPriceHeader
+  const allOffersWithInternal = useMemo(() => {
     if (!result) return [];
-    
+
     const offers: any[] = [];
-    
-    // Добавляем только предложения основного товара (НЕ аналоги)
+
+    // Внутренние предложения из базы данных
     if (result.internalOffers) {
       result.internalOffers.forEach((offer: any) => {
-        // Показываем только предложения с ценой больше 0
         if (offer.price && offer.price > 0) {
           offers.push({
             ...offer,
             type: 'internal',
-            brand: result.brand,
-            articleNumber: result.articleNumber,
-            name: result.name,
+            brand: offer.brand || result.brand,
+            articleNumber: offer.code || result.articleNumber,
+            name: offer.name || result.name,
             isAnalog: false,
-            deliveryTime: offer.deliveryDays,
+            deliveryTime: offer.deliveryTime || 0,
             sortPrice: offer.price
           });
         }
       });
     }
-    
+
+    // Внешние предложения
+    if (result.externalOffers) {
+      result.externalOffers.forEach((offer: any) => {
+        if (offer.price && offer.price > 0) {
+          offers.push({
+            ...offer,
+            type: 'external',
+            brand: offer.brand || result.brand,
+            articleNumber: offer.code || result.articleNumber,
+            name: offer.name || result.name,
+            isAnalog: false,
+            deliveryTime: offer.deliveryTime,
+            sortPrice: offer.price
+          });
+        }
+      });
+    }
+
+    return offers;
+  }, [result]);
+
+  // Собираем предложения ТОЛЬКО ДЛЯ ТАБЛИЦЫ (БЕЗ внутренних - они показываются в ProductPriceHeader)
+  const allOffers = useMemo(() => {
+    if (!result) return [];
+
+    const offers: any[] = [];
+
+    // Добавляем только внешние предложения (external)
     if (result.externalOffers) {
       result.externalOffers.forEach((offer: any) => {
         // Показываем только предложения с ценой больше 0
@@ -197,7 +224,7 @@ export default function CardPage() {
           return a.sortPrice - b.sortPrice;
       }
     });
-    
+
     return sortedOffers;
   }, [result, sortBy]);
 
@@ -219,12 +246,12 @@ export default function CardPage() {
     name: result.name,
     brand: result.brand,
     articleNumber: result.articleNumber,
-    price: allOffers.length > 0 ? Math.min(...allOffers.map(offer => offer.sortPrice)) : undefined
+    price: allOffersWithInternal.length > 0 ? Math.min(...allOffersWithInternal.map(offer => offer.sortPrice)) : undefined
   }) : getMetaByPath('/card');
 
   // Генерируем микроразметку Product
   const productSchema = useMemo(() => {
-    if (!result || allOffers.length === 0) return null;
+    if (!result || allOffersWithInternal.length === 0) return null;
 
     const schemaProduct: SchemaOrgProduct = {
       name: result.name,
@@ -236,7 +263,7 @@ export default function CardPage() {
         || mainImageUrl
         || (result?.partsIndexImages && result.partsIndexImages.length > 0 ? result.partsIndexImages[0].url : undefined),
       category: "Автозапчасти",
-      offers: allOffers.map(offer => ({
+      offers: allOffersWithInternal.map(offer => ({
         price: offer.sortPrice,
         currency: "RUB",
         availability: convertAvailability(offer.quantity || 0),
@@ -247,7 +274,7 @@ export default function CardPage() {
     };
 
     return generateProductSchema(schemaProduct);
-  }, [result, allOffers, mainImageUrl]);
+  }, [result, allOffersWithInternal, mainImageUrl]);
 
   if (loading) {
     return (
@@ -277,12 +304,12 @@ export default function CardPage() {
         ogDescription={metaConfig.ogDescription}
       />
       {productSchema && <JsonLdScript schema={productSchema} />}
-      <InfoCard 
+      <InfoCard
         brand={result ? result.brand : brandQuery}
         articleNumber={result ? result.articleNumber : searchQuery}
         name={result ? result.name : "деталь"}
         productId={artId ? String(artId) : undefined}
-        price={allOffers.length > 0 ? Math.min(...allOffers.map(offer => offer.sortPrice)) : 0}
+        price={allOffersWithInternal.length > 0 ? Math.min(...allOffersWithInternal.map(offer => offer.sortPrice)) : 0}
         currency="RUB"
         image={(() => {
           const isPlaceholder = (url?: string) => {
@@ -315,8 +342,8 @@ export default function CardPage() {
                 images={(result?.images?.map((img: any) => img.url)) || []}
               />
               <div className=" flex-block-48">
-                <ProductPriceHeader 
-                  offers={allOffers}
+                <ProductPriceHeader
+                  offers={allOffersWithInternal}
                   brand={result ? result.brand : brandQuery}
                   articleNumber={result ? result.articleNumber : searchQuery}
                   name={result ? result.name : "деталь"}

@@ -134,13 +134,14 @@ export default function ProductImageGallery({ imageUrl, images, partsIndexImages
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '507px', height: '438px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '507px', height: 'auto' }}>
       {/* Основная картинка - точно по размерам из Figma */}
-      <div 
-        className="relative" 
-        style={{ 
-          width: '507px', 
-          height: '340px',
+      <div
+        className="relative"
+        style={{
+          width: '100%',
+          maxWidth: '507px',
+          aspectRatio: '507 / 340',
           backgroundColor: '#FFFFFF',
           borderRadius: '12px',
           cursor: 'pointer',
@@ -192,13 +193,14 @@ export default function ProductImageGallery({ imageUrl, images, partsIndexImages
       </div>
 
       {/* Миниатюры - точно по размерам из Figma */}
-      <div 
-        style={{ 
-          display: 'flex', 
-          flexDirection: 'row', 
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
           gap: '10px',
           marginTop: '20px',
-          width: '507px', // Растягиваем на всю ширину главной картинки
+          width: '100%',
+          maxWidth: '507px',
           overflowX: 'auto',
           overflowY: 'hidden',
           scrollbarWidth: 'none', // Firefox

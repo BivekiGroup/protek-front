@@ -69,9 +69,14 @@ const ProductPriceHeader = ({ offers, brand, articleNumber, name }: ProductPrice
     }
   };
 
+  // Determine if button should be disabled
+  const isDisabled = totalStock === 0 || minPrice === 0 || minPrice === Infinity;
+
   // Handle add to cart - add cheapest database offer first
   const handleAddToCart = async () => {
-    const cheapestOffer = offersToUse.reduce((min, offer) => 
+    if (isDisabled) return;
+
+    const cheapestOffer = offersToUse.reduce((min, offer) =>
       (offer.price || Infinity) < (min.price || Infinity) ? offer : min
     );
 
@@ -129,21 +134,23 @@ const ProductPriceHeader = ({ offers, brand, articleNumber, name }: ProductPrice
 
       {/* Add to cart button */}
       <button
+        disabled={isDisabled}
         style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           gap: '10px',
           padding: '12px 30px',
-          backgroundColor: '#EC1C24',
+          backgroundColor: isDisabled ? '#CCCCCC' : '#EC1C24',
           border: 'none',
           borderRadius: '13px',
-          cursor: 'pointer',
+          cursor: isDisabled ? 'not-allowed' : 'pointer',
           fontFamily: 'Onest',
           fontWeight: 600,
           fontSize: '16px',
           lineHeight: '1.3em',
-          color: '#FFFFFF'
+          color: '#FFFFFF',
+          opacity: isDisabled ? 0.6 : 1
         } as React.CSSProperties}
         onClick={handleAddToCart}
       >

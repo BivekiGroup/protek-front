@@ -280,85 +280,252 @@ const FilterRange: React.FC<FilterRangeProps> = ({
 
   // Десктопная версия - с dropdown
   return (
-    <div className={`dropdown w-dropdown${open ? " w--open" : ""}`}>
-      <div className="dropdown-toggle w-dropdown-toggle" onClick={() => setOpen(o => !o)} tabIndex={0} aria-expanded={open} aria-label={`Фильтр диапазона ${title}`}>
-        <h4 className="heading-2">{title}</h4>
-        <div className="icon-3 w-icon-dropdown-toggle"></div>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        padding: '20px',
+        gap: '20px',
+        width: '280px',
+        background: '#FFFFFF',
+        borderRadius: '12px',
+        marginBottom: '16px',
+      }}
+    >
+      {/* Заголовок с стрелкой */}
+      <div
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: 0,
+          gap: '10px',
+          width: '240px',
+          height: '23px',
+          cursor: 'pointer',
+        }}
+      >
+        <h4
+          style={{
+            margin: 0,
+            fontFamily: 'Onest',
+            fontWeight: 700,
+            fontSize: '18px',
+            lineHeight: '130%',
+            color: '#000814',
+          }}
+        >
+          {title}
+        </h4>
+        <div
+          style={{
+            width: '18px',
+            height: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s',
+          }}
+        >
+          <svg width="14" height="8" viewBox="0 0 14 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 1L7 7L13 1" stroke="#000814" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
       </div>
+
       {open && (
-        <nav className="dropdown-list w-dropdown-list" onMouseDown={(e) => { e.stopPropagation(); }}>
-          <div className="form-block-2" onMouseDown={(e) => { e.stopPropagation(); }}>
-            <form className="form-2" onSubmit={e => e.preventDefault()}>
-              <div className="div-block-5">
-                <label htmlFor="from" className="field-label">от</label>
-                <input
-                  className="text-field-2 w-input"
-                  maxLength={6}
-                  name="from"
-                  placeholder={String(min)}
-                  type="text"
-                  id="from"
-                  value={from}
-                  onChange={handleFromInput}
-                  onBlur={handleFromBlur}
-                  onKeyDown={handleFromKeyDown}
-                />
-              </div>
-              <div className="div-block-5">
-                <label htmlFor="to" className="field-label">до</label>
-                <input
-                  className="text-field-2 w-input"
-                  maxLength={6}
-                  name="to"
-                  placeholder={String(max)}
-                  type="text"
-                  id="to"
-                  value={to}
-                  onChange={handleToInput}
-                  onBlur={handleToBlur}
-                  onKeyDown={handleToKeyDown}
-                />
-              </div>
-            </form>
-          </div>
-          <div className="div-block-6" style={{ position: "relative", height: 32, marginTop: 12 }} ref={trackRef}>
-            <div className="track" style={{ position: "absolute", top: 14, left: 0, right: 0, height: 4, borderRadius: 2 }}></div>
+        <>
+          {/* Инпуты в ряд */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              padding: 0,
+              gap: '12px',
+              width: '240px',
+            }}
+          >
+            {/* От */}
             <div
-              className="track fill"
               style={{
-                position: "absolute",
-                top: 14,
+                boxSizing: 'border-box',
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                padding: '6px 12px',
+                gap: '12px',
+                flex: 1,
+                height: '34px',
+                border: '1px solid #D0D0D0',
+                borderRadius: '8px',
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: 'Onest',
+                  fontWeight: 400,
+                  fontSize: '16px',
+                  lineHeight: '140%',
+                  color: '#747474',
+                }}
+              >
+                от
+              </span>
+              <input
+                type="text"
+                maxLength={6}
+                value={from}
+                onChange={handleFromInput}
+                onBlur={handleFromBlur}
+                onKeyDown={handleFromKeyDown}
+                style={{
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  flex: 1,
+                  fontFamily: 'Onest',
+                  fontWeight: 500,
+                  fontSize: '16px',
+                  lineHeight: '140%',
+                  color: '#181D23',
+                  padding: 0,
+                  width: '100%',
+                }}
+              />
+            </div>
+
+            {/* До */}
+            <div
+              style={{
+                boxSizing: 'border-box',
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                padding: '6px 12px',
+                gap: '12px',
+                flex: 1,
+                height: '34px',
+                border: '1px solid #D0D0D0',
+                borderRadius: '8px',
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: 'Onest',
+                  fontWeight: 400,
+                  fontSize: '16px',
+                  lineHeight: '140%',
+                  color: '#747474',
+                }}
+              >
+                до
+              </span>
+              <input
+                type="text"
+                maxLength={6}
+                value={to}
+                onChange={handleToInput}
+                onBlur={handleToBlur}
+                onKeyDown={handleToKeyDown}
+                style={{
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  flex: 1,
+                  fontFamily: 'Onest',
+                  fontWeight: 500,
+                  fontSize: '16px',
+                  lineHeight: '140%',
+                  color: '#181D23',
+                  padding: 0,
+                  width: '100%',
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Слайдер */}
+          <div
+            ref={trackRef}
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '2px',
+              isolation: 'isolate',
+              width: '240px',
+              height: '24px',
+              position: 'relative',
+            }}
+          >
+            {/* Неактивная часть трека */}
+            <div
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: '10px',
+                width: '100%',
+                height: '4px',
+                background: '#CBD5E3',
+                borderRadius: '2px',
+              }}
+            ></div>
+
+            {/* Активная часть трека */}
+            <div
+              style={{
+                position: 'absolute',
                 left: pxFrom,
-                width: pxTo - pxFrom,
-                height: 4,
-                borderRadius: 2,
+                top: '10px',
+                width: Math.max(0, pxTo - pxFrom),
+                height: '4px',
+                background: '#EC1C24',
+                borderRadius: '2px',
+                zIndex: 1,
+              }}
+            ></div>
+
+            {/* Левый кружок */}
+            <div
+              onMouseDown={onMouseDown("from")}
+              style={{
+                position: 'absolute',
+                left: pxFrom - 10,
+                top: '2px',
+                width: '20px',
+                height: '20px',
+                background: '#EC1C24',
+                border: '2px solid #FFFFFF',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                zIndex: 3,
+              }}
+            ></div>
+
+            {/* Правый кружок */}
+            <div
+              onMouseDown={onMouseDown("to")}
+              style={{
+                position: 'absolute',
+                left: pxTo - 10,
+                top: '2px',
+                width: '20px',
+                height: '20px',
+                background: '#EC1C24',
+                border: '2px solid #FFFFFF',
+                borderRadius: '50%',
+                cursor: 'pointer',
                 zIndex: 2,
               }}
             ></div>
-            <div
-              className="start"
-              style={{
-                position: "absolute",
-                top: 6,
-                left: pxFrom - 8,
-                zIndex: 3,
-                cursor: "pointer"
-              }}
-              onMouseDown={onMouseDown("from")}
-            ></div>
-            <div
-              className="start end"
-              style={{
-                position: "absolute",
-                top: 6,
-                left: pxTo - 8,
-                zIndex: 3,
-                cursor: "pointer"
-              }}
-              onMouseDown={onMouseDown("to")}
-            ></div>
           </div>
-        </nav>
+        </>
       )}
     </div>
   );

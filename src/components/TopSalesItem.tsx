@@ -16,6 +16,7 @@ interface TopSalesItemProps {
   oldPrice?: string;
   isNew?: boolean;
   isInCart?: boolean;
+  outOfStock?: boolean;
 }
 
 const TopSalesItem: React.FC<TopSalesItemProps> = ({
@@ -30,6 +31,7 @@ const TopSalesItem: React.FC<TopSalesItemProps> = ({
   oldPrice,
   isNew = false,
   isInCart: propIsInCart = false,
+  outOfStock = false,
 }) => {
   const { addItem, isInCart: isItemInCart } = useCart();
   const { addToFavorites, removeFromFavorites, isFavorite, favorites } = useFavorites();
@@ -47,9 +49,11 @@ const TopSalesItem: React.FC<TopSalesItemProps> = ({
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!localInCart) {
-      setLocalInCart(true);
+
+    if (outOfStock) {
+      return; // Не делаем ничего для товаров без наличия
     }
+
     if (onAddToCart) {
       onAddToCart(e);
       return;
@@ -105,7 +109,7 @@ const TopSalesItem: React.FC<TopSalesItemProps> = ({
   };
 
   // Ссылка на карточку товара
-  const cardUrl = article && brand 
+  const cardUrl = article && brand
     ? `/card?article=${encodeURIComponent(article)}&brand=${encodeURIComponent(brand)}`
     : '/card';
 
@@ -113,9 +117,8 @@ const TopSalesItem: React.FC<TopSalesItemProps> = ({
     window.location.href = cardUrl;
   };
 
-  const cartDisabled = isInCart || localInCart;
   const favoriteLabel = isItemFavorite ? 'Удалить из избранного' : 'Добавить в избранное';
-  const cartLabel = cartDisabled ? 'В корзине' : 'Добавить в корзину';
+  const cartLabel = 'Добавить в корзину';
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -182,21 +185,22 @@ const TopSalesItem: React.FC<TopSalesItemProps> = ({
           </div>
           <button
             type="button"
-            className={`button-icon w-inline-block ${cartDisabled ? "in-cart" : ""}`}
-            onClick={cartDisabled ? undefined : handleAddToCart}
-            disabled={cartDisabled || localInCart}
-            aria-label={cartLabel}
-            title={cartLabel}
+            className="button-icon w-inline-block"
+            onClick={outOfStock ? undefined : handleAddToCart}
+            aria-label={outOfStock ? 'Нет в наличии' : cartLabel}
+            title={outOfStock ? 'Нет в наличии' : cartLabel}
+            disabled={outOfStock}
             style={{
-              cursor: cartDisabled ? "default" : localInCart ? "default" : "pointer",
-              background: cartDisabled ? "#94A3B8" : localInCart ? "#2563eb" : undefined,
-              opacity: cartDisabled || localInCart ? 0.65 : 1,
-              filter: cartDisabled || localInCart ? "grayscale(1)" : "none",
+              cursor: outOfStock ? "not-allowed" : "pointer",
               border: "none",
               padding: 0,
+              opacity: outOfStock ? 0.5 : 1,
+              backgroundColor: outOfStock ? '#94A3B8' : undefined,
             }}
           >
-            <div className="div-block-26">
+            <div className="div-block-26" style={{
+              backgroundColor: outOfStock ? '#94A3B8' : undefined
+            }}>
               <div className="icon-setting w-embed">
                 <svg width="currentWidht" height="currentHeight" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M10.1998 22.2C8.8798 22.2 7.81184 23.28 7.81184 24.6C7.81184 25.92 8.8798 27 10.1998 27C11.5197 27 12.5997 25.92 12.5997 24.6C12.5997 23.28 11.5197 22.2 10.1998 22.2ZM3 3V5.4H5.39992L9.71977 14.508L8.09982 17.448C7.90783 17.784 7.79984 18.18 7.79984 18.6C7.79984 19.92 8.8798 21 10.1998 21H24.5993V18.6H10.7037C10.5357 18.6 10.4037 18.468 10.4037 18.3L10.4397 18.156L11.5197 16.2H20.4594C21.3594 16.2 22.1513 15.708 22.5593 14.964L26.8552 7.176C26.9542 6.99286 27.004 6.78718 26.9997 6.57904C26.9955 6.37089 26.9373 6.16741 26.8309 5.98847C26.7245 5.80952 26.5736 5.66124 26.3927 5.55809C26.2119 5.45495 26.0074 5.40048 25.7992 5.4H8.05183L6.92387 3H3ZM22.1993 22.2C20.8794 22.2 19.8114 23.28 19.8114 24.6C19.8114 25.92 20.8794 27 22.1993 27C23.5193 27 24.5993 25.92 24.5993 24.6C24.5993 23.28 23.5193 22.2 22.1993 22.2Z" fill="currentColor" />

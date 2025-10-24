@@ -11,6 +11,7 @@ export type FilterConfig =
       multi?: boolean;
       showAll?: boolean;
       defaultOpen?: boolean;
+      alwaysOpen?: boolean;
       hasMore?: boolean;
       onShowMore?: () => void;
     }
@@ -43,29 +44,58 @@ const Filters: React.FC<FiltersProps> = ({
   <div className="w-layout-vflex flex-block-12">
     {/* Поиск - показываем только если есть обработчик */}
     {onSearchChange && (
-      <div className="div-block-2">
-        <div className="form-block">
-          <form className="form" onSubmit={e => e.preventDefault()}>
-            <a href="#" className="link-block-3 w-inline-block">
-              <span className="code-embed-6 w-embed">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M17.5 17.5L13.8834 13.8833" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M9.16667 15.8333C12.8486 15.8333 15.8333 12.8486 15.8333 9.16667C15.8333 5.48477 12.8486 2.5 9.16667 2.5C5.48477 2.5 2.5 5.48477 2.5 9.16667C2.5 12.8486 5.48477 15.8333 9.16667 15.8333Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-            </a>
-            <input
-              className="text-field w-input"
-              maxLength={256}
-              name="Search"
-              placeholder="Введите код запчасти или VIN номер автомобиля"
-              type="text"
-              id="Search-4"
-              required
-              value={searchQuery}
-              onChange={e => onSearchChange(e.target.value)}
-            />
-          </form>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: '12px 30px',
+          gap: '20px',
+          width: '280px',
+          height: '58px',
+          background: '#FFFFFF',
+          borderRadius: '8px',
+          marginBottom: '4px',
+          cursor: 'text',
+          transition: 'box-shadow 0.2s'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.08)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = 'none';
+        }}
+      >
+        <input
+          style={{
+            width: '100%',
+            height: '24px',
+            fontFamily: 'Onest',
+            fontStyle: 'normal',
+            fontWeight: 400,
+            fontSize: '16px',
+            lineHeight: '140%',
+            display: 'flex',
+            alignItems: 'center',
+            color: searchQuery ? '#000814' : '#747474',
+            border: 'none',
+            outline: 'none',
+            background: 'transparent',
+            flex: 1
+          }}
+          maxLength={256}
+          name="Search"
+          placeholder="Поиск по названию, бренду или артикулу"
+          type="text"
+          id="Search-4"
+          value={searchQuery}
+          onChange={e => onSearchChange(e.target.value)}
+        />
+        <div style={{ width: '24px', height: '24px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10" cy="10" r="7" stroke="#8893A2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M15 15L20 20" stroke="#8893A2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </div>
       </div>
     )}
@@ -80,6 +110,7 @@ const Filters: React.FC<FiltersProps> = ({
             multi={filter.multi}
             showAll={filter.showAll}
             defaultOpen={filter.defaultOpen}
+            alwaysOpen={filter.alwaysOpen}
             selectedValues={(filterValues && filterValues[filter.title]) || []}
             onChange={(values) => onFilterChange(filter.title, values)}
           />

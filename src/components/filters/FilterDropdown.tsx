@@ -6,6 +6,7 @@ interface FilterDropdownProps {
   multi?: boolean;
   showAll?: boolean;
   defaultOpen?: boolean; // Открыт ли по умолчанию
+  alwaysOpen?: boolean; // Всегда открыт, нельзя закрыть
   hasMore?: boolean; // Есть ли еще опции для загрузки
   onShowMore?: () => void; // Обработчик "Показать еще"
   isMobile?: boolean; // Добавляем флаг для мобильной версии
@@ -13,19 +14,20 @@ interface FilterDropdownProps {
   onChange?: (values: string[]) => void; // Обработчик изменений
 }
 
-const FilterDropdown: React.FC<FilterDropdownProps> = ({ 
-  title, 
-  options, 
-  multi = true, 
+const FilterDropdown: React.FC<FilterDropdownProps> = ({
+  title,
+  options,
+  multi = true,
   showAll = false,
   defaultOpen = false,
+  alwaysOpen = false,
   hasMore = false,
   onShowMore,
   isMobile = false,
   selectedValues = [],
   onChange
 }) => {
-  const [open, setOpen] = useState(isMobile || defaultOpen); // На мобилке или если defaultOpen - сразу открыт
+  const [open, setOpen] = useState(isMobile || defaultOpen || alwaysOpen); // На мобилке, если defaultOpen или alwaysOpen - сразу открыт
   const [showAllOptions, setShowAllOptions] = useState(false);
   const [selected, setSelected] = useState<string[]>(selectedValues);
   const visibleOptions = showAll && !showAllOptions ? options.slice(0, 4) : options;
@@ -111,15 +113,66 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
 
   // Десктопная версия - классический dropdown
   return (
-    <div className={`dropdown w-dropdown${open ? " w--open" : ""}`}>
-      <div className="dropdown-toggle w-dropdown-toggle" onClick={() => setOpen(!open)}>
-        <h4 className="heading-2">
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        padding: '20px',
+        gap: '20px',
+        width: '280px',
+        background: '#FFFFFF',
+        borderRadius: '12px',
+        marginBottom: '16px'
+      }}
+    >
+      <div
+        className="dropdown-toggle w-dropdown-toggle"
+        onClick={() => !alwaysOpen && setOpen(!open)}
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: 0,
+          gap: '10px',
+          width: '240px',
+          height: '23px',
+          cursor: alwaysOpen ? 'default' : 'pointer'
+        }}
+      >
+        <h4 className="heading-2" style={{ margin: 0, fontFamily: 'Onest', fontWeight: 700, fontSize: '18px', lineHeight: '130%', color: '#000814' }}>
           {title} {selectedValues.length > 0 && `(${selectedValues.length})`}
         </h4>
-        <div className="icon-3 w-icon-dropdown-toggle"></div>
+        {!alwaysOpen && (
+          <div
+            style={{
+              width: '18px',
+              height: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.2s'
+            }}
+          >
+            <svg width="14" height="8" viewBox="0 0 14 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 1L7 7L13 1" stroke="#000814" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+        )}
       </div>
       {open && (
-        <nav className="dropdown-list w-dropdown-list">
+        <nav
+          className="dropdown-list w-dropdown-list"
+          style={{
+            position: 'static',
+            padding: 0,
+            boxShadow: 'none',
+            background: 'transparent',
+            width: '240px'
+          }}
+        >
           <div className="w-layout-vflex flex-block-17">
             {visibleOptions.map(option => (
               <div className="div-block-8" key={option} onClick={() => handleSelect(option)}>

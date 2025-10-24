@@ -24,6 +24,7 @@ interface BestPriceProductData {
     brand?: string;
     retailPrice?: number;
     wholesalePrice?: number;
+    stock?: number;
     images: { url: string; alt?: string }[];
   };
 }
@@ -76,7 +77,7 @@ const renderHero = (content: ReactNode) => (
         <div className="w-layout-vflex flex-block-119 best-price-hero__text">
           <h2 className="heading-20">ЛУЧШАЯ ЦЕНА!</h2>
           <p className="text-block-58">Подборка лучших предложений по цене</p>
-          <Link href="/search" className="best-price-cta w-inline-block">
+          <Link href="/best-price" className="best-price-cta w-inline-block">
             Показать все
           </Link>
         </div>
@@ -134,6 +135,7 @@ const BestPriceSection: React.FC = () => {
           const basePrice = item.product.retailPrice ?? item.product.wholesalePrice ?? null;
           const discountedPrice = calculateDiscountedPrice(basePrice, item.discount);
           const hasDiscount = !!item.discount && item.discount > 0 && basePrice != null;
+          const hasStock = (item.product.stock ?? 0) > 0;
 
           return {
             image: item.product.images?.[0]?.url || "images/162615.webp",
@@ -144,6 +146,7 @@ const BestPriceSection: React.FC = () => {
             brand: item.product.brand || "",
             article: item.product.article,
             productId: item.product.id,
+            outOfStock: !hasStock,
           };
         }),
     [bestPriceProducts]

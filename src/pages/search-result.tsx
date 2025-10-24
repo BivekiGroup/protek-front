@@ -14,6 +14,7 @@ import InfoSearch from "@/components/InfoSearch";
 import FiltersPanelMobile from "@/components/FiltersPanelMobile";
 import CatalogSortDropdown from "@/components/CatalogSortDropdown";
 import MobileMenuBottomSection from '../components/MobileMenuBottomSection';
+import Loader from "@/components/Loader";
 import { SEARCH_PRODUCT_OFFERS, GET_ANALOG_OFFERS } from "@/lib/graphql";
 import { useArticleImage } from "@/hooks/useArticleImage";
 import { usePartsIndexEntityInfo } from "@/hooks/usePartsIndex";
@@ -606,13 +607,7 @@ export default function SearchResult() {
         <Head>
           <title>Поиск предложений {searchQuery} - Protek</title>
         </Head>
-
-        <div className="fixed inset-0 z-50 bg-gray-50 bg-opacity-90 flex items-center justify-center min-h-screen" aria-live="polite">
-          <div className="flex flex-col items-center justify-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600 mb-4"></div>
-            <p className="text-lg text-gray-600">Поиск предложений...</p>
-          </div>
-        </div>
+        <Loader text="Поиск предложений" fullScreen />
         <Footer />
       </>
     );
