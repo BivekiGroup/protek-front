@@ -302,7 +302,7 @@ export default function BestPricePage() {
                       <CatalogProductCard
                         key={item.id}
                         image={getPrimaryImage(item.product)}
-                        discount={hasDiscount ? `-${item.discount}%` : undefined}
+                        discount={hasDiscount ? `-${item.discount}%` : ""}
                         price={formatPrice(hasDiscount ? discountedPrice : basePrice)}
                         oldPrice={hasDiscount ? formatPrice(basePrice) : ""}
                         title={item.product.name}
