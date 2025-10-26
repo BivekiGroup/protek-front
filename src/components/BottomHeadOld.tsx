@@ -2,7 +2,9 @@
   import Link from "next/link";
   import { useRouter } from "next/router";
   import { useQuery } from '@apollo/client';
-  import { GET_CATEGORIES } from '@/lib/graphql';
+  import { GET_CATEGORIES, GET_PARTSINDEX_CATEGORIES, GET_NAVIGATION_CATEGORIES } from '@/lib/graphql';
+  import { PartsIndexCatalog, PartsIndexCatalogsData, PartsIndexCatalogsVariables } from '@/types/partsindex';
+  import { NavigationCategory } from '@/types';
 
   function useIsMobile(breakpoint = 767) {
     const [isMobile, setIsMobile] = React.useState(false);

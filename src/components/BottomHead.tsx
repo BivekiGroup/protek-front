@@ -30,8 +30,18 @@ interface CategoriesData {
   categories: Category[];
 }
 
+interface TabData {
+  label: string;
+  heading: string;
+  links: string[];
+  categoryId: string;
+  categorySlug?: string;
+  image?: string;
+  children?: Category[];
+}
+
 // Fallback статичные данные
-const fallbackTabData = [
+const fallbackTabData: TabData[] = [
   {
     label: "Масла и технические жидкости",
     heading: "Масла и технические жидкости",
@@ -47,7 +57,7 @@ const fallbackTabData = [
 ];
 
 // Преобразуем категории из БД в формат меню
-const transformCategoriesToTabData = (categories: Category[]) => {
+const transformCategoriesToTabData = (categories: Category[]): TabData[] => {
   console.log('🔄 Преобразуем категории из БД:', categories.length, 'элементов');
 
   return categories.map(category => {
@@ -58,6 +68,7 @@ const transformCategoriesToTabData = (categories: Category[]) => {
     return {
       label: category.name,
       heading: category.name,
+      links: visibleChildren.map(child => child.name),
       categoryId: category.id,
       categorySlug: category.slug,
       image: category.image,
@@ -69,8 +80,8 @@ const transformCategoriesToTabData = (categories: Category[]) => {
 const BottomHead = ({ menuOpen, onClose }: { menuOpen: boolean; onClose: () => void }) => {
   const isMobile = useIsMobile();
   const router = useRouter();
-  const [mobileCategory, setMobileCategory] = useState<null | any>(null);
-  const [tabData, setTabData] = useState(fallbackTabData);
+  const [mobileCategory, setMobileCategory] = useState<null | TabData>(null);
+  const [tabData, setTabData] = useState<TabData[]>(fallbackTabData);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
@@ -182,7 +193,7 @@ const BottomHead = ({ menuOpen, onClose }: { menuOpen: boolean; onClose: () => v
                   Показать все
                 </div>
               ) : (
-                mobileCategory.links.map((link: string, linkIndex: number) => {
+                mobileCategory.links.map((link: string) => {
                   const subcategory = mobileCategory.children?.find((child: Category) => child.name === link);
                   return (
                     <div
@@ -269,7 +280,6 @@ const BottomHead = ({ menuOpen, onClose }: { menuOpen: boolean; onClose: () => v
           <div className="w-layout-hflex flex-block-90" style={{ backgroundColor: "#fff", display: "flex", gap: "0", height: "600px" }}>
             <div className="w-layout-vflex flex-block-88" style={{ height: "100%", overflowY: "auto", width: "280px", flex: "0 0 280px", backgroundColor: "#f8f8f8", padding: "20px 10px" }}>
               {/* Меню с иконками */}
-              {console.log('🎨 Рендерим меню с', tabData.length, 'категориями')}
               {tabData.map((tab, idx) => {
                 const category = categoriesData?.categories.find(c => c.id === tab.categoryId);
                 const icon = category?.image;

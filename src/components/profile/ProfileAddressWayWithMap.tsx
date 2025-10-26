@@ -302,7 +302,7 @@ const ProfileAddressWayWithMap: React.FC<ProfileAddressWayWithMapProps> = ({ onB
               setMapCenter([matchingPoint.position.latitude, matchingPoint.position.longitude]);
             } else {
               console.log('❌ Точка не найдена среди загруженных');
-              console.log('Первые 3 точки:', points.slice(0, 3).map(p => ({
+              console.log('Первые 3 точки:', points.slice(0, 3).map((p: YandexPickupPoint) => ({
                 name: p.name,
                 address: p.address.fullAddress
               })));
