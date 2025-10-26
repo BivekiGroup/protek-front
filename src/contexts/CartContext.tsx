@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useMutation, useQuery } from '@apollo/client'
 import { CartState, CartContextType, CartItem, DeliveryInfo } from '@/types/cart'
-import { ADD_TO_CART, REMOVE_FROM_CART, UPDATE_CART_ITEM_QUANTITY, CLEAR_CART, GET_CART } from '@/lib/graphql'
+import { ADD_TO_CART, REMOVE_FROM_CART, UPDATE_CART_ITEM_QUANTITY, UPDATE_CART_PRICES, CLEAR_CART, GET_CART } from '@/lib/graphql'
 import { toast } from 'react-hot-toast'
 
 // Начальное состояние корзины
@@ -95,6 +95,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [addToCartMutation] = useMutation(ADD_TO_CART)
   const [removeFromCartMutation] = useMutation(REMOVE_FROM_CART)
   const [updateQuantityMutation] = useMutation(UPDATE_CART_ITEM_QUANTITY)
+  const [updatePricesMutation] = useMutation(UPDATE_CART_PRICES)
   const [clearCartMutation] = useMutation(CLEAR_CART)
 
   // Load cart from backend when component mounts or cart data changes
@@ -102,13 +103,48 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (cartData?.getCart) {
       const backendItems = transformBackendItems(cartData.getCart.items)
       const summary = calculateSummary(backendItems)
-      
+
       setState(prev => ({
         ...prev,
         items: backendItems,
         summary,
         isLoading: false
       }))
+
+      // Автоматически обновляем цены при загрузке корзины
+      if (backendItems.length > 0) {
+        updatePricesMutation()
+          .then(({ data }) => {
+            if (data?.updateCartPrices?.success && data.updateCartPrices.priceChanges?.length > 0) {
+              const changes = data.updateCartPrices.priceChanges
+
+              // Показываем уведомление об изменении цен
+              const changesText = changes.map((c: any) =>
+                `${c.article} (${c.brand}): ${c.oldPrice.toFixed(2)} → ${c.newPrice.toFixed(2)} ₽`
+              ).join('\n')
+
+              toast.success(
+                `Цены обновлены:\n${changesText}`,
+                { duration: 6000 }
+              )
+
+              // Обновляем состояние корзины
+              if (data.updateCartPrices.cart) {
+                const updatedItems = transformBackendItems(data.updateCartPrices.cart.items)
+                const updatedSummary = calculateSummary(updatedItems)
+
+                setState(prev => ({
+                  ...prev,
+                  items: updatedItems,
+                  summary: updatedSummary
+                }))
+              }
+            }
+          })
+          .catch(err => {
+            console.error('Ошибка обновления цен:', err)
+          })
+      }
     } else {
       setState(prev => ({
         ...prev,
@@ -117,7 +153,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading: false
       }))
     }
-  }, [cartData])
+  }, [cartData, updatePricesMutation])
 
   // Set loading state
   useEffect(() => {

@@ -95,7 +95,7 @@ const CartList: React.FC<CartListProps> = ({ isSummaryStep = false }) => {
               </svg>
               <span>{state.error}</span>
             </div>
-            <button 
+            <button
               onClick={clearError}
               className="ml-2 text-red-500 hover:text-red-700"
               aria-label="Закрыть уведомление"

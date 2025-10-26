@@ -15,7 +15,7 @@ export const useArticleImage = (
   _artId: string | undefined | null,
   options: UseArticleImageOptions = {}
 ): UseArticleImageReturn => {
-  const { fallbackImage = '/images/image-10.png' } = options;
+  const { fallbackImage = '/images/no-photo.svg' } = options;
   // PartsAPI removed: always return fallback, no loading, no error
   const [imageUrl] = useState<string>(fallbackImage);
 

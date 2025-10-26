@@ -91,6 +91,7 @@ interface CoreProductCardOffer {
   productId?: string;
   offerKey?: string;
   pcs: string;
+  quantity?: number; // Добавляем чистое число количества
   days: string;
   recommended?: boolean;
   price: string;
@@ -262,27 +263,39 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
   };
 
   const handleInputChange = (idx: number, val: string) => {
-    setInputValues(prev => ({ ...prev, [idx]: val }));
-    if (val === "") return;
+    if (val === "") {
+      setInputValues(prev => ({ ...prev, [idx]: val }));
+      return;
+    }
 
     const offer = offers[idx];
     const requested = Math.max(1, parseInt(val, 10) || 1);
-    const remainingStock = getRemainingStock(offer);
+    // Используем offer.quantity если есть, иначе парсим pcs
+    const availableStock = typeof offer.quantity === 'number' ? offer.quantity : parseStock(offer.pcs);
 
+    // При вводе в поле разрешаем указать полное количество со склада
     let finalQuantity = requested;
-    if (typeof remainingStock === 'number') {
-      finalQuantity = Math.min(requested, Math.max(remainingStock, 0));
+    if (typeof availableStock === 'number' && !Number.isNaN(availableStock)) {
+      finalQuantity = Math.min(requested, Math.max(availableStock, 0));
     }
 
     if (finalQuantity < 1) {
       finalQuantity = 1;
     }
 
+    // Устанавливаем скорректированное значение
+    setInputValues(prev => ({ ...prev, [idx]: String(finalQuantity) }));
     setQuantities(prev => ({ ...prev, [idx]: finalQuantity }));
 
-    if (typeof remainingStock === 'number' && requested > remainingStock) {
-      toast.error(`Доступно не более ${remainingStock} шт.`);
-      setInputValues(prev => ({ ...prev, [idx]: String(finalQuantity) }));
+    // Показываем предупреждение если пытаются ввести больше чем есть на складе
+    if (typeof availableStock === 'number' && !Number.isNaN(availableStock) && requested > availableStock) {
+      toast.error(`На складе доступно только ${availableStock} шт.`);
+    }
+  };
+
+  const handleInputFocus = (idx: number) => {
+    if (inputValues[idx] === "1") {
+      setInputValues(prev => ({ ...prev, [idx]: "" }));
     }
   };
 
@@ -579,8 +592,10 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
   const renderOfferRow = (offer: CoreProductCardOffer, idx: number) => {
     const isLast = idx === displayedOffers.length - 1;
     const remainingStock = getRemainingStock(offer);
-    const maxCountRaw = parseStock(offer.pcs);
-    const maxCount = typeof remainingStock === 'number' ? remainingStock : maxCountRaw;
+    // Используем offer.quantity если есть, иначе парсим pcs
+    const maxCountRaw = typeof offer.quantity === 'number' ? offer.quantity : parseStock(offer.pcs);
+    // Для поля ввода используем полное количество со склада, а не остаток
+    const maxCount = maxCountRaw;
     const isAuthenticated = typeof window !== 'undefined' ? Boolean(localStorage.getItem('authToken')) : true;
     const inCart = offer.isInCart || false;
     const isLocallyInCart = !!localInCart[idx];
@@ -656,6 +671,7 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
           max={maxCount && maxCount > 0 ? maxCount : undefined}
           value={inputValues[idx]}
           onChange={e => handleInputChange(idx, e.target.value)}
+          onFocus={() => handleInputFocus(idx)}
           onBlur={() => handleInputBlur(idx)}
           className="text-block-26 w-full text-center outline-none"
           aria-label="Количество"

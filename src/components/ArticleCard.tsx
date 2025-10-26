@@ -27,11 +27,21 @@ const ArticleCard: React.FC<ArticleCardProps> = memo(({ article, index, onVisibi
     enabled: !image && !!article.artId
   });
 
-  // MOCK: fallback image if none loaded
-  const fallbackImage =
-    image || // use prop if provided
-    imageUrl ||
-    '/images/162615.webp'; // путь к картинке из public или любой другой
+  // Fallback image if none loaded
+  const isPlaceholder = (url?: string) => {
+    if (!url) return true;
+    const u = url.toLowerCase();
+    return (
+      u.includes('image-10') ||
+      u.includes('162615') ||
+      u.includes('noimage') ||
+      u.includes('placeholder') ||
+      u.includes('mock')
+    );
+  };
+
+  const finalImageUrl = image || imageUrl;
+  const fallbackImage = finalImageUrl && !isPlaceholder(finalImageUrl) ? finalImageUrl : '/images/no-photo.svg';
 
   // Проверяем и очищаем данные артикула и бренда
   const articleNumber = article.artArticleNr?.trim();

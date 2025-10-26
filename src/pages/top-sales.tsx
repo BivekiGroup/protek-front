@@ -45,10 +45,20 @@ const formatPrice = (price?: number | null) => {
 };
 
 const getPrimaryImage = (product: TopSalesProductData["product"]) => {
-  if (product.images && product.images.length > 0) {
-    return product.images[0]?.url || "/images/162615.webp";
-  }
-  return "/images/162615.webp";
+  const isPlaceholder = (url?: string) => {
+    if (!url) return true;
+    const u = url.toLowerCase();
+    return (
+      u.includes('image-10') ||
+      u.includes('162615') ||
+      u.includes('noimage') ||
+      u.includes('placeholder') ||
+      u.includes('mock')
+    );
+  };
+
+  const imageUrl = product.images?.[0]?.url;
+  return imageUrl && !isPlaceholder(imageUrl) ? imageUrl : "/images/no-photo.svg";
 };
 
 const SORT_OPTIONS = [

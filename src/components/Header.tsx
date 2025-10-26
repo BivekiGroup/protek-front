@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { useLazyQuery } from '@apollo/client';
-// import BottomHead from "@/components/BottomHead";
+import BottomHead from "@/components/BottomHead";
 import AuthModal from "@/components/auth/AuthModal";
 import type { Client } from "@/types/auth";
 import { useIsClient } from "@/lib/useIsomorphicLayoutEffect";
@@ -514,8 +514,6 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
                 </svg>
               </Link>
           <div data-animation="default" data-collapse="all" data-duration="400" data-easing="ease-in" data-easing2="ease" role="banner" className="topnav w-nav">
-            {/* Хамбургер-меню временно отключено */}
-            {/**
             <div
               className={`menu-button w-nav-button${menuOpen ? " w--open" : ""}`}
               onClick={() => setMenuOpen((open) => !open)}
@@ -527,7 +525,6 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
                 <path d="M0 15H30V18H0V15Z" fill="currentColor"></path>
               </svg></div>
             </div>
-            */}
           </div>
               <div className="searcj w-form flex-1" style={{ position: 'relative' }} ref={searchDropdownRef}>
                 <form
@@ -928,7 +925,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
             </div>
         </div>
       </section>
-      {/** <BottomHead menuOpen={menuOpen} onClose={() => setMenuOpen(false)} /> */}
+      <BottomHead menuOpen={menuOpen} onClose={() => setMenuOpen(false)} />
     </>
   );
 };

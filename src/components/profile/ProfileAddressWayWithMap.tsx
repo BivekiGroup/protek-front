@@ -1,14 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from 'react-hot-toast'
 import AddressFormWithPickup from "./AddressFormWithPickup";
 import AddressDetails from "./AddressDetails";
 import YandexPickupPointsMap from "../delivery/YandexPickupPointsMap";
 import { useLazyQuery } from '@apollo/client';
 import { useRouter } from 'next/router'
-import { 
-  YANDEX_PICKUP_POINTS_BY_CITY, 
+import {
+  YANDEX_PICKUP_POINTS_BY_CITY,
   YANDEX_PICKUP_POINTS_BY_COORDINATES,
-  YandexPickupPoint 
+  YandexPickupPoint
 } from '@/lib/graphql/yandex-delivery';
 
 interface ProfileAddressWayWithMapProps {
@@ -123,6 +123,7 @@ const ProfileAddressWayWithMap: React.FC<ProfileAddressWayWithMapProps> = ({ onB
   const [pickupPoints, setPickupPoints] = useState<YandexPickupPoint[]>([]);
   const [selectedPickupPoint, setSelectedPickupPoint] = useState<YandexPickupPoint | undefined>();
   const [mapCenter, setMapCenter] = useState<[number, number]>([55.7558, 37.6176]); // Москва
+  const [initialCity, setInitialCity] = useState<string | undefined>(); // Город для инициализации селектора
 
   const [loadPointsByCity] = useLazyQuery(YANDEX_PICKUP_POINTS_BY_CITY, {
     onCompleted: (data) => {
@@ -198,10 +199,127 @@ const ProfileAddressWayWithMap: React.FC<ProfileAddressWayWithMapProps> = ({ onB
     if (coordinates) {
       setMapCenter(coordinates);
     }
-    
+
     // Затем загружаем ПВЗ для города
     loadPointsByCity({ variables: { cityName } });
   };
+
+  // Инициализация при редактировании адреса самовывоза
+  useEffect(() => {
+    console.log('🔍 ProfileAddressWayWithMap useEffect запущен', { editingAddress });
+
+    if (editingAddress && editingAddress.deliveryType === 'PICKUP') {
+      console.log('✅ Редактируем адрес самовывоза:', editingAddress);
+
+      // Извлекаем город из адреса
+      // Формат может быть: "Москва Берёзовая аллея 19" или "Москва, Берёзовая аллея 19"
+      const addressString = editingAddress.address;
+      console.log('📍 Адрес:', addressString);
+
+      // Пытаемся найти город в списке известных городов
+      let foundCity: string | null = null;
+
+      // Сначала пробуем split по запятой
+      const addressParts = addressString.split(',');
+      for (const part of addressParts) {
+        const trimmedPart = part.trim();
+        if (cityCoordinates[trimmedPart]) {
+          foundCity = trimmedPart;
+          console.log('🎯 Найден город через запятую:', foundCity);
+          break;
+        }
+      }
+
+      // Если не нашли через запятую, ищем в начале строки
+      if (!foundCity) {
+        for (const city of Object.keys(cityCoordinates)) {
+          if (addressString.startsWith(city)) {
+            foundCity = city;
+            console.log('🎯 Найден город в начале строки:', foundCity);
+            break;
+          }
+        }
+      }
+
+      if (foundCity) {
+        // Устанавливаем город для селектора
+        console.log('🏙️ Устанавливаем initialCity:', foundCity);
+        setInitialCity(foundCity);
+
+        // Центрируем карту на найденном городе
+        const coordinates = cityCoordinates[foundCity];
+        if (coordinates) {
+          console.log('🗺️ Центрирование карты на:', foundCity, coordinates);
+          setMapCenter(coordinates);
+        }
+
+        // Загружаем точки самовывоза для этого города
+        console.log('📦 Загружаем точки для города:', foundCity);
+        loadPointsByCity({
+          variables: { cityName: foundCity },
+          onCompleted: (data) => {
+            const points = data.yandexPickupPointsByCity || [];
+            console.log('📦 Загружено точек:', points.length);
+            setPickupPoints(points);
+
+            // Ищем точку по имени из сохраненного адреса
+            const savedPointName = editingAddress.name;
+            const savedAddress = editingAddress.address;
+            console.log('🔎 Ищем точку с именем:', savedPointName);
+            console.log('🔎 Адрес для поиска:', savedAddress);
+
+            // Пробуем несколько способов найти точку
+            let matchingPoint = points.find((p: YandexPickupPoint) => {
+              const nameMatch = p.name === savedPointName;
+              const addressMatch = p.address.fullAddress === savedAddress;
+
+              console.log('Проверяем точку:', {
+                pointName: p.name,
+                savedName: savedPointName,
+                nameMatch,
+                pointAddress: p.address.fullAddress,
+                savedAddress,
+                addressMatch
+              });
+
+              return nameMatch || addressMatch;
+            });
+
+            // Если не нашли точное совпадение, пробуем частичное по адресу
+            if (!matchingPoint) {
+              console.log('⚠️ Точное совпадение не найдено, ищем по частичному совпадению адреса');
+              matchingPoint = points.find((p: YandexPickupPoint) => {
+                // Убираем город из обоих адресов и сравниваем
+                const pointAddressWithoutCity = p.address.fullAddress.replace(foundCity, '').trim();
+                const savedAddressWithoutCity = savedAddress.replace(foundCity, '').trim();
+                return pointAddressWithoutCity === savedAddressWithoutCity;
+              });
+            }
+
+            if (matchingPoint) {
+              console.log('✅ Найдена точка:', matchingPoint.name);
+              setSelectedPickupPoint(matchingPoint);
+              setMapCenter([matchingPoint.position.latitude, matchingPoint.position.longitude]);
+            } else {
+              console.log('❌ Точка не найдена среди загруженных');
+              console.log('Первые 3 точки:', points.slice(0, 3).map(p => ({
+                name: p.name,
+                address: p.address.fullAddress
+              })));
+            }
+          },
+          onError: (error) => {
+            console.error('❌ Ошибка загрузки точек:', error);
+          }
+        });
+      } else {
+        console.log('❌ Город не найден в списке известных городов');
+        console.log('Доступные города:', Object.keys(cityCoordinates).slice(0, 10).join(', ') + '...');
+      }
+    } else {
+      console.log('⚠️ Не редактируем адрес самовывоза или нет editingAddress');
+    }
+  }, [editingAddress, loadPointsByCity]);
 
   return (
     <div className="flex relative gap-8 items-start bg-white rounded-2xl flex-[1_0_0] max-md:flex-col max-md:gap-5">
@@ -235,6 +353,7 @@ const ProfileAddressWayWithMap: React.FC<ProfileAddressWayWithMapProps> = ({ onB
           onPickupPointSelect={handlePickupPointSelect}
           selectedPickupPoint={selectedPickupPoint}
           editingAddress={editingAddress}
+          initialCity={initialCity}
         />
       )}
       

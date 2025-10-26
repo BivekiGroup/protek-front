@@ -16,6 +16,7 @@ export default function ProductImageGallery({ imageUrl, images, partsIndexImages
     const u = url.toLowerCase();
     return (
       u.includes('image-10') ||
+      u.includes('162615') ||
       u.includes('noimage') ||
       u.includes('placeholder') ||
       u.includes('mock') ||

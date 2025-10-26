@@ -4592,7 +4592,7 @@ body {
 }
 
 .flex-block-13-copy {
-  grid-column-gap: 30px;
+  grid-column-gap: 8px;
   grid-row-gap: 30px;
   flex: 1;
   max-width: 100%;
@@ -4600,7 +4600,7 @@ body {
 
 .filters-desktop-wrapper {
   width: 300px;
-  margin-right: 20px;
+  margin-right: 0px;
   margin-bottom: 80px;
   position: sticky;
   top: 120px;

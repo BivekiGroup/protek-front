@@ -2050,6 +2050,105 @@ export const UPDATE_CART_ITEM_QUANTITY = gql`
   }
 `;
 
+export const UPDATE_CART_PRICES = gql`
+  mutation UpdateCartPrices {
+    updateCartPrices {
+      success
+      message
+      error
+      priceChanges {
+        itemId
+        article
+        brand
+        oldPrice
+        newPrice
+      }
+      cart {
+        id
+        clientId
+        items {
+          id
+          productId
+          offerKey
+          name
+          description
+          brand
+          article
+          price
+          currency
+          quantity
+          stock
+          deliveryTime
+          warehouse
+          supplier
+          isExternal
+          image
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`;
+
+export const GET_CATEGORIES = gql`
+  query GetCategories {
+    categories {
+      id
+      name
+      slug
+      description
+      image
+      isHidden
+      parentId
+      level
+      children {
+        id
+        name
+        slug
+        image
+        isHidden
+        level
+        children {
+          id
+          name
+          slug
+          image
+          isHidden
+          level
+        }
+      }
+    }
+  }
+`;
+
+export const GET_PRODUCTS_BY_CATEGORY = gql`
+  query GetProductsByCategory($categorySlug: String!, $limit: Int) {
+    productsByCategory(categorySlug: $categorySlug, limit: $limit) {
+      id
+      name
+      slug
+      article
+      brand
+      retailPrice
+      wholesalePrice
+      stock
+      createdAt
+      images {
+        id
+        url
+        alt
+        order
+      }
+      categories {
+        id
+        name
+        slug
+      }
+    }
+  }
+`;
+
 export const CLEAR_CART = gql`
   mutation ClearCart {
     clearCart {

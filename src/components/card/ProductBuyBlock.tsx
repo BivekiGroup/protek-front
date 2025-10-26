@@ -40,6 +40,13 @@ const ProductBuyBlock = ({ offer }: ProductBuyBlockProps) => {
 
     const maxAllowed = typeof availableStock === 'number' ? availableStock : 999;
     const newQuantity = Math.max(1, Math.min(maxAllowed, quantity + delta));
+
+    // Проверка превышения доступного количества
+    if (delta > 0 && newQuantity === quantity && typeof availableStock === 'number') {
+      toast.error(`Нельзя добавить больше ${availableStock} шт`);
+      return;
+    }
+
     setQuantity(newQuantity);
   };
 
@@ -101,12 +108,13 @@ const ProductBuyBlock = ({ offer }: ProductBuyBlockProps) => {
     }
   };
 
-  const totalPrice = offer.price * quantity;
+  // Всегда показываем цену за 1 товар
+  const unitPrice = offer.price;
 
   return (
     <div className="w-layout-hflex add-to-cart-block-copy">
       <div className="pcs-card">{typeof availableStock === 'number' ? `${Math.max(availableStock, 0)} шт` : '—'}</div>
-      <div className="price opencard">{totalPrice.toLocaleString('ru-RU')} ₽</div>
+      <div className="price opencard">{unitPrice.toLocaleString('ru-RU')} ₽</div>
       <div className="w-layout-hflex pcs-copy">
         <div
           className="minus-plus"

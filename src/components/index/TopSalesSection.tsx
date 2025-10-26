@@ -94,11 +94,11 @@ const TopSalesSection: React.FC = () => {
         article: "FDB1562",
         brand: "Ferodo",
         retailPrice: 4250,
-        images: [{ url: "images/162615.webp", alt: "Ferodo brake pads" }]
+        images: []
       }
     },
     {
-      id: "mock-top-2", 
+      id: "mock-top-2",
       productId: "mock-product-top-2",
       isActive: true,
       sortOrder: 1000,
@@ -108,7 +108,7 @@ const TopSalesSection: React.FC = () => {
         article: "W712/75",
         brand: "Mann-Filter",
         retailPrice: 890,
-        images: [{ url: "images/162615.webp", alt: "Mann oil filter" }]
+        images: []
       }
     }
   ];
@@ -156,9 +156,19 @@ const TopSalesSection: React.FC = () => {
                 ? `от ${product.retailPrice.toLocaleString('ru-RU')} ₽`
                 : 'По запросу';
 
-              const image = product.images && product.images.length > 0
-                ? product.images[0].url
-                : '/images/162615.webp'; // Fallback изображение
+              const imageUrl = product.images?.[0]?.url;
+              const isPlaceholder = (url?: string) => {
+                if (!url) return true;
+                const u = url.toLowerCase();
+                return (
+                  u.includes('image-10') ||
+                  u.includes('162615') ||
+                  u.includes('noimage') ||
+                  u.includes('placeholder') ||
+                  u.includes('mock')
+                );
+              };
+              const image = imageUrl && !isPlaceholder(imageUrl) ? imageUrl : '/images/no-photo.svg';
 
               const title = product.name;
               const brand = product.brand || 'Неизвестный бренд';

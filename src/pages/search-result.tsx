@@ -207,24 +207,44 @@ const getBestOffers = (offers: any[]) => {
 
 // Убрано: функция сортировки теперь в CoreProductCard
 
+// Функция для проверки соответствия бренда
+// Проверяет, является ли наш бренд (из БД) частью бренда от Laxima
+// Пример: наш "MAHLE" является частью "KNECHT/MAHLE" от Laxima
+// Пример: наш "BMW" является частью "BMW/MINI/RR" от Laxima
+const brandMatches = (offerBrand: string, searchBrands: string[]): boolean => {
+  if (searchBrands.length === 0) return true;
+
+  const offerBrandUpper = offerBrand.toUpperCase();
+  const offerBrandParts = offerBrandUpper.split('/').map(b => b.trim());
+
+  return searchBrands.some(searchBrand => {
+    const searchBrandUpper = searchBrand.toUpperCase();
+    // Проверяем:
+    // 1. Точное совпадение
+    // 2. ИЛИ наш бренд является одной из частей составного бренда Laxima
+    return offerBrandUpper === searchBrandUpper ||
+           offerBrandParts.includes(searchBrandUpper);
+  });
+};
+
 // Функция для проверки наличия товара на складе
 const checkProductStock = (result: any): boolean => {
   if (!result) return false;
-  
+
   // Используем новые данные stockCalculation если доступны
   if (result.stockCalculation) {
     return result.stockCalculation.hasAnyStock;
   }
-  
+
   // Fallback к старой логике для обратной совместимости
-  const hasInternalStock = result.internalOffers?.some((offer: any) => 
+  const hasInternalStock = result.internalOffers?.some((offer: any) =>
     offer.quantity > 0 && offer.available
   );
-  
-  const hasExternalStock = result.externalOffers?.some((offer: any) => 
+
+  const hasExternalStock = result.externalOffers?.some((offer: any) =>
     offer.quantity > 0
   );
-  
+
   return hasInternalStock || hasExternalStock;
 };
 
@@ -244,6 +264,7 @@ const transformOffersForCard = (offers: any[], hasStock: boolean = true) => {
       productId: offer.productId,
       offerKey: uniqueKey, // Используем уникальный ключ вместо оригинального offerKey
       pcs: `${offer.quantity} шт.`,
+      quantity: offer.quantity, // Добавляем чистое число для использования в max и валидации
       days: formatDeliveryDuration(deliveryDays),
       recommended: !isExternal,
       price: `${new Intl.NumberFormat('ru-RU', {
@@ -388,7 +409,7 @@ export default function SearchResult() {
   const filteredOffers = useMemo(() => {
     return allOffers.filter(offer => {
       // Фильтр по бренду
-      if (selectedBrands.length > 0 && !selectedBrands.includes(offer.brand)) {
+      if (!brandMatches(offer.brand, selectedBrands)) {
         return false;
       }
       // Фильтр по цене
@@ -466,7 +487,7 @@ export default function SearchResult() {
       // Применяем все фильтры кроме текущего
       relevantOffers = allOffers.filter(offer => {
         // Фильтр по бренду (если это не фильтр производителя)
-        if (filter.title !== 'Производитель' && selectedBrands.length > 0 && !selectedBrands.includes(offer.brand)) {
+        if (filter.title !== 'Производитель' && !brandMatches(offer.brand, selectedBrands)) {
           return false;
         }
         // Фильтр по цене (если это не фильтр цены)
@@ -851,7 +872,7 @@ export default function SearchResult() {
                         // Применяем фильтры только если они активны
                         const filteredAnalogOffers = allAnalogOffers.filter(offer => {
                           // Фильтр по бренду
-                          if (selectedBrands.length > 0 && !selectedBrands.includes(offer.brand)) {
+                          if (!brandMatches(offer.brand, selectedBrands)) {
                             return false;
                           }
                           // Фильтр по цене

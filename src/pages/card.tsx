@@ -317,11 +317,18 @@ export default function CardPage() {
             const u = url.toLowerCase();
             return (
               u.includes('image-10') ||
+              u.includes('162615') ||
               u.includes('noimage') ||
               u.includes('placeholder') ||
               u.includes('mock') ||
+              u.includes('mockup') ||
               u.includes('akum') ||
-              u.includes('akku')
+              u.includes('akkum') ||
+              u.includes('akku') ||
+              u.includes('accum') ||
+              u.includes('accumulator') ||
+              u.includes('battery') ||
+              u.includes('/akb')
             );
           };
           const cms = (result?.images?.map((img: any) => img.url) || []).filter(Boolean);

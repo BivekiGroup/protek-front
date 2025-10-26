@@ -137,8 +137,21 @@ const BestPriceSection: React.FC = () => {
           const hasDiscount = !!item.discount && item.discount > 0 && basePrice != null;
           const hasStock = (item.product.stock ?? 0) > 0;
 
+          const imageUrl = item.product.images?.[0]?.url;
+          const isPlaceholder = (url?: string) => {
+            if (!url) return true;
+            const u = url.toLowerCase();
+            return (
+              u.includes('image-10') ||
+              u.includes('162615') ||
+              u.includes('noimage') ||
+              u.includes('placeholder') ||
+              u.includes('mock')
+            );
+          };
+
           return {
-            image: item.product.images?.[0]?.url || "images/162615.webp",
+            image: imageUrl && !isPlaceholder(imageUrl) ? imageUrl : "/images/no-photo.svg",
             salePercent: hasDiscount ? item.discount : undefined,
             newPrice: formatPrice(hasDiscount ? discountedPrice : basePrice),
             oldPrice: hasDiscount ? formatOldPrice(basePrice) : undefined,

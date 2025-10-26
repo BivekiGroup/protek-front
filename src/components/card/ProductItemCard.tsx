@@ -88,7 +88,6 @@ interface ProductItemCardProps {
 const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps) => {
   const [quantity, setQuantity] = useState(1);
   const [inputValue, setInputValue] = useState("1");
-  const [quantityError, setQuantityError] = useState("");
   const [isLocallyInCart, setIsLocallyInCart] = useState(false);
   const { addItem, state: cartState } = useCart();
 
@@ -142,28 +141,36 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
   };
 
   const handleInputChange = (val: string) => {
-    setInputValue(val);
-    if (val === "") return;
+    if (val === "") {
+      setInputValue(val);
+      return;
+    }
 
     const requested = Math.max(1, parseInt(val, 10) || 1);
-    const remainingStock = getRemainingStock();
 
+    // При вводе в поле разрешаем указать полное количество со склада
     let finalQuantity = requested;
-    if (typeof remainingStock === 'number') {
-      finalQuantity = Math.min(requested, Math.max(remainingStock, 0));
+    if (typeof availableStock === 'number') {
+      finalQuantity = Math.min(requested, Math.max(availableStock, 0));
     }
 
     if (finalQuantity < 1) {
       finalQuantity = 1;
     }
 
+    // Устанавливаем скорректированное значение
+    setInputValue(String(finalQuantity));
     setQuantity(finalQuantity);
 
-    if (typeof remainingStock === 'number' && requested > remainingStock) {
-      setQuantityError(`Доступно не более ${remainingStock} шт.`);
-      setInputValue(String(finalQuantity));
-    } else {
-      setQuantityError("");
+    // Показываем предупреждение если пытаются ввести больше чем есть на складе
+    if (typeof availableStock === 'number' && requested > availableStock) {
+      toast.error(`На складе доступно только ${availableStock} шт.`);
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (inputValue === "1") {
+      setInputValue("");
     }
   };
 
@@ -192,7 +199,6 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
           ? 'Товара нет в наличии'
           : 'В корзине уже максимальное количество этого товара';
         toast.error(errorMessage);
-        setQuantityError(errorMessage);
         setIsLocallyInCart(false);
         return;
       }
@@ -202,14 +208,11 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
         setQuantity(clampedQuantity);
         setInputValue(String(clampedQuantity));
         const errorMessage = `Можно добавить не более ${remainingStock} шт.`;
-        setQuantityError(errorMessage);
         toast.error(errorMessage);
         setIsLocallyInCart(false);
         return;
       }
     }
-
-    setQuantityError("");
 
     const result = await addItem({
       productId: offer.id ? String(offer.id) : undefined,
@@ -252,14 +255,16 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
   };
 
   const formatPriceDisplay = (price: number): string => {
+    // Всегда показываем цену за 1 единицу товара
     return new Intl.NumberFormat('ru-RU', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(price * quantity) + ' ₽';
+    }).format(price) + ' ₽';
   };
 
   const remainingStock = getRemainingStock();
-  const maxCount = typeof remainingStock === 'number' ? remainingStock : availableStock;
+  // Для поля ввода используем полное количество со склада, а не остаток
+  const maxCount = availableStock;
   const isAuthenticated = typeof window !== 'undefined' ? Boolean(localStorage.getItem('authToken')) : true;
   const inCart = offer.isInCart || false;
   const cannotAddMore = typeof remainingStock === 'number' && remainingStock <= 0;
@@ -325,16 +330,12 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
                 max={maxCount && maxCount > 0 ? maxCount : undefined}
                 value={inputValue}
                 onChange={e => handleInputChange(e.target.value)}
+                onFocus={handleInputFocus}
                 onBlur={handleInputBlur}
                 className="text-block-26 w-full text-center outline-none"
                 aria-label="Количество"
               />
             </div>
-            {quantityError && (
-              <div className="core-offers-table__error">
-                {quantityError}
-              </div>
-            )}
             <div style={{ position: 'relative', display: 'inline-block' }}>
               <button
                 type="button"

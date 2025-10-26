@@ -16,6 +16,7 @@ interface AddressFormWithPickupProps {
   onPickupPointSelect: (point: YandexPickupPoint) => void;
   selectedPickupPoint?: YandexPickupPoint;
   editingAddress?: any; // Для редактирования существующего адреса
+  initialCity?: string; // Начальный город для инициализации селектора
 }
 
 // Компонент автокомплита адресов
@@ -267,16 +268,17 @@ const PickupPointDetails = ({ point, onConfirm, onCancel }: {
   </div>
 );
 
-const AddressFormWithPickup = ({ 
-  onDetectLocation, 
-  address, 
-  setAddress, 
+const AddressFormWithPickup = ({
+  onDetectLocation,
+  address,
+  setAddress,
   onBack,
   onCityChange,
   onPickupPointSelect,
   selectedPickupPoint,
   editingAddress,
-  onSaved
+  onSaved,
+  initialCity
 }: AddressFormWithPickupProps) => {
   const [deliveryType, setDeliveryType] = useState(editingAddress?.deliveryType || 'COURIER');
   const [pickupTypeFilter, setPickupTypeFilter] = useState<string>('pickup_point');
@@ -636,6 +638,7 @@ const AddressFormWithPickup = ({
               onCityChange={onCityChange}
               placeholder={`Выберите ${pickupTypeFilter === 'pickup_point' ? 'ПВЗ' : 'постомат'}`}
               typeFilter={pickupTypeFilter}
+              initialCity={initialCity}
             />
           )}
           {/* Комментарий для самовывоза */}

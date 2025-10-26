@@ -14,6 +14,7 @@ interface Product {
   brand?: string;
   retailPrice?: number;
   wholesalePrice?: number;
+  stock?: number;
   createdAt: string;
   images: Array<{
     id: string;
@@ -41,10 +42,19 @@ const NewArrivalsSection: React.FC = () => {
 
   // Получаем изображения для товаров
   const getProductImage = (product: Product): string => {
-    if (product.images && product.images.length > 0) {
-      return product.images[0].url;
-    }
-    return "/images/162615.webp"; // fallback изображение
+    const imageUrl = product.images?.[0]?.url;
+    const isPlaceholder = (url?: string) => {
+      if (!url) return true;
+      const u = url.toLowerCase();
+      return (
+        u.includes('image-10') ||
+        u.includes('162615') ||
+        u.includes('noimage') ||
+        u.includes('placeholder') ||
+        u.includes('mock')
+      );
+    };
+    return imageUrl && !isPlaceholder(imageUrl) ? imageUrl : "/images/no-photo.svg";
   };
 
   const activeNewArrivals = data?.newArrivals?.slice(0, 6) || [];
@@ -135,6 +145,7 @@ const NewArrivalsSection: React.FC = () => {
               const image = getProductImage(product);
               const brand = product.brand || 'Неизвестный бренд';
               const isInCart = isItemInCart(product.id, undefined, product.article, brand);
+              const hasStock = (product.stock ?? 0) > 0;
 
               return (
                 <TopSalesItem
@@ -147,6 +158,7 @@ const NewArrivalsSection: React.FC = () => {
                   productId={product.id}
                   isInCart={isInCart}
                   isNew={true} // Mark new arrivals as "NEW"
+                  outOfStock={!hasStock}
                 />
               );
             })}

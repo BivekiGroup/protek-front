@@ -379,16 +379,13 @@ const LegalEntityFormBlock: React.FC<LegalEntityFormBlockProps> = (props) => {
               </div>
             )}
             {!isFullFormVisible && (
-              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-600">
-                <span>Нужно поправить реквизиты?</span>
-                <button
-                  type="button"
-                  onClick={() => setIsEditingDetails(true)}
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 font-medium text-gray-700 transition hover:border-red-200 hover:text-red-600"
-                >
-                  Редактировать вручную
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditingDetails(true)}
+                className="mt-4 -ml-5 inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 font-medium text-gray-700 transition hover:border-red-200 hover:text-red-600"
+              >
+                Редактировать вручную
+              </button>
             )}
           </div>
         )}

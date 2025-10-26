@@ -91,7 +91,6 @@ const CartItem: React.FC<CartItemProps> = ({
               id="Search-5"
               value={comment}
               onChange={e => onComment(e.target.value)}
-              disabled={isSummaryStep}
             />
           </form>
           <div className="success-message w-form-done">

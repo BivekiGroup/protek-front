@@ -13,6 +13,7 @@ interface PickupPointSelectorProps {
   placeholder?: string;
   className?: string;
   typeFilter?: string;
+  initialCity?: string; // Начальный город для редактирования
 }
 
 const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
@@ -21,15 +22,24 @@ const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
   onCityChange,
   placeholder = "Выберите пункт выдачи",
   className = "",
-  typeFilter
+  typeFilter,
+  initialCity
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [cityName, setCityName] = useState(''); // Не загружаем город по умолчанию
+  const [cityName, setCityName] = useState(initialCity || ''); // Инициализация из пропа
   const [showCitySelector, setShowCitySelector] = useState(false);
   const [citySearchTerm, setCitySearchTerm] = useState(''); // Поисковый запрос для городов
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Обновляем город если пришел новый initialCity
+  useEffect(() => {
+    if (initialCity && initialCity !== cityName) {
+      console.log('📍 PickupPointSelector: устанавливаем город из пропа:', initialCity);
+      setCityName(initialCity);
+    }
+  }, [initialCity]);
 
   // Запрос ПВЗ по городу (только если город выбран)
   const { data: cityData, loading: cityLoading, error: cityError } = useQuery(YANDEX_PICKUP_POINTS_BY_CITY, {
@@ -222,9 +232,14 @@ const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
     <div className={`relative ${className}`} ref={dropdownRef}>
       {/* Выбор города */}
       <div className="mb-3">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Город для поиска ПВЗ:
+        <label className="block text-sm font-semibold text-gray-900 mb-2">
+          1. Выберите город доставки
         </label>
+        {!cityName && (
+          <p className="text-sm text-gray-500 mb-2">
+            Сначала укажите город, чтобы увидеть доступные пункты выдачи
+          </p>
+        )}
         <div className="relative">
           <button
             onClick={() => {
@@ -233,10 +248,14 @@ const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
                 setIsOpen(false); // Закрываем дропдаун ПВЗ
               }
             }}
-            className="w-full gap-2.5 px-6 py-3 text-base leading-6 bg-white rounded border border-solid border-stone-300 h-[45px] outline-none flex items-center justify-between hover:border-gray-400 transition-colors"
+            className={`w-full gap-2.5 px-6 py-3 text-base leading-6 bg-white rounded border-2 h-[50px] outline-none flex items-center justify-between transition-all ${
+              cityName
+                ? 'border-green-400 hover:border-green-500'
+                : 'border-red-400 hover:border-red-500'
+            }`}
           >
-            <span className={cityName ? 'text-gray-700' : 'text-gray-400'}>
-              {cityName || 'Выберите город'}
+            <span className={cityName ? 'text-gray-900 font-medium' : 'text-gray-600'}>
+              {cityName || '⚠️ Выберите город'}
             </span>
             <svg 
               width="16" 
@@ -300,6 +319,9 @@ const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
 
       {/* Поле ввода */}
       <div className="relative">
+        <label className="block text-sm font-semibold text-gray-900 mb-2">
+          2. Выберите пункт выдачи
+        </label>
         <input
           type="text"
           value={selectedPoint ? selectedPoint.name : searchTerm}
@@ -325,7 +347,7 @@ const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
             setIsOpen(true);
             setShowCitySelector(false); // Закрываем селектор города
           }}
-          className="absolute right-2 top-2 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute right-2 top-[32px] p-2 text-gray-400 hover:text-gray-600 transition-colors"
           title="Определить местоположение"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
