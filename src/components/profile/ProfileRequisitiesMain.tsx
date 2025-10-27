@@ -269,28 +269,44 @@ const ProfileRequisitiesMain: React.FC<ProfileRequisitiesMainProps> = ({ onCreat
   if (legalEntities.length === 0) {
     return (
       <div className="flex flex-col flex-1 shrink justify-center basis-0 min-w-[240px] max-md:max-w-full">
-        <div className="flex overflow-hidden flex-col p-8 w-full bg-white rounded-2xl max-md:px-5 max-md:max-w-full">
-          <div className="text-3xl font-bold leading-none text-gray-950 max-md:max-w-full">
-            Банковские реквизиты
+        <div className="flex overflow-hidden flex-col items-center p-12 w-full bg-white rounded-2xl max-md:px-5 max-md:max-w-full">
+          {/* Иконка */}
+          <div className="flex items-center justify-center w-20 h-20 rounded-full bg-red-50 mb-6">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6.66699 8.33337H33.3337M6.66699 20H33.3337M6.66699 31.6667H33.3337" stroke="#EC1C24" strokeWidth="2.5" strokeLinecap="round"/>
+              <circle cx="10" cy="8.33337" r="1.5" fill="#EC1C24"/>
+              <circle cx="10" cy="20" r="1.5" fill="#EC1C24"/>
+              <circle cx="10" cy="31.6667" r="1.5" fill="#EC1C24"/>
+            </svg>
           </div>
-          <div className="mt-8 text-gray-600">
-            У вас пока нет юридических лиц. Создайте юридическое лицо, чтобы добавить банковские реквизиты.
+
+          {/* Заголовок */}
+          <div className="text-2xl font-bold leading-none text-gray-950 text-center mb-3">
+            Начните с добавления юридического лица
           </div>
-          <div className="flex gap-8 items-start self-start mt-8">
-            <button
-              onClick={() => {
-                if (onCreateLegalEntity) {
-                  onCreateLegalEntity();
-                } else {
-                  router.push('/profile-set');
-                }
-              }}
-              style={{ color: 'fff' }}
-              className="gap-2.5 self-stretch px-5 py-4 bg-red-600 rounded-xl min-h-[50px] cursor-pointer text-white text-base font-medium leading-tight text-center hover:bg-red-700"
-            >
-              Создать юридическое лицо
-            </button>
+
+          {/* Описание */}
+          <div className="text-base text-gray-600 text-center max-w-md mb-8">
+            Для добавления банковских реквизитов сначала необходимо создать юридическое лицо. Это займет всего пару минут.
           </div>
+
+          {/* Кнопка */}
+          <button
+            onClick={() => {
+              if (onCreateLegalEntity) {
+                onCreateLegalEntity();
+              } else {
+                router.push('/profile-set');
+              }
+            }}
+            style={{ color: '#FFFFFF' }}
+            className="flex items-center gap-2 px-6 py-4 bg-red-600 rounded-xl cursor-pointer text-white text-base font-semibold leading-tight text-center hover:bg-red-700 transition-colors"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 4V16M4 10H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            Добавить юридическое лицо
+          </button>
         </div>
       </div>
     );
@@ -327,8 +343,36 @@ const ProfileRequisitiesMain: React.FC<ProfileRequisitiesMainProps> = ({ onCreat
         )}
         <div className="flex flex-col mt-6 w-full text-sm leading-snug text-gray-600 max-md:max-w-full">
           {bankDetails.length === 0 ? (
-            <div className="text-gray-600 py-8 text-center">
-              У {selectedLegalEntity?.shortName || 'выбранного юридического лица'} пока нет банковских реквизитов.
+            <div className="flex flex-col items-center py-12 px-6 bg-slate-50 rounded-2xl">
+              {/* Иконка */}
+              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-4">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M16 6V26M6 16H26" stroke="#EC1C24" strokeWidth="2.5" strokeLinecap="round"/>
+                  <rect x="4" y="4" width="24" height="24" rx="4" stroke="#EC1C24" strokeWidth="2" strokeDasharray="4 4"/>
+                </svg>
+              </div>
+
+              {/* Заголовок */}
+              <div className="text-lg font-semibold text-gray-950 text-center mb-2">
+                Добавьте банковские реквизиты
+              </div>
+
+              {/* Описание */}
+              <div className="text-sm text-gray-600 text-center max-w-sm mb-6">
+                У {selectedLegalEntity?.shortName || 'выбранного юридического лица'} пока нет банковских реквизитов. Добавьте их для оформления документов.
+              </div>
+
+              {/* Кнопка */}
+              <button
+                onClick={() => setShowAddForm(true)}
+                style={{ color: '#FFFFFF' }}
+                className="flex items-center gap-2 px-5 py-3 bg-red-600 rounded-xl cursor-pointer text-white text-sm font-semibold leading-tight text-center hover:bg-red-700 transition-colors"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 3.6V14.4M3.6 9H14.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                Добавить реквизиты
+              </button>
             </div>
           ) : (
             bankDetails.map((bankDetail) => (

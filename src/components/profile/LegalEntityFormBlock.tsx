@@ -153,7 +153,7 @@ const LegalEntityFormBlock: React.FC<LegalEntityFormBlockProps> = (props) => {
     },
     onError: (error) => {
       console.error(error);
-      toast.error('Ошибка создания юр. лица');
+      toast.error(error.message || 'Ошибка создания юр. лица');
     },
   });
 
@@ -164,7 +164,7 @@ const LegalEntityFormBlock: React.FC<LegalEntityFormBlockProps> = (props) => {
     },
     onError: (error) => {
       console.error(error);
-      toast.error('Ошибка обновления юр. лица');
+      toast.error(error.message || 'Ошибка обновления юр. лица');
     },
   });
 

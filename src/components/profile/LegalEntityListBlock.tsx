@@ -217,7 +217,11 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
                       <button
                         type="button"
                         onClick={() => onToggleRequisites && onToggleRequisites(entity.id)}
-                        className="group inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-red-200 hover:text-red-600"
+                        className={`group inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                          entity.bankDetails.length === 0
+                            ? 'border-red-200 bg-red-50 text-red-600 hover:border-red-300 hover:bg-red-100'
+                            : 'border-slate-200 text-gray-600 hover:border-red-200 hover:text-red-600'
+                        }`}
                         aria-expanded={isExpanded}
                       >
                         <svg
@@ -226,7 +230,11 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
                           viewBox="0 0 16 15"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
-                          className="text-gray-500 transition-colors group-hover:text-red-600"
+                          className={`transition-colors ${
+                            entity.bankDetails.length === 0
+                              ? 'text-red-600'
+                              : 'text-gray-500 group-hover:text-red-600'
+                          }`}
                         >
                           <path
                             fillRule="evenodd"
@@ -235,7 +243,7 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
                             fill="currentColor"
                           />
                         </svg>
-                        <span>{isExpanded ? "Скрыть реквизиты" : "Реквизиты"}</span>
+                        <span>{isExpanded ? "Скрыть реквизиты" : entity.bankDetails.length === 0 ? "Добавить реквизиты" : `Реквизиты (${entity.bankDetails.length})`}</span>
                       </button>
 
                       <div className="flex items-center gap-3 text-sm leading-5 text-gray-600">

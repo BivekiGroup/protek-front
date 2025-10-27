@@ -327,8 +327,42 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
     <>
       <div className="flex flex-col gap-5">
       {details.length === 0 && !showForm && (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-6 text-sm text-gray-600">
-          У {entity.shortName} пока нет банковских реквизитов. Добавьте первый счёт, чтобы можно было оплачивать ваши заказы быстрее.
+        <div className="flex flex-col items-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 px-6 py-10">
+          {/* Иконка */}
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 7V21M7 14H21" stroke="#EC1C24" strokeWidth="2.5" strokeLinecap="round"/>
+              <rect x="3.5" y="3.5" width="21" height="21" rx="3.5" stroke="#EC1C24" strokeWidth="1.5" strokeDasharray="3 3"/>
+            </svg>
+          </div>
+
+          {/* Заголовок */}
+          <div className="mb-2 text-center text-base font-semibold text-gray-950">
+            Добавьте банковские реквизиты
+          </div>
+
+          {/* Описание */}
+          <div className="mb-6 max-w-md text-center text-sm text-gray-600">
+            У {entity.shortName} пока нет банковских реквизитов. Добавьте их для оформления документов и оплаты заказов.
+          </div>
+
+          {/* Кнопка */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowForm(true);
+              setEditingDetail(null);
+              setFormState(emptyForm);
+              setErrors({});
+            }}
+            style={{ color: '#FFFFFF' }}
+            className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-700"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 3.6V14.4M3.6 9H14.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            Добавить реквизиты
+          </button>
         </div>
       )}
 
