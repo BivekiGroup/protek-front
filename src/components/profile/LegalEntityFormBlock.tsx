@@ -312,6 +312,12 @@ const LegalEntityFormBlock: React.FC<LegalEntityFormBlockProps> = (props) => {
               className={`${inputClass} ${validationErrors.inn ? inputErrorClass : ''} sm:flex-1`}
               value={inn}
               onChange={(event) => handleInnChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && inn.trim().length >= 10 && !daDataLoading) {
+                  event.preventDefault();
+                  handleFillFromInn();
+                }
+              }}
             />
             <button
               type="button"

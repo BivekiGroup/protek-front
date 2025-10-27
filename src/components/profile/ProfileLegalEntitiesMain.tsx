@@ -1,6 +1,7 @@
 import React, { useState, forwardRef, useImperativeHandle, useCallback } from "react";
 import { useQuery } from '@apollo/client';
 import { GET_CLIENT_ME } from '@/lib/graphql';
+import { useAuthErrorHandler } from '@/hooks/useAuthErrorHandler';
 import LegalEntityListBlock from "./LegalEntityListBlock";
 import LegalEntityFormBlock from "./LegalEntityFormBlock";
 
@@ -82,6 +83,9 @@ const ProfileLegalEntitiesMain = forwardRef<ProfileLegalEntitiesMainHandle>((_, 
       console.error('Ошибка загрузки юридических лиц:', err);
     }
   });
+
+  // Обрабатываем ошибки авторизации (включая удаленных пользователей)
+  useAuthErrorHandler(error);
 
   const clientData: ClientData | null = data?.clientMe || null;
   const legalEntities = clientData?.legalEntities || [];

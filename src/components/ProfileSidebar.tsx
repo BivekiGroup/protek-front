@@ -3,6 +3,7 @@ import { emitAuthChanged } from '@/lib/authEvents'
 import { useQuery } from '@apollo/client';
 import { useIsClient } from '@/lib/useIsomorphicLayoutEffect';
 import { GET_CLIENT_ME } from '@/lib/graphql';
+import { useAuthErrorHandler } from '@/hooks/useAuthErrorHandler';
 
 interface ProfileSidebarProps {
   activeItem: string;
@@ -10,12 +11,15 @@ interface ProfileSidebarProps {
 
 const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ activeItem }) => {
   const isClient = useIsClient();
-  
+
   // Получаем данные клиента для проверки наличия юридических лиц
-  const { data: clientData } = useQuery(GET_CLIENT_ME, {
+  const { data: clientData, error } = useQuery(GET_CLIENT_ME, {
     skip: !isClient,
-    errorPolicy: 'ignore' // Игнорируем ошибки, чтобы не ломать интерфейс
+    errorPolicy: 'all' // Обрабатываем все ошибки
   });
+
+  // Обрабатываем ошибки авторизации (включая удаленных пользователей)
+  useAuthErrorHandler(error);
 
   // Проверяем есть ли у клиента юридические лица
   const hasLegalEntities = (clientData?.clientMe?.legalEntities?.length ?? 0) > 0;

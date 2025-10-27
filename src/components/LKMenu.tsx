@@ -4,7 +4,8 @@ import { useRouter } from 'next/router';
 import { useQuery } from '@apollo/client';
 import { useIsClient } from '@/lib/useIsomorphicLayoutEffect';
 import { GET_CLIENT_ME } from '@/lib/graphql';
-import { emitAuthChanged } from '@/lib/authEvents'
+import { emitAuthChanged } from '@/lib/authEvents';
+import { useAuthErrorHandler } from '@/hooks/useAuthErrorHandler';
 
 const menuItems = [
   { label: 'Заказы', href: '/profile-orders', icon: 'https://cdn.builder.io/api/v1/image/assets/TEMP/22ecd7e6251abe04521d03f0ac09f73018a8c2c8?placeholderIfAbsent=true&apiKey=f5bc5a2dc9b841d0aba1cc6c74a35920' },
@@ -34,10 +35,13 @@ const LKMenu = React.forwardRef<HTMLDivElement>((props, ref) => {
   const isClient = useIsClient();
 
   // Получаем данные клиента для проверки наличия юридических лиц
-  const { data: clientData } = useQuery(GET_CLIENT_ME, {
+  const { data: clientData, error } = useQuery(GET_CLIENT_ME, {
     skip: !isClient,
-    errorPolicy: 'ignore' // Игнорируем ошибки, чтобы не ломать интерфейс
+    errorPolicy: 'all' // Обрабатываем все ошибки для корректного разлогинивания удалённых пользователей
   });
+
+  // Обрабатываем ошибки авторизации (включая удаленных пользователей)
+  useAuthErrorHandler(error);
 
   // Проверяем есть ли у клиента юридические лица
   const hasLegalEntities = (clientData?.clientMe?.legalEntities?.length ?? 0) > 0;
