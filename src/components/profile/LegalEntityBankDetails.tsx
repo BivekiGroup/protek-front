@@ -44,6 +44,7 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
   const [errors, setErrors] = useState<Partial<Record<FormField, string>>>({});
   const [pendingDelete, setPendingDelete] = useState<BankDetail | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [fetchingBankData, setFetchingBankData] = useState(false);
 
   const fieldRefs: Record<FormField, React.RefObject<HTMLInputElement | null>> = {
     name: useRef<HTMLInputElement | null>(null),
@@ -123,6 +124,63 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
     return typeof limit === "number" ? stripped.slice(0, limit) : stripped;
   };
 
+  const fetchBankDataByBik = async (bik: string) => {
+    if (bik.length !== 9) return;
+
+    setFetchingBankData(true);
+    const toastId = toast.loading("Получаем данные банка...");
+
+    try {
+      const cmsGraphql = process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL || 'http://localhost:3000/api/graphql';
+      const cmsDaDataBankUrl = cmsGraphql.replace(/\/api\/graphql.*/, '/api/dadata/bank');
+
+      const response = await fetch(cmsDaDataBankUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: bik }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Не удалось получить данные банка");
+      }
+
+      const data = await response.json();
+
+      if (data.suggestions && data.suggestions.length > 0) {
+        const bankData = data.suggestions[0].data;
+        const bankName = bankData.name?.payment || bankData.value || "";
+        const corrAccount = bankData.correspondent_account || "";
+
+        setFormState((prev) => ({
+          ...prev,
+          bankName: bankName,
+          correspondentAccount: corrAccount,
+        }));
+
+        // Auto-generate account name if account number is filled
+        if (formState.accountNumber.length === 20 && bankName) {
+          const last4Digits = formState.accountNumber.slice(-4);
+          const generatedName = `${last4Digits} ${bankName}`;
+          setFormState((prev) => ({
+            ...prev,
+            name: generatedName,
+          }));
+        }
+
+        toast.success("Данные банка загружены", { id: toastId });
+      } else {
+        toast.error("Банк с таким БИК не найден", { id: toastId });
+      }
+    } catch (error) {
+      console.error("Ошибка при получении данных банка:", error);
+      toast.error("Не удалось получить данные банка", { id: toastId });
+    } finally {
+      setFetchingBankData(false);
+    }
+  };
+
   const handleChange = (field: FormField) => (event: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = event.target.value;
     let nextValue = rawValue;
@@ -135,26 +193,37 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
 
     setFormState((prev) => ({ ...prev, [field]: nextValue }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
+
+    // Auto-fetch bank data when BIK is complete
+    if (field === "bik" && nextValue.length === 9) {
+      fetchBankDataByBik(nextValue);
+    }
+
+    // Auto-generate account name when account number is complete and bank name exists
+    if (field === "accountNumber" && nextValue.length === 20 && formState.bankName) {
+      const last4Digits = nextValue.slice(-4);
+      const generatedName = `${last4Digits} ${formState.bankName}`;
+      setFormState((prev) => ({
+        ...prev,
+        name: generatedName,
+      }));
+    }
   };
 
   const validateForm = (): boolean => {
-    const { name, accountNumber, bankName, bik, correspondentAccount } = formState;
+    const { accountNumber, bankName, bik, correspondentAccount } = formState;
     const nextErrors: Partial<Record<FormField, string>> = {};
-
-    if (!name.trim()) {
-      nextErrors.name = "Введите название счёта";
-    }
 
     if (accountNumber.length !== 20) {
       nextErrors.accountNumber = "Номер счёта должен содержать 20 цифр";
     }
 
-    if (!bankName.trim()) {
-      nextErrors.bankName = "Укажите наименование банка";
-    }
-
     if (bik.length !== 9) {
       nextErrors.bik = "БИК должен содержать 9 цифр";
+    }
+
+    if (!bankName.trim()) {
+      nextErrors.bankName = "Укажите наименование банка (загрузится автоматически по БИК)";
     }
 
     if (correspondentAccount.length !== 20) {
@@ -169,6 +238,7 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
         const ref = fieldRefs[firstError];
         ref?.current?.focus();
       }
+      toast.error("Пожалуйста, заполните все обязательные поля");
       return false;
     }
 
@@ -180,10 +250,17 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
       return;
     }
 
+    // Generate account name if not set
+    let accountName = formState.name.trim();
+    if (!accountName && formState.accountNumber.length === 20 && formState.bankName) {
+      const last4Digits = formState.accountNumber.slice(-4);
+      accountName = `${last4Digits} ${formState.bankName.trim()}`;
+    }
+
     const variables = {
       legalEntityId: entity.id,
       input: {
-        name: formState.name.trim(),
+        name: accountName,
         accountNumber: formState.accountNumber,
         bankName: formState.bankName.trim(),
         bik: formState.bik,
@@ -317,22 +394,7 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
               </span>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Название счёта</span>
-                <input
-                  type="text"
-                  value={formState.name}
-                  onChange={handleChange("name")}
-                  ref={fieldRefs.name}
-                  className={`${baseInputClass} ${errors.name ? errorInputClass : ""}`}
-                  autoComplete="off"
-                  placeholder="Основной расчётный счёт"
-                />
-                <span className="text-xs text-gray-400">Отображается в списке счетов</span>
-                {errors.name ? <span className="text-xs font-medium text-red-500">{errors.name}</span> : null}
-              </div>
-
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">№ расчётного счёта</span>
                 <input
@@ -350,21 +412,15 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
               </div>
 
               <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Банк</span>
-                <input
-                  type="text"
-                  value={formState.bankName}
-                  onChange={handleChange("bankName")}
-                  ref={fieldRefs.bankName}
-                  className={`${baseInputClass} ${errors.bankName ? errorInputClass : ""}`}
-                  placeholder="Наименование банка"
-                />
-                <span className="text-xs text-gray-400">Полное или краткое наименование</span>
-                {errors.bankName ? <span className="text-xs font-medium text-red-500">{errors.bankName}</span> : null}
-              </div>
-
-              <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">БИК</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">БИК</span>
+                  {fetchingBankData && (
+                    <svg className="h-4 w-4 animate-spin text-red-600" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                      <path className="opacity-75" d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  )}
+                </div>
                 <input
                   type="text"
                   value={formState.bik}
@@ -374,28 +430,65 @@ const LegalEntityBankDetails: React.FC<LegalEntityBankDetailsProps> = ({ entity,
                   inputMode="numeric"
                   maxLength={9}
                   placeholder="9 цифр"
+                  disabled={fetchingBankData}
                 />
-                <span className="text-xs text-gray-400">Проверочный код Банка России</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-400">Проверочный код Банка России</span>
+                  {formState.bik.length === 9 && !fetchingBankData && (
+                    <button
+                      type="button"
+                      onClick={() => fetchBankDataByBik(formState.bik)}
+                      className="text-xs text-red-600 hover:text-red-700 underline"
+                    >
+                      Обновить
+                    </button>
+                  )}
+                </div>
                 {errors.bik ? <span className="text-xs font-medium text-red-500">{errors.bik}</span> : null}
               </div>
 
-              <div className="md:col-span-2 flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Корреспондентский счёт</span>
-                <input
-                  type="text"
-                  value={formState.correspondentAccount}
-                  onChange={handleChange("correspondentAccount")}
-                  ref={fieldRefs.correspondentAccount}
-                  className={`${baseInputClass} ${errors.correspondentAccount ? errorInputClass : ""}`}
-                  inputMode="numeric"
-                  maxLength={20}
-                  placeholder="20 цифр"
-                />
-                <span className="text-xs text-gray-400">Обязателен для расчётов по БИК</span>
-                {errors.correspondentAccount ? (
-                  <span className="text-xs font-medium text-red-500">{errors.correspondentAccount}</span>
-                ) : null}
-              </div>
+              {formState.bankName && (
+                <>
+                  <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-gray-50 px-4 py-4">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Банк</span>
+                    <input
+                      type="text"
+                      value={formState.bankName}
+                      readOnly
+                      className={`${baseInputClass} bg-gray-100 cursor-not-allowed text-gray-700`}
+                      placeholder="Загружается автоматически по БИК"
+                    />
+                    <span className="text-xs text-gray-400">Заполняется автоматически</span>
+                  </div>
+
+                  <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-gray-50 px-4 py-4">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Корреспондентский счёт</span>
+                    <input
+                      type="text"
+                      value={formState.correspondentAccount}
+                      readOnly
+                      className={`${baseInputClass} bg-gray-100 cursor-not-allowed text-gray-700`}
+                      placeholder="Загружается автоматически по БИК"
+                    />
+                    <span className="text-xs text-gray-400">Заполняется автоматически</span>
+                  </div>
+                </>
+              )}
+
+              {formState.name && (
+                <div className="md:col-span-2 flex flex-col gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-4">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-green-700">Название счёта</span>
+                  <input
+                    type="text"
+                    value={formState.name}
+                    readOnly
+                    ref={fieldRefs.name}
+                    className={`${baseInputClass} bg-green-100 cursor-not-allowed text-gray-900 font-medium border-green-300`}
+                    placeholder="Генерируется автоматически"
+                  />
+                  <span className="text-xs text-green-600">✓ Название сгенерировано автоматически</span>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
