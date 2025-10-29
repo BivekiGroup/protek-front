@@ -118,7 +118,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({ value, onChan
   );
 };
 
-const Tabs = ({ deliveryType, setDeliveryType }: { deliveryType: string; setDeliveryType: (type: string) => void; }) => (
+const Tabs = ({ deliveryType, setDeliveryType }: { deliveryType: string; setDeliveryType: (type: 'COURIER' | 'PICKUP') => void; }) => (
   <div className="flex items-center w-full text-base font-medium text-center whitespace-nowrap rounded-xl bg-slate-100 mb-6">
     <button
       type="button"
