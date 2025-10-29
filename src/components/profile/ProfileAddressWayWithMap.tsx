@@ -124,6 +124,7 @@ const ProfileAddressWayWithMap: React.FC<ProfileAddressWayWithMapProps> = ({ onB
   const [selectedPickupPoint, setSelectedPickupPoint] = useState<YandexPickupPoint | undefined>();
   const [mapCenter, setMapCenter] = useState<[number, number]>([55.7558, 37.6176]); // Москва
   const [initialCity, setInitialCity] = useState<string | undefined>(); // Город для инициализации селектора
+  const [deliveryType, setDeliveryType] = useState<'COURIER' | 'PICKUP'>(editingAddress?.deliveryType || 'COURIER');
 
   const [loadPointsByCity] = useLazyQuery(YANDEX_PICKUP_POINTS_BY_CITY, {
     onCompleted: (data) => {
@@ -354,6 +355,7 @@ const ProfileAddressWayWithMap: React.FC<ProfileAddressWayWithMapProps> = ({ onB
           selectedPickupPoint={selectedPickupPoint}
           editingAddress={editingAddress}
           initialCity={initialCity}
+          onDeliveryTypeChange={setDeliveryType}
         />
       )}
       
@@ -366,6 +368,7 @@ const ProfileAddressWayWithMap: React.FC<ProfileAddressWayWithMapProps> = ({ onB
           center={mapCenter}
           zoom={12}
           className="w-full h-[220px] md:min-h-[990px] md:h-full"
+          deliveryAddress={deliveryType === 'COURIER' ? address : undefined}
         />
       </div>
     </div>

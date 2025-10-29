@@ -17,6 +17,7 @@ interface AddressFormWithPickupProps {
   selectedPickupPoint?: YandexPickupPoint;
   editingAddress?: any; // Для редактирования существующего адреса
   initialCity?: string; // Начальный город для инициализации селектора
+  onDeliveryTypeChange?: (type: 'COURIER' | 'PICKUP') => void; // Callback для изменения типа доставки
 }
 
 // Компонент автокомплита адресов
@@ -278,9 +279,18 @@ const AddressFormWithPickup = ({
   selectedPickupPoint,
   editingAddress,
   onSaved,
-  initialCity
+  initialCity,
+  onDeliveryTypeChange
 }: AddressFormWithPickupProps) => {
   const [deliveryType, setDeliveryType] = useState(editingAddress?.deliveryType || 'COURIER');
+
+  // Уведомляем родительский компонент об изменении типа доставки
+  const handleDeliveryTypeChange = (type: 'COURIER' | 'PICKUP') => {
+    setDeliveryType(type);
+    if (onDeliveryTypeChange) {
+      onDeliveryTypeChange(type);
+    }
+  };
   const [pickupTypeFilter, setPickupTypeFilter] = useState<string>('pickup_point');
   const [showPickupDetails, setShowPickupDetails] = useState(false);
   const [formData, setFormData] = useState({
@@ -290,7 +300,6 @@ const AddressFormWithPickup = ({
     floor: editingAddress?.floor || '',
     apartment: editingAddress?.apartment || '',
     intercom: editingAddress?.intercom || '',
-    deliveryTime: editingAddress?.deliveryTime || '',
     contactPhone: '',
     comment: editingAddress?.comment || ''
   });
@@ -328,6 +337,13 @@ const AddressFormWithPickup = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Синхронизируем адрес с родительским компонентом для отображения на карте
+  useEffect(() => {
+    if (formData.address && deliveryType === 'COURIER') {
+      setAddress(formData.address);
+    }
+  }, [formData.address, deliveryType, setAddress])
+
   const [createAddress] = useMutation(CREATE_CLIENT_DELIVERY_ADDRESS, {
     onCompleted: (data) => {
       toast.success('Адрес доставки сохранён');
@@ -342,9 +358,10 @@ const AddressFormWithPickup = ({
   });
 
   const [updateAddress] = useMutation(UPDATE_CLIENT_DELIVERY_ADDRESS, {
-    onCompleted: () => {
+    onCompleted: (data) => {
       toast.success('Адрес доставки обновлён');
-      if (onSaved) onSaved(); else onBack();
+      const updatedAddressId = data?.updateClientDeliveryAddressMe?.id || editingAddress?.id;
+      if (onSaved) onSaved(updatedAddressId); else onBack();
     },
     onError: (error) => {
       console.error('Ошибка обновления адреса:', error);
@@ -385,7 +402,6 @@ const AddressFormWithPickup = ({
         floor: formData.floor || null,
         apartment: formData.apartment || null,
         intercom: formData.intercom || null,
-        deliveryTime: formData.deliveryTime || null,
         contactPhone: normalizedPhone
       };
 
@@ -425,7 +441,6 @@ const AddressFormWithPickup = ({
         floor: null,
         apartment: null,
         intercom: null,
-        deliveryTime: null,
         contactPhone: null
       };
 
@@ -454,16 +469,6 @@ const AddressFormWithPickup = ({
     }
   };
 
-  const timeSlots = [
-    '9:00 - 12:00',
-    '12:00 - 15:00',
-    '15:00 - 18:00',
-    '18:00 - 21:00',
-    'Любое время'
-  ];
-
-  // Желаемое время доставки — кастомный селект
-  const [isTimeOpen, setIsTimeOpen] = useState(false);
 
   return (
     <div className="flex flex-col px-8 pt-8 bg-white rounded-2xl w-[480px] max-md:w-full max-md:px-4 max-md:pb-8 ">
@@ -471,7 +476,7 @@ const AddressFormWithPickup = ({
         <div className="text-2xl font-bold text-gray-950 mb-2">
           {editingAddress ? 'Редактировать адрес' : 'Адрес доставки'}
         </div>
-        <Tabs deliveryType={deliveryType} setDeliveryType={setDeliveryType} />
+        <Tabs deliveryType={deliveryType} setDeliveryType={handleDeliveryTypeChange} />
       </div>
       {deliveryType === 'COURIER' ? (
         <div className="flex flex-col gap-4 w-full">
@@ -494,7 +499,10 @@ const AddressFormWithPickup = ({
             <div className="gap-2.5 self-stretch px-6 py-3.5 mt-1.5 w-full bg-white rounded border border-solid border-stone-300 min-h-[46px] max-md:px-5">
               <AddressAutocomplete
                 value={formData.address}
-                onChange={(value) => setFormData(prev => ({ ...prev, address: value }))}
+                onChange={(value) => {
+                  setFormData(prev => ({ ...prev, address: value }));
+                  setAddress(value); // Обновляем адрес в родительском компоненте для карты
+                }}
                 placeholder="Введите адрес"
               />
             </div>
@@ -550,34 +558,6 @@ const AddressFormWithPickup = ({
                   className="w-full bg-transparent outline-none text-gray-600"
                 />
               </div>
-            </div>
-          </div>
-          {/* Время доставки */}
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">Желаемое время доставки</label>
-            <div className="relative mt-1.5">
-              <div
-                className="flex gap-10 justify-between items-center px-6 py-3.5 w-full bg-white rounded border border-solid border-stone-300 min-h-[46px] text-neutral-500 max-md:px-5 cursor-pointer select-none"
-                onClick={() => setIsTimeOpen((prev) => !prev)}
-                tabIndex={0}
-                onBlur={() => setIsTimeOpen(false)}
-              >
-                <span className="self-stretch my-auto text-neutral-500">{formData.deliveryTime || 'Выберите время'}</span>
-                <svg width="20" height="20" fill="none" viewBox="0 0 20 20"><path d="M6 8l4 4 4-4" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </div>
-              {isTimeOpen && (
-                <ul className="absolute left-0 right-0 z-10 bg-white border-x border-b border-stone-300 rounded-b-lg shadow-lg animate-fadeIn">
-                  {timeSlots.map(option => (
-                    <li
-                      key={option}
-                      className={`px-6 py-3.5 cursor-pointer hover:bg-blue-100 ${option === formData.deliveryTime ? 'bg-blue-50 font-semibold' : ''}`}
-                      onMouseDown={() => { setFormData(prev => ({ ...prev, deliveryTime: option })); setIsTimeOpen(false); }}
-                    >
-                      {option}
-                    </li>
-                  ))}
-                </ul>
-              )}
             </div>
           </div>
           {/* Контактный телефон */}

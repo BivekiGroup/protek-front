@@ -16,7 +16,6 @@ const menuItems = [
   { label: 'Техподдержка', href: '/profile-support', icon: 'https://cdn.builder.io/api/v1/image/assets/TEMP/7505ecbdf10660110c88e1641f43b4618fef292d?placeholderIfAbsent=true&apiKey=f5bc5a2dc9b841d0aba1cc6c74a35920' },
   { label: 'Гараж', href: '/profile-gar', icon: 'https://cdn.builder.io/api/v1/image/assets/TEMP/783501855b4cb8be4ac47a0733e298c3f3ccfc5e?placeholderIfAbsent=true&apiKey=f5bc5a2dc9b841d0aba1cc6c74a35920' },
   { label: 'Настройки аккаунта', href: '/profile-set', icon: 'https://cdn.builder.io/api/v1/image/assets/TEMP/b39907028aa6baf08adc313aed84d1294f2be013?placeholderIfAbsent=true&apiKey=f5bc5a2dc9b841d0aba1cc6c74a35920' },
-  { label: 'Настройки cookies', href: '/profile-cookie-settings', icon: 'https://cdn.builder.io/api/v1/image/assets/TEMP/b39907028aa6baf08adc313aed84d1294f2be013?placeholderIfAbsent=true&apiKey=f5bc5a2dc9b841d0aba1cc6c74a35920' },
 ];
 
 const financeItems = [

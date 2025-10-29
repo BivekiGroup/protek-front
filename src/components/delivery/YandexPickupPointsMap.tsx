@@ -8,6 +8,7 @@ interface YandexPickupPointsMapProps {
   center?: [number, number];
   zoom?: number;
   className?: string;
+  deliveryAddress?: string; // Адрес курьерской доставки для отображения на карте
 }
 
 declare global {
@@ -23,12 +24,14 @@ const YandexPickupPointsMap: React.FC<YandexPickupPointsMapProps> = ({
   onPointSelect,
   center = [55.76, 37.64], // Москва по умолчанию
   zoom = 10,
-  className = "w-full h-full"
+  className = "w-full h-full",
+  deliveryAddress
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<any>(null);
   const [clusterer, setClusterer] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [addressPlacemark, setAddressPlacemark] = useState<any>(null);
 
   // Загрузка Яндекс карт API
   useEffect(() => {
@@ -150,6 +153,57 @@ const YandexPickupPointsMap: React.FC<YandexPickupPointsMapProps> = ({
       delete window.selectPickupPoint;
     };
   }, [pickupPoints, onPointSelect]);
+
+  // Геокодирование и отображение адреса курьерской доставки
+  useEffect(() => {
+    if (!map || !isLoaded || !deliveryAddress) {
+      // Если адреса нет, удаляем метку если она была
+      if (addressPlacemark) {
+        map.geoObjects.remove(addressPlacemark);
+        setAddressPlacemark(null);
+      }
+      return;
+    }
+
+    // Геокодируем адрес
+    window.ymaps.geocode(deliveryAddress, {
+      results: 1
+    }).then((res: any) => {
+      const firstGeoObject = res.geoObjects.get(0);
+      if (firstGeoObject) {
+        const coordinates = firstGeoObject.geometry.getCoordinates();
+
+        // Удаляем старую метку если была
+        if (addressPlacemark) {
+          map.geoObjects.remove(addressPlacemark);
+        }
+
+        // Создаем новую метку для адреса доставки
+        const newPlacemark = new window.ymaps.Placemark(
+          coordinates,
+          {
+            balloonContentHeader: '<strong>Адрес доставки</strong>',
+            balloonContentBody: `<p>${deliveryAddress}</p>`,
+            hintContent: deliveryAddress
+          },
+          {
+            preset: 'islands#redHomeIcon', // Иконка дома красного цвета
+            draggable: false
+          }
+        );
+
+        map.geoObjects.add(newPlacemark);
+        setAddressPlacemark(newPlacemark);
+
+        // Центрируем карту на адресе
+        map.setCenter(coordinates, 15, {
+          checkZoomRange: true
+        });
+      }
+    }).catch((error: any) => {
+      console.error('Ошибка геокодирования адреса:', error);
+    });
+  }, [map, isLoaded, deliveryAddress]);
 
   // Центрирование на выбранной точке
   useEffect(() => {

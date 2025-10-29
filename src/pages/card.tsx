@@ -10,7 +10,7 @@ import CatalogSubscribe from "@/components/CatalogSubscribe";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import CartRecommended from "@/components/CartRecommended";
-import InfoCard from "@/components/card/InfoCard";  
+import InfoCard from "@/components/card/InfoCard";
 import ProductImageGallery from "@/components/card/ProductImageGallery";
 import ProductList from "@/components/card/ProductList";
 import ProductPriceHeader from "@/components/card/ProductPriceHeader";
@@ -22,6 +22,15 @@ import { useRecommendedProducts } from "../hooks/useRecommendedProducts";
 import { emitAnalyticsView } from "@/lib/utils";
 
 const INITIAL_OFFERS_COUNT = 4;
+
+const pluralizeDays = (count: number): string => {
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return 'дней';
+  if (lastDigit === 1) return 'день';
+  if (lastDigit >= 2 && lastDigit <= 4) return 'дня';
+  return 'дней';
+};
 
 export default function CardPage() {
   const router = useRouter();
@@ -268,7 +277,7 @@ export default function CardPage() {
         currency: "RUB",
         availability: convertAvailability(offer.quantity || 0),
         seller: offer.type === 'internal' ? 'Protek' : 'AutoEuro',
-        deliveryTime: offer.deliveryTime ? `${offer.deliveryTime} дней` : undefined,
+        deliveryTime: offer.deliveryTime ? `${offer.deliveryTime} ${pluralizeDays(offer.deliveryTime)}` : undefined,
         warehouse: offer.warehouse || 'Склад'
       }))
     };

@@ -102,16 +102,25 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
 
   const availableStock = parseStock(offer?.quantity);
 
+  const pluralizeDays = (count: number): string => {
+    const lastDigit = count % 10;
+    const lastTwoDigits = count % 100;
+
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return 'дней';
+    if (lastDigit === 1) return 'день';
+    if (lastDigit >= 2 && lastDigit <= 4) return 'дня';
+    return 'дней';
+  };
+
   const formatDeliveryTime = (deliveryTime: number | string) => {
     if (typeof deliveryTime === 'string' && isDeliveryDate(deliveryTime)) {
       return deliveryTime;
     }
-    
+
     const days = typeof deliveryTime === 'string' ? parseInt(deliveryTime) : deliveryTime;
-    
+
     if (!days || days === 0) return "Сегодня";
-    if (days === 1) return "1 день";
-    return `${days} дней`;
+    return `${days} ${pluralizeDays(days)}`;
   };
 
   const getExistingCartQuantity = (): number => {

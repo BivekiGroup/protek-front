@@ -411,3 +411,13 @@ button,
 .button-icon.in-cart svg {
   filter: brightness(0.7) contrast(1.2);
 }
+
+/* Анимация вращения для кнопки обновления цен */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

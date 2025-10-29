@@ -167,6 +167,22 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
   };
 
   // Функция для парсинга времени доставки
+  const pluralizeDays = (count: number): string => {
+    const lastDigit = count % 10;
+    const lastTwoDigits = count % 100;
+
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+      return 'дней';
+    }
+    if (lastDigit === 1) {
+      return 'день';
+    }
+    if (lastDigit >= 2 && lastDigit <= 4) {
+      return 'дня';
+    }
+    return 'дней';
+  };
+
   const parseDeliveryTime = (daysStr: string): string => {
     // Если это дата (содержит название месяца), возвращаем как есть
     if (isDeliveryDate(daysStr)) {
@@ -174,7 +190,11 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
     }
     // Иначе парсим как количество дней (для обратной совместимости)
     const match = daysStr.match(/\d+/);
-    return match ? `${match[0]} дней` : daysStr;
+    if (match) {
+      const count = parseInt(match[0], 10);
+      return `${count} ${pluralizeDays(count)}`;
+    }
+    return daysStr;
   };
 
   const formatDeliveryDisplay = (value?: string): string => {

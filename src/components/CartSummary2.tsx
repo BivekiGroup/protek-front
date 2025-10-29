@@ -18,6 +18,14 @@ const INACTIVE_COLOR = '#F6F8FA';
 const ACTIVE_TEXT = '#fff';
 const INACTIVE_TEXT = '#222';
 
+const timeSlots = [
+  '9:00 - 12:00',
+  '12:00 - 15:00',
+  '15:00 - 18:00',
+  '18:00 - 21:00',
+  'Любое время'
+];
+
 const CartSummary2: React.FC = () => {
   const [consent, setConsent] = useState(false);
   const [selectedTag, setSelectedTag] = useState<number | null>(null);
@@ -29,6 +37,8 @@ const CartSummary2: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [showInfo, setShowInfo] = useState(false);
   const [showInfo2, setShowInfo2] = useState(false);
+  const [selectedDeliveryTime, setSelectedDeliveryTime] = useState<string>('');
+  const [isTimeDropdownOpen, setIsTimeDropdownOpen] = useState(false);
 
   // Логика блокировки выбора даты и радиокнопок
   const canSelectTag = !separateChecked;
@@ -147,6 +157,76 @@ const CartSummary2: React.FC = () => {
           <div className="text-block-31">Способ получения</div>
           <h4 className="heading-12">Доставка курьером</h4>
           <div className="text-block-32">Калининградская область, Калиниград, улица Понартская, 5, кв./офис 1, Подъезд 1, этаж 1</div>
+        </div>
+        <div className="w-layout-vflex flex-block-58" style={{ marginTop: 16, display: 'flex', flexDirection: 'column' }}>
+          <div className="text-block-31" style={{ marginBottom: 8, display: 'block' }}>Желаемое время доставки</div>
+          <div style={{ position: 'relative' }}>
+            <div
+              className="w-layout-hflex flex-block-62"
+              style={{
+                position: 'relative',
+                cursor: 'pointer',
+                background: '#f6f8fa',
+                padding: '10px 16px',
+                borderRadius: 8,
+                border: '1px solid #e5e7eb'
+              }}
+              onClick={() => setIsTimeDropdownOpen(v => !v)}
+            >
+              <div className="text-block-31" style={{ width: '100%', color: selectedDeliveryTime ? '#222' : '#9ca3af' }}>
+                {selectedDeliveryTime || 'Выберите время'}
+              </div>
+              <div className="code-embed w-embed" style={{ transform: isTimeDropdownOpen ? 'rotate(180deg)' : undefined, transition: '0.2s' }}>
+                <svg width="14" height="9" viewBox="0 0 14 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 1L7 7L13 1" stroke="currentColor" strokeWidth="2" />
+                </svg>
+              </div>
+            </div>
+            {isTimeDropdownOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                width: '100%',
+                background: '#fff',
+                border: '1px solid #eee',
+                borderTop: 'none',
+                zIndex: 10,
+                borderRadius: '0 0 10px 10px',
+                boxShadow: '0 4px 16px #0001',
+                marginTop: 0,
+                overflow: 'hidden'
+              }}>
+                {timeSlots.map(slot => (
+                  <div
+                    key={slot}
+                    style={{
+                      padding: '10px 16px',
+                      cursor: 'pointer',
+                      background: slot === selectedDeliveryTime ? 'var(--_button---primary)' : 'transparent',
+                      color: slot === selectedDeliveryTime ? '#fff' : '#222',
+                      transition: 'background 0.2s, color 0.2s'
+                    }}
+                    onMouseDown={e => {
+                      e.preventDefault();
+                      setSelectedDeliveryTime(slot);
+                      setIsTimeDropdownOpen(false);
+                    }}
+                    onMouseOver={e => {
+                      e.currentTarget.style.background = slot === selectedDeliveryTime ? 'var(--_button---primary)' : '#f6f8fa';
+                      e.currentTarget.style.color = slot === selectedDeliveryTime ? '#fff' : '#222';
+                    }}
+                    onMouseOut={e => {
+                      e.currentTarget.style.background = slot === selectedDeliveryTime ? 'var(--_button---primary)' : 'transparent';
+                      e.currentTarget.style.color = slot === selectedDeliveryTime ? '#fff' : '#222';
+                    }}
+                  >
+                    {slot}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <div className="px-line"></div>
         <div className="w-layout-vflex flex-block-63">

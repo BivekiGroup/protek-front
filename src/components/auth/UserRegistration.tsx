@@ -3,6 +3,8 @@ import { useMutation } from '@apollo/client'
 import { REGISTER_NEW_CLIENT } from '@/lib/graphql'
 import type { VerificationResponse } from '@/types/auth'
 import { User } from 'lucide-react'
+import CredentialsModal from './CredentialsModal'
+import { toast } from 'react-hot-toast'
 
 interface UserRegistrationProps {
   phone: string
@@ -19,9 +21,11 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({
 }) => {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [login, setLogin] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showCredentials, setShowCredentials] = useState(false)
+  const [credentials, setCredentials] = useState<{ login: string; password: string } | null>(null)
+  const [registrationData, setRegistrationData] = useState<VerificationResponse | null>(null)
 
   const [registerClient] = useMutation<{ registerNewClient: VerificationResponse }>(REGISTER_NEW_CLIENT)
 
@@ -38,6 +42,11 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({
     return `+7 ${part1} ${part2} ${part3} ${part4}`
   }
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!firstName.trim()) {
@@ -48,16 +57,12 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({
       onError('Введите фамилию')
       return
     }
-    if (!login.trim()) {
-      onError('Введите логин')
+    if (!email.trim()) {
+      onError('Введите email')
       return
     }
-    if (!password.trim()) {
-      onError('Введите пароль')
-      return
-    }
-    if (password.length < 6) {
-      onError('Пароль должен содержать минимум 6 символов')
+    if (!validateEmail(email)) {
+      onError('Введите корректный email')
       return
     }
     setIsLoading(true)
@@ -68,17 +73,29 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({
           phone,
           name: fullName,
           sessionId,
-          login: login.trim(),
-          password: password
+          email: email.trim()
         }
       })
       if (data?.registerNewClient) {
-        onSuccess(data.registerNewClient)
+        // Показываем модальное окно с логином и паролем если они есть
+        if (data.registerNewClient.generatedLogin && data.registerNewClient.generatedPassword) {
+          setCredentials({
+            login: data.registerNewClient.generatedLogin,
+            password: data.registerNewClient.generatedPassword
+          })
+          setRegistrationData(data.registerNewClient)
+          setShowCredentials(true)
+        } else {
+          // Если нет логина и пароля, сразу вызываем onSuccess
+          onSuccess(data.registerNewClient)
+        }
       }
     } catch (error) {
       if (error instanceof Error) {
+        toast.error(error.message)
         onError(error.message)
       } else {
+        toast.error('Не удалось зарегистрировать пользователя')
         onError('Не удалось зарегистрировать пользователя')
       }
     } finally {
@@ -149,25 +166,12 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({
         required
       />
 
-      {/* Подсказка */}
-      <div
-        className="w-full text-[#8893A2]"
-        style={{
-          fontFamily: 'Onest, sans-serif',
-          fontSize: '14px',
-          fontWeight: 500,
-          lineHeight: '130%'
-        }}
-      >
-        Создать логин и пароль для входа
-      </div>
-
-      {/* Логин */}
+      {/* Email */}
       <input
-        type="text"
-        value={login}
-        onChange={(e) => setLogin(e.target.value)}
-        placeholder="Логин"
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
         className="w-full bg-[#F5F8FB] rounded-[12px] outline-none"
         style={{
           padding: '16px 24px',
@@ -179,35 +183,27 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({
           color: '#424F60'
         }}
         disabled={isLoading}
-        autoComplete="username"
+        autoComplete="email"
         required
       />
 
-      {/* Пароль */}
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="••••••••"
-        className="w-full bg-[#F5F8FB] rounded-[12px] outline-none"
+      {/* Подсказка */}
+      <div
+        className="w-full text-[#8893A2]"
         style={{
-          padding: '16px 24px',
-          height: '52px',
           fontFamily: 'Onest, sans-serif',
-          fontSize: '24px',
-          fontWeight: 700,
-          lineHeight: '100%',
-          color: '#8893A2'
+          fontSize: '14px',
+          fontWeight: 500,
+          lineHeight: '130%'
         }}
-        disabled={isLoading}
-        autoComplete="new-password"
-        required
-      />
+      >
+        Логин и пароль будут автоматически созданы и отправлены на ваш email
+      </div>
 
       {/* Кнопка */}
       <button
         type="submit"
-        disabled={isLoading || !firstName.trim() || !lastName.trim() || !login.trim() || !password.trim()}
+        disabled={isLoading || !firstName.trim() || !lastName.trim() || !email.trim()}
         className="flex items-center justify-center w-full bg-[#EC1C24] rounded-[12px] transition-all hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
         style={{
           padding: '14px 20px',
@@ -235,6 +231,18 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({
       >
         Используйте реальные данные для корректной работы заказов и доставки
       </div>
+
+      {/* Модальное окно с логином и паролем */}
+      {showCredentials && credentials && registrationData && (
+        <CredentialsModal
+          login={credentials.login}
+          password={credentials.password}
+          onClose={() => {
+            setShowCredentials(false)
+            onSuccess(registrationData)
+          }}
+        />
+      )}
     </form>
   )
 }

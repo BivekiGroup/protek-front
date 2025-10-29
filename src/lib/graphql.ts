@@ -153,8 +153,8 @@ export const LOGIN_BY_CREDENTIALS = gql`
 `
 
 export const REGISTER_NEW_CLIENT = gql`
-  mutation RegisterNewClient($phone: String!, $name: String!, $sessionId: String!, $login: String, $password: String) {
-    registerNewClient(phone: $phone, name: $name, sessionId: $sessionId, login: $login, password: $password) {
+  mutation RegisterNewClient($phone: String!, $name: String!, $sessionId: String!, $email: String!) {
+    registerNewClient(phone: $phone, name: $name, sessionId: $sessionId, email: $email) {
       success
       client {
         id
@@ -164,6 +164,8 @@ export const REGISTER_NEW_CLIENT = gql`
         email
       }
       token
+      generatedLogin
+      generatedPassword
     }
   }
 `

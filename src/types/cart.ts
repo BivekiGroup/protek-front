@@ -49,6 +49,7 @@ export interface CartState {
   orderComment: string
   isLoading: boolean
   error?: string
+  isUpdatingPrices?: boolean // Флаг активного обновления цен
 }
 
 export interface CartContextType {
@@ -67,4 +68,5 @@ export interface CartContextType {
   clearCart: () => void
   clearError: () => void
   isInCart: (productId?: string, offerKey?: string, article?: string, brand?: string) => boolean
+  updatePrices: (showNotification?: boolean) => Promise<void> // Функция обновления цен
 } 

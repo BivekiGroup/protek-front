@@ -109,7 +109,7 @@ const CartList: React.FC<CartListProps> = ({ isSummaryStep = false }) => {
       )}
       <div className="w-layout-vflex product-list-cart">
         {!isSummaryStep && (
-          <div className="w-layout-hflex multi-control">
+          <div className="w-layout-hflex multi-control" style={{ flexWrap: 'wrap', gap: '12px' }}>
             <div className="w-layout-hflex select-all-block" onClick={handleSelectAll} style={{ cursor: 'pointer' }}>
               <div
                 className={"div-block-7" + (allSelected ? " active" : "")}

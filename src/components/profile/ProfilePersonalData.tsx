@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { getCookiePreferences, CookiePreferences } from '@/lib/cookie-utils';
+import toast from 'react-hot-toast';
 
 interface ProfilePersonalDataProps {
   firstName: string;
@@ -39,6 +41,28 @@ const ProfilePersonalData: React.FC<ProfilePersonalDataProps> = ({
   onSave,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [cookiePreferences, setCookiePreferences] = useState<CookiePreferences>({
+    necessary: true,
+    analytics: false,
+    marketing: false,
+    functional: false,
+  });
+
+  useEffect(() => {
+    const prefs = getCookiePreferences();
+    if (prefs) {
+      setCookiePreferences(prefs);
+    }
+  }, []);
+
+  const toggleCookie = (key: keyof CookiePreferences) => {
+    if (key === 'necessary') return;
+    const newPrefs = { ...cookiePreferences, [key]: !cookiePreferences[key] };
+    setCookiePreferences(newPrefs);
+    localStorage.setItem('cookieConsent', 'configured');
+    localStorage.setItem('cookiePreferences', JSON.stringify(newPrefs));
+    toast.success('Настройки cookies сохранены');
+  };
 
   return (
     <div
@@ -287,6 +311,101 @@ const ProfilePersonalData: React.FC<ProfilePersonalDataProps> = ({
             Сохранить изменения
           </button>
         )}
+
+        {/* Настройки Cookies - компактный блок */}
+        <div className="flex flex-col w-full pt-4 border-t border-gray-200" style={{ gap: '12px' }}>
+          <h3 className="text-[#424F60] text-sm font-semibold">Настройки Cookies</h3>
+
+          {/* Аналитические cookies */}
+          <div className="flex flex-row items-center justify-between w-full">
+            <span className="text-[#424F60] text-sm">Аналитические cookies</span>
+            <button
+              type="button"
+              onClick={() => toggleCookie('analytics')}
+              className="relative flex-shrink-0 rounded-full focus:outline-none"
+              style={{ width: '36px', height: '20px' }}
+              role="switch"
+              aria-checked={cookiePreferences.analytics}
+            >
+              <div
+                className="absolute inset-0 rounded-full transition-colors"
+                style={{
+                  background: cookiePreferences.analytics ? '#EC1C24' : '#CBD5E3',
+                  borderRadius: '100px'
+                }}
+              />
+              <div
+                className="absolute bg-white rounded-full transition-transform"
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  top: '2px',
+                  left: cookiePreferences.analytics ? '18px' : '2px',
+                }}
+              />
+            </button>
+          </div>
+
+          {/* Маркетинговые cookies */}
+          <div className="flex flex-row items-center justify-between w-full">
+            <span className="text-[#424F60] text-sm">Маркетинговые cookies</span>
+            <button
+              type="button"
+              onClick={() => toggleCookie('marketing')}
+              className="relative flex-shrink-0 rounded-full focus:outline-none"
+              style={{ width: '36px', height: '20px' }}
+              role="switch"
+              aria-checked={cookiePreferences.marketing}
+            >
+              <div
+                className="absolute inset-0 rounded-full transition-colors"
+                style={{
+                  background: cookiePreferences.marketing ? '#EC1C24' : '#CBD5E3',
+                  borderRadius: '100px'
+                }}
+              />
+              <div
+                className="absolute bg-white rounded-full transition-transform"
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  top: '2px',
+                  left: cookiePreferences.marketing ? '18px' : '2px',
+                }}
+              />
+            </button>
+          </div>
+
+          {/* Функциональные cookies */}
+          <div className="flex flex-row items-center justify-between w-full">
+            <span className="text-[#424F60] text-sm">Функциональные cookies</span>
+            <button
+              type="button"
+              onClick={() => toggleCookie('functional')}
+              className="relative flex-shrink-0 rounded-full focus:outline-none"
+              style={{ width: '36px', height: '20px' }}
+              role="switch"
+              aria-checked={cookiePreferences.functional}
+            >
+              <div
+                className="absolute inset-0 rounded-full transition-colors"
+                style={{
+                  background: cookiePreferences.functional ? '#EC1C24' : '#CBD5E3',
+                  borderRadius: '100px'
+                }}
+              />
+              <div
+                className="absolute bg-white rounded-full transition-transform"
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  top: '2px',
+                  left: cookiePreferences.functional ? '18px' : '2px',
+                }}
+              />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

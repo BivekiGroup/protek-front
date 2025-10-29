@@ -279,11 +279,21 @@ const ProfileBalanceMain = () => {
     return new Date(dateString).toLocaleDateString('ru-RU');
   };
 
+  const pluralizeDays = (count: number): string => {
+    const lastDigit = count % 10;
+    const lastTwoDigits = count % 100;
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return 'дней';
+    if (lastDigit === 1) return 'день';
+    if (lastDigit >= 2 && lastDigit <= 4) return 'дня';
+    return 'дней';
+  };
+
   const calculateDaysLeft = (delayDays?: number) => {
     if (!delayDays) return 'Без ограничений';
     // Здесь должна быть логика расчета оставшихся дней
     // Пока возвращаем статичное значение
-    return `Осталось ${Math.max(0, delayDays)} дней`;
+    const days = Math.max(0, delayDays);
+    return `Осталось ${days} ${pluralizeDays(days)}`;
   };
 
   const getLegalEntityName = (clientLegalEntity: string) => {
@@ -326,7 +336,7 @@ const ProfileBalanceMain = () => {
                 limit={hasLimit ? formatCurrency(contract.creditLimit || 0, contract.currency) : 'Не установлен'}
                 limitLeft={hasLimit ? formatCurrency(limitLeft, contract.currency) : 'Не установлен'}
                 ordersSum="0 ₽" // TODO: Добавить расчет суммы заказов
-                days={contract.delayDays ? `${contract.delayDays} дней` : 'Без ограничений'}
+                days={contract.delayDays ? `${contract.delayDays} ${pluralizeDays(contract.delayDays)}` : 'Без ограничений'}
                 daysLeft={calculateDaysLeft(contract.delayDays)}
                 paid="0 ₽" // TODO: Добавить расчет оплаченной суммы
                 inputValue="0 ₽"

@@ -8,6 +8,14 @@ import toast from "react-hot-toast";
 import { useAuthPrompt } from "@/contexts/AuthPromptContext";
 import { onAuthChanged } from "@/lib/authEvents";
 
+const TIME_SLOTS = [
+  '9:00 - 12:00',
+  '12:00 - 15:00',
+  '15:00 - 18:00',
+  '18:00 - 21:00',
+  'Любое время'
+];
+
 interface CartSummaryProps {
   step: number;
   setStep: (step: number) => void;
@@ -15,11 +23,12 @@ interface CartSummaryProps {
 
 const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
   const router = useRouter();
-  const { state, updateDelivery, updateOrderComment, clearCart } = useCart();
+  const { state, updateDelivery, updateOrderComment, clearCart, updatePrices } = useCart();
   const { summary, delivery, items, orderComment } = state;
   const legalEntityDropdownRef = useRef<HTMLDivElement>(null);
   const addressDropdownRef = useRef<HTMLDivElement>(null);
   const paymentDropdownRef = useRef<HTMLDivElement>(null);
+  const deliveryTimeDropdownRef = useRef<HTMLDivElement>(null);
 
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState("");
@@ -36,7 +45,11 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
 
   const [recipientName, setRecipientName] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
-  
+
+  // Желаемое время доставки
+  const [selectedDeliveryTime, setSelectedDeliveryTime] = useState<string>("");
+  const [isTimeDropdownOpen, setIsTimeDropdownOpen] = useState(false);
+
   // Новые состояния для способа оплаты
   const [paymentMethod, setPaymentMethod] = useState<string>("yookassa");
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
@@ -105,6 +118,7 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
           setSelectedDeliveryAddress(state.selectedDeliveryAddress || '');
           setRecipientName(state.recipientName || '');
           setRecipientPhone(state.recipientPhone || '');
+          setSelectedDeliveryTime(state.selectedDeliveryTime || '');
           setPaymentMethod(state.paymentMethod || 'yookassa');
           setConsent(state.consent || false);
         } catch (error) {
@@ -125,12 +139,13 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
         selectedDeliveryAddress,
         recipientName,
         recipientPhone,
+        selectedDeliveryTime,
         paymentMethod,
         consent
       };
       localStorage.setItem('cartSummaryState', JSON.stringify(stateToSave));
     }
-  }, [step, selectedLegalEntity, selectedLegalEntityId, isIndividual, selectedDeliveryAddress, recipientName, recipientPhone, paymentMethod, consent]);
+  }, [step, selectedLegalEntity, selectedLegalEntityId, isIndividual, selectedDeliveryAddress, recipientName, recipientPhone, selectedDeliveryTime, paymentMethod, consent]);
 
   // Инициализация данных получателя
   useEffect(() => {
@@ -140,7 +155,7 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
     }
   }, [clientData, recipientName, recipientPhone]);
 
-  // Автоматический выбор адреса после добавления из личного кабинета
+  // Автоматический выбор адреса после добавления/редактирования из личного кабинета
   useEffect(() => {
     const newAddressId = router.query.newAddressId as string;
 
@@ -150,13 +165,13 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
         (addr: any) => addr.id === newAddressId
       );
 
-      if (newAddress && newAddress.address !== selectedDeliveryAddress) {
-        // Автоматически выбираем новый адрес
+      if (newAddress) {
+        // Автоматически выбираем новый/обновленный адрес
         setSelectedDeliveryAddress(newAddress.address);
         updateDelivery({ address: newAddress.address });
 
         // Показываем уведомление
-        toast.success('Адрес автоматически выбран');
+        toast.success('Адрес обновлен');
 
         // Очищаем параметр из URL
         const { newAddressId: _, ...restQuery } = router.query;
@@ -180,15 +195,20 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
       if (legalEntityDropdownRef.current && !legalEntityDropdownRef.current.contains(event.target as Node)) {
         setShowLegalEntityDropdown(false);
       }
-      
+
       // Проверяем клик вне дропдауна адресов
       if (addressDropdownRef.current && !addressDropdownRef.current.contains(event.target as Node)) {
         setShowAddressDropdown(false);
       }
-      
+
       // Проверяем клик вне дропдауна способов оплаты
       if (paymentDropdownRef.current && !paymentDropdownRef.current.contains(event.target as Node)) {
         setShowPaymentDropdown(false);
+      }
+
+      // Проверяем клик вне дропдауна времени доставки
+      if (deliveryTimeDropdownRef.current && !deliveryTimeDropdownRef.current.contains(event.target as Node)) {
+        setIsTimeDropdownOpen(false);
       }
     };
 
@@ -198,7 +218,7 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
     };
   }, []);
 
-  const handleProceedToStep2 = () => {
+  const handleProceedToStep2 = async () => {
     if (!recipientName.trim()) {
       toast.error('Пожалуйста, введите имя получателя');
       return;
@@ -211,7 +231,12 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
       toast.error('Пожалуйста, выберите адрес доставки');
       return;
     }
-    updateDelivery({ 
+
+    // Проверяем и обновляем цены перед переходом на следующий шаг
+    console.log('🔍 Проверка актуальности цен перед оформлением заказа...');
+    await updatePrices(true);
+
+    updateDelivery({
       address: selectedDeliveryAddress,
       cost: 0,
       date: 'Включена в стоимость товаров',
@@ -242,6 +267,9 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
     setShowAuthWarning(false);
 
     try {
+      // Проверяем и обновляем цены перед созданием заказа
+      console.log('🔍 Финальная проверка актуальности цен перед оплатой...');
+      await updatePrices(true);
       const user = storedUserData;
       const selectedItems = items.filter(item => item.selected);
 
@@ -254,9 +282,10 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
             clientPhone: recipientPhone,
             clientName: recipientName,
             deliveryAddress: selectedDeliveryAddress || delivery.address,
+            deliveryTime: selectedDeliveryTime || null,
             legalEntityId: selectedLegalEntityId || null,
             paymentMethod: paymentMethod,
-            comment: orderComment || `Адрес доставки: ${selectedDeliveryAddress}. ${selectedLegalEntity ? `Юридическое лицо: ${selectedLegalEntity}. ` : ''}Способ оплаты: ${getPaymentMethodName(paymentMethod)}. Доставка: ${selectedDeliveryAddress}.`,
+            comment: orderComment || `Адрес доставки: ${selectedDeliveryAddress}. ${selectedDeliveryTime ? `Желаемое время: ${selectedDeliveryTime}. ` : ''}${selectedLegalEntity ? `Юридическое лицо: ${selectedLegalEntity}. ` : ''}Способ оплаты: ${getPaymentMethodName(paymentMethod)}. Доставка: ${selectedDeliveryAddress}.`,
             items: selectedItems.map(item => ({
               productId: item.productId,
               externalId: item.offerKey,
@@ -955,6 +984,73 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
             <div className="link-r" onClick={handleBackToStep1} style={{ cursor: 'pointer' }}>Изменить</div>
           </div>
           <div className="text-block-32">{selectedDeliveryAddress || delivery.address}</div>
+        </div>
+
+        {/* Желаемое время доставки */}
+        <div className="w-layout-vflex flex-block-58" style={{ position: 'relative' }} ref={deliveryTimeDropdownRef}>
+          <div className="text-block-31">Желаемое время доставки</div>
+          <div
+            className="w-layout-hflex flex-block-62"
+            onClick={() => setIsTimeDropdownOpen(!isTimeDropdownOpen)}
+            style={{ cursor: 'pointer', justifyContent: 'space-between', alignItems: 'center' }}
+          >
+            <div className="text-block-31" style={{ fontSize: '14px', color: selectedDeliveryTime ? '#333' : '#999' }}>
+              {selectedDeliveryTime || 'Выберите время'}
+            </div>
+            <div className="code-embed w-embed" style={{ transform: isTimeDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+              <svg width="14" height="9" viewBox="0 0 14 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1L7 7L13 1" stroke="currentColor" strokeWidth="2"></path>
+              </svg>
+            </div>
+          </div>
+
+          {/* Dropdown список времени */}
+          {isTimeDropdownOpen && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              background: '#fff',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              marginTop: '4px',
+              zIndex: 100,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              overflow: 'hidden'
+            }}>
+              {TIME_SLOTS.map(slot => (
+                <div
+                  key={slot}
+                  style={{
+                    padding: '12px 16px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    borderBottom: '1px solid #f0f0f0',
+                    transition: 'background 0.2s',
+                    background: slot === selectedDeliveryTime ? '#f8f9fa' : 'transparent'
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedDeliveryTime(slot);
+                    setIsTimeDropdownOpen(false);
+                  }}
+                  onMouseEnter={(e) => {
+                    if (slot !== selectedDeliveryTime) {
+                      e.currentTarget.style.background = '#f8f9fa';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (slot !== selectedDeliveryTime) {
+                      e.currentTarget.style.background = 'transparent';
+                    }
+                  }}
+                >
+                  {slot}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Получатель */}

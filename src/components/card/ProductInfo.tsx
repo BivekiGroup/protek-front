@@ -24,18 +24,23 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ offer }) => {
     }
     
     const days = typeof deliveryTime === 'string' ? parseInt(deliveryTime) : deliveryTime;
-    
+
+    const pluralizeDays = (count: number): string => {
+      const lastDigit = count % 10;
+      const lastTwoDigits = count % 100;
+
+      if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return 'дней';
+      if (lastDigit === 1) return 'день';
+      if (lastDigit >= 2 && lastDigit <= 4) return 'дня';
+      return 'дней';
+    };
+
     if (!days || days === 0) {
       return "Сегодня";
     } else if (days === 1) {
       return "Завтра";
-    } else if (days <= 3) {
-      return `${days} дня`;
-    } else if (days <= 7) {
-      return `${days} дней`;
-    } else {
-      return `${days} дней`;
     }
+    return `${days} ${pluralizeDays(days)}`;
   };
 
   return (

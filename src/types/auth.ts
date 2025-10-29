@@ -22,6 +22,8 @@ export interface VerificationResponse {
   success: boolean
   client?: Client
   token?: string
+  generatedLogin?: string
+  generatedPassword?: string
 }
 
 export type AuthStep = 'phone' | 'code' | 'registration' | 'loginPassword'

@@ -81,8 +81,19 @@ const ProductBuyBlock = ({ offer }: ProductBuyBlockProps) => {
         article: offer.articleNumber,
         supplier: offer.supplier || (offer.type === 'external' ? 'AutoEuro' : 'Внутренний'),
         deliveryTime: offer.deliveryTime ? (typeof offer.deliveryTime === 'string' && isDeliveryDate(offer.deliveryTime)
-          ? offer.deliveryTime 
-          : String(offer.deliveryTime) + ' дней') : '1 день',
+          ? offer.deliveryTime
+          : (() => {
+              const days = Number(offer.deliveryTime);
+              const pluralize = (count: number): string => {
+                const lastDigit = count % 10;
+                const lastTwoDigits = count % 100;
+                if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return 'дней';
+                if (lastDigit === 1) return 'день';
+                if (lastDigit >= 2 && lastDigit <= 4) return 'дня';
+                return 'дней';
+              };
+              return `${days} ${pluralize(days)}`;
+            })()) : '1 день',
         isExternal: offer.type === 'external'
       });
 

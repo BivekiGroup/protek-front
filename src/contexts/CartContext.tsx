@@ -86,6 +86,7 @@ const calculateSummary = (items: CartItem[]) => {
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<CartState>(initialState)
   const [error, setError] = useState<string>('')
+  const [isUpdatingPrices, setIsUpdatingPrices] = useState(false) // Флаг активного обновления цен
 
   // GraphQL operations
   const { data: cartData, loading: cartLoading, refetch: refetchCart } = useQuery(GET_CART, {
@@ -97,6 +98,48 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [updateQuantityMutation] = useMutation(UPDATE_CART_ITEM_QUANTITY)
   const [updatePricesMutation] = useMutation(UPDATE_CART_PRICES)
   const [clearCartMutation] = useMutation(CLEAR_CART)
+
+  // Функция обновления цен (выделена в отдельную функцию для повторного использования)
+  const updatePrices = async (showNotification = true) => {
+    if (isUpdatingPrices || state.items.length === 0) return
+
+    setIsUpdatingPrices(true)
+    try {
+      const { data } = await updatePricesMutation()
+
+      if (data?.updateCartPrices?.success) {
+        const changes = data.updateCartPrices.priceChanges
+
+        // Показываем уведомление об изменении цен только если есть изменения и включены уведомления
+        if (changes?.length > 0 && showNotification) {
+          const changesText = changes.map((c: any) =>
+            `${c.article} (${c.brand}): ${c.oldPrice.toFixed(2)} → ${c.newPrice.toFixed(2)} ₽`
+          ).join('\n')
+
+          toast.success(
+            `Цены обновлены:\n${changesText}`,
+            { duration: 6000 }
+          )
+        }
+
+        // Обновляем состояние корзины
+        if (data.updateCartPrices.cart) {
+          const updatedItems = transformBackendItems(data.updateCartPrices.cart.items)
+          const updatedSummary = calculateSummary(updatedItems)
+
+          setState(prev => ({
+            ...prev,
+            items: updatedItems,
+            summary: updatedSummary
+          }))
+        }
+      }
+    } catch (err) {
+      console.error('Ошибка обновления цен:', err)
+    } finally {
+      setIsUpdatingPrices(false)
+    }
+  }
 
   // Load cart from backend when component mounts or cart data changes
   useEffect(() => {
@@ -111,39 +154,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading: false
       }))
 
-      // Автоматически обновляем цены при загрузке корзины
+      // Автоматически обновляем цены при первой загрузке корзины
       if (backendItems.length > 0) {
-        updatePricesMutation()
-          .then(({ data }) => {
-            if (data?.updateCartPrices?.success && data.updateCartPrices.priceChanges?.length > 0) {
-              const changes = data.updateCartPrices.priceChanges
-
-              // Показываем уведомление об изменении цен
-              const changesText = changes.map((c: any) =>
-                `${c.article} (${c.brand}): ${c.oldPrice.toFixed(2)} → ${c.newPrice.toFixed(2)} ₽`
-              ).join('\n')
-
-              toast.success(
-                `Цены обновлены:\n${changesText}`,
-                { duration: 6000 }
-              )
-
-              // Обновляем состояние корзины
-              if (data.updateCartPrices.cart) {
-                const updatedItems = transformBackendItems(data.updateCartPrices.cart.items)
-                const updatedSummary = calculateSummary(updatedItems)
-
-                setState(prev => ({
-                  ...prev,
-                  items: updatedItems,
-                  summary: updatedSummary
-                }))
-              }
-            }
-          })
-          .catch(err => {
-            console.error('Ошибка обновления цен:', err)
-          })
+        updatePrices(true)
       }
     } else {
       setState(prev => ({
@@ -153,7 +166,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading: false
       }))
     }
-  }, [cartData, updatePricesMutation])
+  }, [cartData])
 
   // Set loading state
   useEffect(() => {
@@ -162,6 +175,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isLoading: cartLoading
     }))
   }, [cartLoading])
+
+  // Периодическое обновление цен (каждые 2 минуты)
+  useEffect(() => {
+    if (state.items.length === 0) return
+
+    // Устанавливаем интервал для автообновления цен
+    const intervalId = setInterval(() => {
+      console.log('🔄 Автообновление цен в корзине...')
+      updatePrices(true) // Показываем уведомления при автообновлении
+    }, 2 * 60 * 1000) // 2 минуты
+
+    // Очищаем интервал при размонтировании или изменении зависимостей
+    return () => {
+      clearInterval(intervalId)
+    }
+  }, [state.items.length])
 
   // GraphQL-based cart operations
   const addItem = async (item: Omit<CartItem, 'id' | 'selected' | 'favorite'>) => {
@@ -495,7 +524,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const contextValue: CartContextType = {
     state: {
       ...state,
-      error
+      error,
+      isUpdatingPrices
     },
     addItem,
     removeItem,
@@ -510,7 +540,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateDelivery,
     clearCart,
     clearError,
-    isInCart
+    isInCart,
+    updatePrices
   }
 
   return (
