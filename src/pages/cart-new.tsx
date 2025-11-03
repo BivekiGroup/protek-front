@@ -1,5 +1,4 @@
 import Header from "@/components/Header";
-import Head from "next/head";
 import Footer from "@/components/Footer";
 import CartInfo from "@/components/CartInfo";
 import CartListNew from "@/components/CartListNew";
@@ -10,13 +9,10 @@ import MobileMenuBottomSection from "@/components/MobileMenuBottomSection";
 import React, { useState } from "react";
 import MetaTags from "@/components/MetaTags";
 import { getMetaByPath } from "@/lib/meta-config";
-import { useCart } from "@/contexts/CartContext";
 
-export default function CartPage() {
+export default function CartNewPage() {
   const [step, setStep] = useState(1);
   const metaData = getMetaByPath('/cart');
-  const { state } = useCart();
-  const hasItems = state.items.length > 0;
 
   return (
     <>
@@ -36,7 +32,7 @@ export default function CartPage() {
           {/* Основной контент */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: hasItems ? '1fr 380px' : '1fr',
+            gridTemplateColumns: '1fr 380px',
             gap: '24px',
             alignItems: 'flex-start',
           }}>
@@ -45,12 +41,10 @@ export default function CartPage() {
               <CartListNew isSummaryStep={step === 2} />
             </div>
 
-            {/* Правая колонка - итоги (только если есть товары) */}
-            {hasItems && (
-              <div>
-                <CartSummaryNew step={step} setStep={setStep} />
-              </div>
-            )}
+            {/* Правая колонка - итоги */}
+            <div>
+              <CartSummaryNew step={step} setStep={setStep} />
+            </div>
           </div>
 
           {/* Рекомендованные товары */}
@@ -60,7 +54,7 @@ export default function CartPage() {
         </div>
       </section>
 
-      <section className="section-3">
+      <section>
         <CatalogSubscribe />
       </section>
 
@@ -68,4 +62,4 @@ export default function CartPage() {
       <MobileMenuBottomSection />
     </>
   );
-} 
+}

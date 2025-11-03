@@ -19,26 +19,31 @@ const CookieConsent: React.FC = () => {
 
   return (
     <div
-      className="fixed bottom-4 right-4 z-[5000] max-w-[320px] bg-white rounded-lg shadow-md border border-gray-200 p-3 text-xs"
+      className="fixed bottom-6 right-6 z-[5000] max-w-[380px] bg-white rounded-2xl shadow-2xl border-2 border-gray-100 p-5 animate-slide-up"
     >
-      <div className="flex items-start gap-2">
-        <div className="flex-1">
-          <p className="text-gray-600 leading-tight mb-2">
-            Мы используем cookies.{' '}
-            <a
-              href="/profile-set"
-              className="text-red-600 underline hover:text-red-700"
-            >
-              Настройки
-            </a>
-          </p>
-          <button
-            onClick={handleAccept}
-            className="w-full px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded text-white text-xs font-medium transition-colors duration-200"
-          >
-            Принять
-          </button>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
+            <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">
+              Мы используем cookies
+            </h3>
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Для улучшения работы сайта и персонализации вашего опыта.
+            </p>
+          </div>
         </div>
+        <button
+          onClick={handleAccept}
+          className="w-full px-4 py-2.5 bg-[#EC1C24] hover:bg-[#d9151d] rounded-xl text-white text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
+          style={{ color: '#ffffff' }}
+        >
+          Принять и продолжить
+        </button>
       </div>
     </div>
   );

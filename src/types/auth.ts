@@ -26,7 +26,7 @@ export interface VerificationResponse {
   generatedPassword?: string
 }
 
-export type AuthStep = 'phone' | 'code' | 'registration' | 'loginPassword'
+export type AuthStep = 'phone' | 'code' | 'registration' | 'loginPassword' | 'passwordRegistration' | 'passwordLogin' | 'pendingVerification'
 
 export interface AuthState {
   step: AuthStep
@@ -34,4 +34,6 @@ export interface AuthState {
   sessionId: string
   client?: Client
   isExistingClient: boolean
+  pendingEmail?: string
+  pendingPhone?: string
 } 

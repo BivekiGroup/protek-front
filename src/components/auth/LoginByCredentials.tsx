@@ -3,17 +3,24 @@ import { useMutation } from '@apollo/client'
 import { LOGIN_BY_CREDENTIALS } from '@/lib/graphql'
 import type { VerificationResponse } from '@/types/auth'
 import { UserRound, Lock } from 'lucide-react'
+import { z } from 'zod'
+import { toast } from 'react-hot-toast'
+
+const loginSchema = z.object({
+  login: z.string().min(1, 'Введите логин'),
+  password: z.string().min(1, 'Введите пароль')
+})
 
 interface LoginByCredentialsProps {
   onSuccess: (data: VerificationResponse) => void
   onError: (error: string) => void
-  onSwitchToPhone: () => void
+  onSwitchToRegistration?: () => void
 }
 
 const LoginByCredentials: React.FC<LoginByCredentialsProps> = ({
   onSuccess,
   onError,
-  onSwitchToPhone
+  onSwitchToRegistration
 }) => {
   const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
@@ -26,13 +33,19 @@ const LoginByCredentials: React.FC<LoginByCredentialsProps> = ({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
-    if (!login.trim()) {
-      onError('Введите логин')
-      return
-    }
+    // Валидация через zod
+    const validationResult = loginSchema.safeParse({
+      login: login.trim(),
+      password: password
+    })
 
-    if (!password.trim()) {
-      onError('Введите пароль')
+    if (!validationResult.success) {
+      const errors = validationResult.error?.errors
+      if (errors && errors.length > 0) {
+        onError(errors[0].message)
+      } else {
+        onError('Ошибка валидации')
+      }
       return
     }
 
@@ -40,31 +53,46 @@ const LoginByCredentials: React.FC<LoginByCredentialsProps> = ({
     onError('')
 
     try {
-      const { data } = await loginByCredentials({
+      const { data, errors } = await loginByCredentials({
         variables: {
           login: login.trim(),
           password: password
         }
       })
 
+      // Проверяем наличие ошибок в ответе (благодаря errorPolicy: 'all')
+      if (errors && errors.length > 0) {
+        const errorMessage = errors[0].message
+        toast.error(errorMessage)
+        onError(errorMessage)
+        return
+      }
+
       if (data?.loginByCredentials) {
         onSuccess(data.loginByCredentials)
       }
-    } catch (error) {
-      console.error('Ошибка входа по логину/паролю:', error)
-      if (error instanceof Error) {
-        onError(error.message)
-      } else {
-        onError('Произошла ошибка при входе')
+    } catch (error: any) {
+      // Извлекаем сообщение ошибки из GraphQL
+      let errorMessage = 'Произошла ошибка при входе'
+
+      if (error?.graphQLErrors && error.graphQLErrors.length > 0) {
+        errorMessage = error.graphQLErrors[0].message
+      } else if (error?.networkError) {
+        errorMessage = 'Ошибка сети. Проверьте подключение к интернету'
+      } else if (error?.message) {
+        errorMessage = error.message
       }
+
+      toast.error(errorMessage)
+      onError(errorMessage)
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full flex-col items-start gap-[30px]">
-      <div className="flex w-full max-w-[340px] flex-col gap-5">
+    <form onSubmit={handleSubmit} className="flex w-full flex-col items-start gap-[20px]">
+      <div className="flex w-full max-w-[340px] flex-col gap-4">
         {/* Поле логина */}
         <div className="flex h-[48px] w-full items-center gap-[10px] rounded-[12px] bg-[#F5F8FB] px-5">
           <span className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full bg-[#EC1C24] text-white">
@@ -79,7 +107,6 @@ const LoginByCredentials: React.FC<LoginByCredentialsProps> = ({
             disabled={isLoading}
             aria-label="Введите логин"
             autoComplete="username"
-            required
           />
         </div>
 
@@ -97,7 +124,6 @@ const LoginByCredentials: React.FC<LoginByCredentialsProps> = ({
             disabled={isLoading}
             aria-label="Введите пароль"
             autoComplete="current-password"
-            required
           />
         </div>
 
@@ -111,15 +137,22 @@ const LoginByCredentials: React.FC<LoginByCredentialsProps> = ({
           {isLoading ? 'Проверяем...' : 'Войти'}
         </button>
 
-        {/* Ссылка на вход по номеру телефона */}
-        <button
-          type="button"
-          onClick={onSwitchToPhone}
-          disabled={isLoading}
-          className="w-full text-center text-[14px] font-medium leading-[18px] text-[#424F60] transition-colors hover:text-[#EC1C24] disabled:opacity-60"
-        >
-          Войти по номеру телефона
-        </button>
+        {/* Ссылка на регистрацию */}
+        {onSwitchToRegistration && (
+          <div className="w-full text-center">
+            <p className="text-[14px] text-[#424F60]">
+              Нет аккаунта?{' '}
+              <button
+                type="button"
+                onClick={onSwitchToRegistration}
+                disabled={isLoading}
+                className="font-semibold text-[#EC1C24] hover:text-[#D01920] transition-colors disabled:opacity-60"
+              >
+                Зарегистрироваться
+              </button>
+            </p>
+          </div>
+        )}
       </div>
     </form>
   )

@@ -5,6 +5,7 @@ import { useMutation, useQuery } from '@apollo/client'
 import { CartState, CartContextType, CartItem, DeliveryInfo } from '@/types/cart'
 import { ADD_TO_CART, REMOVE_FROM_CART, UPDATE_CART_ITEM_QUANTITY, UPDATE_CART_PRICES, CLEAR_CART, GET_CART } from '@/lib/graphql'
 import { toast } from 'react-hot-toast'
+import PriceChangeModal from '@/components/PriceChangeModal'
 
 // Начальное состояние корзины
 const initialState: CartState = {
@@ -87,6 +88,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [state, setState] = useState<CartState>(initialState)
   const [error, setError] = useState<string>('')
   const [isUpdatingPrices, setIsUpdatingPrices] = useState(false) // Флаг активного обновления цен
+  const [priceChanges, setPriceChanges] = useState<any[]>([])
+  const [showPriceChangeModal, setShowPriceChangeModal] = useState(false)
 
   // GraphQL operations
   const { data: cartData, loading: cartLoading, refetch: refetchCart } = useQuery(GET_CART, {
@@ -110,18 +113,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data?.updateCartPrices?.success) {
         const changes = data.updateCartPrices.priceChanges
 
-        // Показываем уведомление об изменении цен только если есть изменения и включены уведомления
-        if (changes?.length > 0 && showNotification) {
-          const changesText = changes.map((c: any) =>
-            `${c.article} (${c.brand}): ${c.oldPrice.toFixed(2)} → ${c.newPrice.toFixed(2)} ₽`
-          ).join('\n')
-
-          toast.success(
-            `Цены обновлены:\n${changesText}`,
-            { duration: 6000 }
-          )
-        }
-
         // Обновляем состояние корзины
         if (data.updateCartPrices.cart) {
           const updatedItems = transformBackendItems(data.updateCartPrices.cart.items)
@@ -132,6 +123,32 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             items: updatedItems,
             summary: updatedSummary
           }))
+
+          // Показываем модалку об изменении цен только если есть изменения и включены уведомления
+          if (changes?.length > 0 && showNotification) {
+            // Преобразуем изменения в формат для модалки
+            const formattedChanges = changes.map((c: any) => {
+              const item = updatedItems.find(i =>
+                (i.article === c.article && i.brand === c.brand) ||
+                i.offerKey === c.offerKey ||
+                i.productId === c.productId
+              )
+
+              return {
+                id: item?.id || `${c.article}-${c.brand}`,
+                name: c.name || item?.name || 'Товар',
+                brand: c.brand,
+                article: c.article,
+                image: item?.image,
+                oldPrice: c.oldPrice,
+                newPrice: c.newPrice,
+                quantity: item?.quantity || 1
+              }
+            })
+
+            setPriceChanges(formattedChanges)
+            setShowPriceChangeModal(true)
+          }
         }
       }
     } catch (err) {
@@ -235,7 +252,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       console.log('🛒 Adding item to backend cart:', item)
 
-      const { data } = await addToCartMutation({
+      const { data, errors } = await addToCartMutation({
         variables: {
           input: {
             productId: item.productId || null,
@@ -256,6 +273,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
       })
+
+      console.log('🛒 addToCart response:', { data, errors })
+
+      if (errors && errors.length > 0) {
+        const errorMessage = errors[0].message || 'GraphQL error'
+        console.error('❌ GraphQL errors:', errors)
+        toast.error(errorMessage)
+        setError(errorMessage)
+        setState(prev => ({ ...prev, isLoading: false }))
+        return { success: false, error: errorMessage }
+      }
 
       if (data?.addToCart?.success) {
         // Update local state with backend response
@@ -547,6 +575,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <CartContext.Provider value={contextValue}>
       {children}
+      {showPriceChangeModal && priceChanges.length > 0 && (
+        <PriceChangeModal
+          changes={priceChanges}
+          onClose={() => {
+            setShowPriceChangeModal(false)
+            setPriceChanges([])
+          }}
+          onConfirm={() => {
+            setShowPriceChangeModal(false)
+            setPriceChanges([])
+            toast.success('Цены обновлены в корзине')
+          }}
+        />
+      )}
     </CartContext.Provider>
   )
 }

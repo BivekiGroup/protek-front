@@ -191,13 +191,7 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
   };
 
   const handleAddToCart = async () => {
-    const isAuthenticated = typeof window !== 'undefined' ? Boolean(localStorage.getItem('authToken')) : true;
-
-    if (!isAuthenticated) {
-      toast.error('Авторизуйтесь, чтобы добавить товар в корзину');
-      return;
-    }
-
+    // Убрана проверка авторизации - теперь неавторизованные пользователи могут добавлять в корзину
     setIsLocallyInCart(true);
     const remainingStock = getRemainingStock();
     const inCart = offer.isInCart || false;
@@ -274,18 +268,15 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
   const remainingStock = getRemainingStock();
   // Для поля ввода используем полное количество со склада, а не остаток
   const maxCount = availableStock;
-  const isAuthenticated = typeof window !== 'undefined' ? Boolean(localStorage.getItem('authToken')) : true;
   const inCart = offer.isInCart || false;
   const cannotAddMore = typeof remainingStock === 'number' && remainingStock <= 0;
-  const addDisabled = !isAuthenticated || isLocallyInCart || cannotAddMore;
+  const addDisabled = isLocallyInCart || cannotAddMore;
 
-  const buttonTitle = !isAuthenticated
-    ? 'Только для авторизованных пользователей'
-    : cannotAddMore
-      ? 'Добавление недоступно — нет свободного остатка'
-      : inCart || isLocallyInCart
-        ? 'Товар уже в корзине - нажмите для добавления еще'
-        : 'Добавить в корзину';
+  const buttonTitle = cannotAddMore
+    ? 'Добавление недоступно — нет свободного остатка'
+    : inCart || isLocallyInCart
+      ? 'Товар уже в корзине - нажмите для добавления еще'
+      : 'Добавить в корзину';
 
   // Use CoreProductCard styling pattern
   const rowClasses = [

@@ -11,27 +11,10 @@ const httpLink = createHttpLink({
 })
 
 // Глобальный логгер ошибок Apollo для наглядной диагностики
+// Намеренно делаем пустым, так как ошибки обрабатываются через toast в компонентах
 const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
-  if (graphQLErrors && graphQLErrors.length) {
-    graphQLErrors.forEach(({ message, locations, path, extensions }) => {
-      console.error('[Apollo GraphQL error]', {
-        operation: operation.operationName,
-        message,
-        locations,
-        path,
-        extensions,
-        variables: operation.variables,
-      })
-    })
-  }
-  if (networkError) {
-    console.error('[Apollo Network error]', {
-      operation: operation.operationName,
-      error: networkError,
-      uri: graphqlUri,
-      variables: operation.variables,
-    })
-  }
+  // Не выводим ошибки в консоль, чтобы не показывать красный оверлей Next.js
+  // Все ошибки обрабатываются в компонентах через toast.error()
 })
 
 const activityLink = new ApolloLink((operation, forward) => {
@@ -64,7 +47,7 @@ const authLink = setContext((_, { headers }) => {
         token = `client_${user.id}`;
         console.log('Apollo Client: создан токен для авторизованного пользователя:', token);
       } catch (error) {
-        console.error('Apollo Client: ошибка парсинга userData:', error);
+        console.log('Apollo Client: ошибка парсинга userData, очищаем localStorage');
         localStorage.removeItem('userData');
         localStorage.removeItem('authToken');
       }
@@ -141,6 +124,9 @@ export const apolloClient = new ApolloClient({
       errorPolicy: 'all',
       fetchPolicy: 'cache-first', // Сначала ищем в кэше
     },
+    mutate: {
+      errorPolicy: 'all', // Возвращаем ошибки, но не логируем их
+    },
   },
 })
 
@@ -149,7 +135,9 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   // Очищаем кэш только один раз при первой загрузке страницы
   const cacheCleared = sessionStorage.getItem('apollo-cache-cleared');
   if (!cacheCleared) {
-    apolloClient.clearStore().catch(console.error);
+    apolloClient.clearStore().catch(() => {
+      console.log('Apollo Client: не удалось очистить кэш');
+    });
     sessionStorage.setItem('apollo-cache-cleared', 'true');
     console.log('Apollo Client: очистка кэша в режиме разработки');
   }

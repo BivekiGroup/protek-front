@@ -92,12 +92,7 @@ const BestPriceCard: React.FC<BestPriceCardProps> = ({
       return;
     }
 
-    const isAuthenticated = typeof window !== 'undefined' ? Boolean(localStorage.getItem('authToken')) : true;
-
-    if (!isAuthenticated) {
-      toast.error('Авторизуйтесь, чтобы добавить товар в корзину');
-      return;
-    }
+    // Убрана проверка авторизации - теперь неавторизованные пользователи могут добавлять в корзину
 
     try {
       const result = await addItem({

@@ -327,13 +327,7 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
   };
 
   const handleAddToCart = async (offer: CoreProductCardOffer, index: number) => {
-    const isAuthenticated = typeof window !== 'undefined' ? Boolean(localStorage.getItem('authToken')) : true;
-
-    if (!isAuthenticated) {
-      toast.error('Авторизуйтесь, чтобы добавить товар в корзину');
-      return;
-    }
-
+    // Убрана проверка авторизации - теперь неавторизованные пользователи могут добавлять в корзину
     setLocalInCart(prev => ({ ...prev, [index]: true }));
     const quantity = quantities[index] || 1;
     const availableStock = parseStock(offer.pcs);
@@ -616,7 +610,6 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
     const maxCountRaw = typeof offer.quantity === 'number' ? offer.quantity : parseStock(offer.pcs);
     // Для поля ввода используем полное количество со склада, а не остаток
     const maxCount = maxCountRaw;
-    const isAuthenticated = typeof window !== 'undefined' ? Boolean(localStorage.getItem('authToken')) : true;
     const inCart = offer.isInCart || false;
     const isLocallyInCart = !!localInCart[idx];
     const cannotAddMore = typeof remainingStock === 'number' && remainingStock <= 0;
@@ -625,25 +618,21 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
     const priceValue = parseFloat(offer.price.replace(/[^\d.]/g, '')) || 0;
     const isPriceZero = priceValue === 0;
 
-    const addDisabled = !isAuthenticated || inCart || isLocallyInCart || cannotAddMore || isPriceZero;
-    const buttonTitle = !isAuthenticated
-      ? 'Только для авторизованных пользователей'
-      : isPriceZero
-        ? 'Товар недоступен для заказа (цена не указана)'
-        : cannotAddMore
-          ? 'Добавление недоступно — нет свободного остатка'
-          : inCart || isLocallyInCart
-            ? 'Товар уже в корзине - нажмите для добавления еще'
-            : 'Добавить в корзину';
-    const buttonAriaLabel = !isAuthenticated
-      ? 'Только для авторизованных пользователей'
-      : isPriceZero
-        ? 'Товар недоступен для заказа'
-        : cannotAddMore
-          ? 'Добавление недоступно — нет свободного остатка'
-          : inCart || isLocallyInCart
-            ? 'Товар уже в корзине'
+    const addDisabled = inCart || isLocallyInCart || cannotAddMore || isPriceZero;
+    const buttonTitle = isPriceZero
+      ? 'Товар недоступен для заказа (цена не указана)'
+      : cannotAddMore
+        ? 'Добавление недоступно — нет свободного остатка'
+        : inCart || isLocallyInCart
+          ? 'Товар уже в корзине - нажмите для добавления еще'
           : 'Добавить в корзину';
+    const buttonAriaLabel = isPriceZero
+      ? 'Товар недоступен для заказа'
+      : cannotAddMore
+        ? 'Добавление недоступно — нет свободного остатка'
+        : inCart || isLocallyInCart
+          ? 'Товар уже в корзине'
+        : 'Добавить в корзину';
 
     const region = offer.region || 'Москва';
     const brandDisplay = offer.brandName || brand;

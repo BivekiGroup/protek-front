@@ -63,18 +63,8 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ onSuccess, onError, onRegister,
       const { data: clientData } = await checkClient({ variables: { phone: cleanPhone } })
 
       if (clientData?.checkClientByPhone) {
-        const { data: smsData } = await sendSMSCode({
-          variables: {
-            phone: cleanPhone,
-            sessionId: clientData.checkClientByPhone.sessionId
-          }
-        })
-
-        if (smsData?.sendSMSCode?.success) {
-          onSuccess(clientData.checkClientByPhone, cleanPhone)
-        } else {
-          onError('Не удалось отправить SMS код')
-        }
+        // Просто переходим к следующему шагу, БЕЗ отправки SMS
+        onSuccess(clientData.checkClientByPhone, cleanPhone)
       }
     } catch (error) {
       console.error('Ошибка проверки телефона:', error)

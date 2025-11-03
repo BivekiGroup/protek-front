@@ -170,6 +170,46 @@ export const REGISTER_NEW_CLIENT = gql`
   }
 `
 
+// Новая система авторизации с паролем
+export const REGISTER_CLIENT_WITH_PASSWORD = gql`
+  mutation RegisterClientWithPassword($input: RegisterClientInput!) {
+    registerClientWithPassword(input: $input) {
+      success
+      client {
+        id
+        clientNumber
+        name
+        firstName
+        lastName
+        companyName
+        phone
+        email
+        isVerified
+      }
+      token
+    }
+  }
+`
+
+export const LOGIN_WITH_PASSWORD = gql`
+  mutation LoginWithPassword($phone: String!, $password: String!) {
+    loginWithPassword(phone: $phone, password: $password) {
+      success
+      client {
+        id
+        clientNumber
+        name
+        firstName
+        lastName
+        phone
+        email
+        isVerified
+      }
+      token
+    }
+  }
+`
+
 // Запросы для профиля пользователя
 export const GET_CLIENT_ME = gql`
   query GetClientMe {
@@ -517,6 +557,13 @@ export const GET_ORDERS = gql`
         }
         deliveryAddress
         comment
+        paymentMethod
+        invoiceUrl
+        cancelReason
+        canceledAt
+        returnReason
+        returnRequestedAt
+        returnedAt
         createdAt
         updatedAt
         payments {

@@ -5,6 +5,9 @@ import PhoneInput from './PhoneInput'
 import CodeVerification from './CodeVerification'
 import UserRegistration from './UserRegistration'
 import LoginByCredentials from './LoginByCredentials'
+import PasswordRegistration from './PasswordRegistration'
+import PasswordLogin from './PasswordLogin'
+import PendingVerification from './PendingVerification'
 import { X } from 'lucide-react'
 import type { AuthState, ClientAuthResponse, VerificationResponse } from '@/types/auth'
 
@@ -16,7 +19,7 @@ interface AuthModalProps {
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [authState, setAuthState] = useState<AuthState>({
-    step: 'phone',
+    step: 'loginPassword',
     phone: '',
     sessionId: '',
     isExistingClient: false
@@ -25,14 +28,24 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 
   const handlePhoneSuccess = (data: ClientAuthResponse) => {
     setError('')
-    // Всегда переходим к вводу кода, независимо от того, существует клиент или нет
-    setAuthState(prev => ({
-      ...prev,
-      step: 'code',
-      sessionId: data.sessionId,
-      client: data.client,
-      isExistingClient: data.exists
-    }))
+    // Если клиент существует - переходим к вводу пароля
+    // Если новый клиент - переходим к регистрации с паролем
+    if (data.exists) {
+      setAuthState(prev => ({
+        ...prev,
+        step: 'passwordLogin',
+        sessionId: data.sessionId,
+        client: data.client,
+        isExistingClient: true
+      }))
+    } else {
+      setAuthState(prev => ({
+        ...prev,
+        step: 'passwordRegistration',
+        sessionId: data.sessionId,
+        isExistingClient: false
+      }))
+    }
   }
 
   const handleCodeSuccess = (data: VerificationResponse) => {
@@ -91,9 +104,43 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
     setError('')
   }
 
+  const handleGoToPasswordRegistration = () => {
+    setAuthState(prev => ({
+      ...prev,
+      step: 'passwordRegistration'
+    }))
+    setError('')
+  }
+
+  const handleGoToPasswordLogin = () => {
+    setAuthState(prev => ({
+      ...prev,
+      step: 'passwordLogin'
+    }))
+    setError('')
+  }
+
+  const handleShowPendingVerification = (email: string, phone: string) => {
+    setAuthState(prev => ({
+      ...prev,
+      step: 'pendingVerification',
+      pendingEmail: email,
+      pendingPhone: phone
+    }))
+    setError('')
+  }
+
+  const handlePasswordLoginSuccess = (client: any, token: string) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lastAuthExistingClient', '1')
+    }
+    onSuccess(client, token)
+    onClose()
+  }
+
   const handleClose = () => {
     setAuthState({
-      step: 'phone',
+      step: 'loginPassword',
       phone: '',
       sessionId: '',
       isExistingClient: false
@@ -150,7 +197,37 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
           <LoginByCredentials
             onSuccess={handleCodeSuccess}
             onError={handleError}
-            onSwitchToPhone={handleGoToPhone}
+            onSwitchToRegistration={handleGoToPasswordRegistration}
+          />
+        )
+      case 'passwordRegistration':
+        return (
+          <PasswordRegistration
+            onSuccess={(client, token) => {
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('lastAuthExistingClient', '0')
+              }
+              // Сразу логиним пользователя
+              onSuccess(client, token)
+              onClose()
+            }}
+            onShowPendingVerification={handleShowPendingVerification}
+          />
+        )
+      case 'passwordLogin':
+        return (
+          <PasswordLogin
+            phone={authState.phone}
+            onSuccess={handlePasswordLoginSuccess}
+            onBack={handleBack}
+          />
+        )
+      case 'pendingVerification':
+        return (
+          <PendingVerification
+            email={authState.pendingEmail || ''}
+            phone={authState.pendingPhone || ''}
+            onClose={handleClose}
           />
         )
       default:
@@ -162,7 +239,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
   const isCodeStep = authState.step === 'code'
   const isLoginPasswordStep = authState.step === 'loginPassword'
   const isRegistrationStep = authState.step === 'registration'
-  const isModernStep = isPhoneStep || isCodeStep || isLoginPasswordStep || isRegistrationStep
+  const isPendingVerificationStep = authState.step === 'pendingVerification'
+  const isPasswordRegistrationStep = authState.step === 'passwordRegistration'
+  const isPasswordLoginStep = authState.step === 'passwordLogin'
+  const isModernStep = isPhoneStep || isCodeStep || isLoginPasswordStep || isRegistrationStep || isPendingVerificationStep || isPasswordRegistrationStep || isPasswordLoginStep
 
   const title = (() => {
     switch (authState.step) {
@@ -195,23 +275,23 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
   const subtitle = isCodeStep ? `Отправили на ${formatPhoneForDisplay(authState.phone)}` : null
 
   const containerClasses = isModernStep
-    ? 'relative z-10 flex w-[440px] max-w-[92vw] flex-col items-start gap-[30px] rounded-[12px] bg-white px-[50px] py-[50px] shadow-[0_32px_80px_rgba(19,31,55,0.16)]'
-    : 'relative z-10 flex flex-col gap-6 items-start bg-white rounded-3xl shadow-xl w-[480px] max-w-[90vw] min-h-[280px] px-8 py-8 max-md:px-6 max-md:py-6 max-sm:gap-6 max-sm:p-5'
+    ? 'relative z-10 flex w-[440px] max-w-[92vw] max-h-[90vh] flex-col items-start gap-[24px] rounded-[12px] bg-white px-[40px] py-[40px] shadow-[0_32px_80px_rgba(19,31,55,0.16)] overflow-y-auto'
+    : 'relative z-10 flex flex-col gap-6 items-start bg-white rounded-3xl shadow-xl w-[480px] max-w-[90vw] max-h-[90vh] min-h-[280px] px-8 py-8 max-md:px-6 max-md:py-6 max-sm:gap-6 max-sm:p-5 overflow-y-auto'
 
   const titleWrapperClasses = isModernStep
-    ? 'flex w-full max-w-[340px] flex-col gap-2 text-left'
+    ? 'flex w-full max-w-[360px] flex-col gap-2 text-left'
     : 'flex relative justify-between items-start w-full max-sm:flex-col max-sm:gap-4'
 
   const titleTextClasses = isModernStep
-    ? 'text-[30px] font-extrabold leading-[36px] text-[#000814]'
+    ? 'text-[28px] font-extrabold leading-[34px] text-[#000814]'
     : 'relative text-[32px] font-semibold leading-[38px] text-gray-950 max-sm:self-start max-sm:text-[26px] max-sm:leading-[32px]'
 
   const errorClasses = isModernStep
-    ? 'mb-1 w-full max-w-[340px] rounded-[12px] border border-red-200 bg-red-50 px-4 py-3'
+    ? 'mb-1 w-full max-w-[360px] rounded-[12px] border border-red-200 bg-red-50 px-4 py-3'
     : 'mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded'
 
   const contentWrapperClasses = isModernStep
-    ? 'flex w-full max-w-[340px] flex-col gap-5 items-start'
+    ? 'flex w-full max-w-[360px] flex-col gap-4 items-start'
     : 'flex relative flex-col gap-5 items-start self-stretch w-full'
 
   return (

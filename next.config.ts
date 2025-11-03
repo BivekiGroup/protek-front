@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactStrictMode: true,
   output: 'standalone',
+
+  // Отключаем оверлей ошибок в режиме разработки для GraphQL ошибок
+  devIndicators: {
+    buildActivityPosition: 'bottom-right',
+  },
   
   // Настройки для изображений
   images: {

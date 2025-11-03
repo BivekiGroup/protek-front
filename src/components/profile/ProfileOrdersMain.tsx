@@ -41,6 +41,8 @@ interface Order {
   returnReason?: string | null;
   returnRequestedAt?: string | null;
   returnedAt?: string | null;
+  paymentMethod?: string | null;
+  invoiceUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -236,7 +238,7 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
           <p className="text-red-500">Ошибка загрузки заказов: {error.message}</p>
           <button
             onClick={() => refetch()}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className="mt-4 px-4 py-2 bg-red-600 !text-white rounded hover:bg-red-700 transition-colors"
           >
             Попробовать снова
           </button>
@@ -422,10 +424,34 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                   )}
 
                   <div className="flex flex-wrap gap-3 mt-6">
+                    {order.paymentMethod === 'invoice' && (
+                      <a
+                        href={order.invoiceUrl || `${process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL?.replace('/graphql', '')}/api/order-invoice/${order.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-4 py-2 rounded font-medium transition-colors"
+                        style={{
+                          backgroundColor: '#f59e0b',
+                          color: '#ffffff',
+                          textDecoration: 'none'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#d97706'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f59e0b'
+                        }}
+                      >
+                        <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#ffffff' }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span style={{ color: '#ffffff' }}>Скачать счёт на оплату</span>
+                      </a>
+                    )}
                     {canCancel && (
                       <button
                         onClick={() => openActionDialog('cancel', order)}
-                        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                        className="px-4 py-2 bg-red-600 !text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
                         disabled={isSubmitting || isProcessingThisOrder}
                       >
                         Отменить заказ
@@ -434,7 +460,7 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                     {(canRequestReturn || canUpdateReturn) && (
                       <button
                         onClick={() => openActionDialog('return', order)}
-                        className="px-4 py-2 bg-slate-200 text-gray-900 rounded hover:bg-slate-300 disabled:opacity-50"
+                        className="px-4 py-2 bg-slate-200 text-gray-900 rounded hover:bg-slate-300 disabled:opacity-50 transition-colors"
                         disabled={isSubmitting || isProcessingThisOrder}
                       >
                         {canUpdateReturn ? 'Изменить заявку на возврат' : 'Оформить возврат'}
@@ -480,7 +506,7 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
               </button>
               <button
                 onClick={handleConfirmAction}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                className="px-4 py-2 bg-red-600 !text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
                 disabled={isSubmitting}
               >
                 {isSubmitting && pendingAction ? 'Сохраняем...' : 'Подтвердить'}

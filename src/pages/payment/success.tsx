@@ -89,6 +89,13 @@ function PaymentSuccessContent() {
     const orderNumberValue = getQueryValue(router.query.orderNumber);
     const paymentMethodValue = getQueryValue(router.query.paymentMethod);
 
+    console.log('🔍 Payment Success - Query params:', {
+      paymentId: paymentIdValue,
+      orderId: orderIdValue,
+      orderNumber: orderNumberValue,
+      paymentMethod: paymentMethodValue
+    });
+
     setPaymentId(paymentIdValue);
     setOrderId(orderIdValue);
     setOrderNumber(orderNumberValue);
@@ -242,11 +249,18 @@ function PaymentSuccessContent() {
             </div>
             <div className="w-layout-hflex flex-block-8">
               <div className="w-layout-hflex flex-block-10">
-                <h1 className="heading">Оплата прошла успешно</h1>
+                <h1 className="heading">
+                  {paymentMethod === 'invoice' ? 'Заказ оформлен' : 'Оплата прошла успешно'}
+                </h1>
                 <div className="text-block-4">
-                  {orderNumber
-                    ? `Заказ №${orderNumber} уже передан в обработку. Статус можно отслеживать в личном кабинете.`
-                    : "Заказ передан в обработку. Статус можно отслеживать в личном кабинете."}
+                  {paymentMethod === 'invoice'
+                    ? (orderNumber
+                      ? `Заказ №${orderNumber} создан. Скачайте счёт на оплату ниже.`
+                      : "Заказ создан. Скачайте счёт на оплату ниже.")
+                    : (orderNumber
+                      ? `Заказ №${orderNumber} уже передан в обработку. Статус можно отслеживать в личном кабинете.`
+                      : "Заказ передан в обработку. Статус можно отслеживать в личном кабинете.")
+                  }
                 </div>
               </div>
             </div>
@@ -260,22 +274,28 @@ function PaymentSuccessContent() {
             <section className="rounded-3xl border border-slate-100 bg-white px-6 py-8 shadow-lg shadow-slate-900/5 sm:px-10 sm:py-12">
               <div className="flex flex-col gap-8">
                 <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-6">
-                  <span className="flex h-16 w-16 flex-none items-center justify-center rounded-2xl bg-emerald-500 text-white sm:h-20 sm:w-20">
-                    <CheckCircle2 className="h-8 w-8" />
+                  <span className={`flex h-16 w-16 flex-none items-center justify-center rounded-2xl text-white sm:h-20 sm:w-20 ${paymentMethod === 'invoice' ? 'bg-amber-500' : 'bg-emerald-500'}`}>
+                    {paymentMethod === 'invoice' ? <Clock className="h-8 w-8" /> : <CheckCircle2 className="h-8 w-8" />}
                   </span>
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
-                        Оплата получена
+                        {paymentMethod === 'invoice' ? 'Ожидает оплаты' : 'Оплата получена'}
                       </p>
                       <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
-                        {orderNumber ? `Заказ №${orderNumber} принят в работу` : "Заказ принят в работу"}
+                        {paymentMethod === 'invoice'
+                          ? (orderNumber ? `Заказ №${orderNumber} ожидает оплаты` : "Заказ ожидает оплаты")
+                          : (orderNumber ? `Заказ №${orderNumber} принят в работу` : "Заказ принят в работу")
+                        }
                       </h1>
                     </div>
                     <p className="text-base text-slate-600 sm:text-lg lg:max-w-none">
-                      {paymentMethodLabel
-                        ? `Мы зафиксировали оплату (${paymentMethodLabel}) и уже начинаем подготовку заказа.`
-                        : "Мы зафиксировали оплату и уже начинаем подготовку заказа."}
+                      {paymentMethod === 'invoice'
+                        ? `Мы выставили счёт на оплату. Скачайте счёт ниже и произведите оплату. После получения оплаты мы начнём подготовку заказа.`
+                        : (paymentMethodLabel
+                          ? `Мы зафиксировали оплату (${paymentMethodLabel}) и уже начинаем подготовку заказа.`
+                          : "Мы зафиксировали оплату и уже начинаем подготовку заказа.")
+                      }
                       {" "}
                       Все обновления появятся в личном кабинете и придут на указанную при оформлении почту.
                     </p>
@@ -295,6 +315,44 @@ function PaymentSuccessContent() {
                       </div>
                     ))}
                   </dl>
+                )}
+
+                {paymentMethod === 'invoice' && orderId && (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-3">Счёт на оплату</h3>
+                    <p className="text-sm text-slate-600 mb-4">
+                      Скачайте счёт и произведите оплату в течение 3 рабочих дней. После получения оплаты мы сразу начнём обработку заказа.
+                    </p>
+                    <a
+                      href={`${process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL?.replace('/graphql', '')}/api/order-invoice/${orderId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '0.75rem',
+                        backgroundColor: '#EC1C24',
+                        padding: '0.75rem 1.5rem',
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: '#ffffff',
+                        textDecoration: 'none',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#D01920'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#EC1C24'
+                      }}
+                    >
+                      <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#ffffff' }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span style={{ color: '#ffffff' }}>Скачать счёт</span>
+                    </a>
+                  </div>
                 )}
 
                 <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-lg shadow-slate-900/5">
