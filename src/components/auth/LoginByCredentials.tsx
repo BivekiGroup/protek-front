@@ -40,7 +40,7 @@ const LoginByCredentials: React.FC<LoginByCredentialsProps> = ({
     })
 
     if (!validationResult.success) {
-      const errors = validationResult.error?.errors
+      const errors = validationResult.error?.issues
       if (errors && errors.length > 0) {
         onError(errors[0].message)
       } else {

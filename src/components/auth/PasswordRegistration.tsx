@@ -90,7 +90,7 @@ const PasswordRegistration: React.FC<PasswordRegistrationProps> = ({
     })
 
     if (!validationResult.success) {
-      const errors = validationResult.error?.errors
+      const errors = validationResult.error?.issues
       if (errors && errors.length > 0) {
         toast.error(errors[0].message)
       } else {
