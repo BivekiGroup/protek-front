@@ -137,8 +137,8 @@ export const VERIFY_CODE = gql`
 `
 
 export const LOGIN_BY_CREDENTIALS = gql`
-  mutation LoginByCredentials($login: String!, $password: String!) {
-    loginByCredentials(login: $login, password: $password) {
+  mutation LoginByCredentials($email: String!, $password: String!) {
+    loginByCredentials(email: $email, password: $password) {
       success
       client {
         id
@@ -218,7 +218,6 @@ export const GET_CLIENT_ME = gql`
       name
       email
       phone
-      login
       emailNotifications
       smsNotifications
       pushNotifications

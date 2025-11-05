@@ -18,10 +18,10 @@ const PendingVerification: React.FC<PendingVerificationProps> = ({ email, phone,
       {/* Заголовок */}
       <div className="flex flex-col items-center gap-2 text-center">
         <h2 className="text-2xl font-bold text-slate-900">
-          Заявка отправлена
+          Благодарим за регистрацию
         </h2>
         <p className="text-sm text-slate-600">
-          Мы проверим ваши данные и отправим пароль на email в течение рабочего дня
+          В течение 24 часов (либо до конца ближайшего рабочего дня) с вами свяжется менеджер для обсуждения условий сотрудничества и предоставления доступа.
         </p>
       </div>
 

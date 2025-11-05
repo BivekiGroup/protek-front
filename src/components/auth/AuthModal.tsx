@@ -253,7 +253,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
       case 'registration':
         return 'Регистрация'
       case 'loginPassword':
-        return 'Войти по логину и паролю'
+        return 'Вход'
+      case 'passwordRegistration':
+        return '' // Скрываем заголовок на этапе регистрации
+      case 'passwordLogin':
+        return '' // Скрываем заголовок на этапе входа по паролю
+      case 'pendingVerification':
+        return '' // Скрываем заголовок на этапе ожидания проверки
       default:
         return 'Авторизация'
     }
@@ -279,7 +285,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
     : 'relative z-10 flex flex-col gap-6 items-start bg-white rounded-3xl shadow-xl w-[480px] max-w-[90vw] max-h-[90vh] min-h-[280px] px-8 py-8 max-md:px-6 max-md:py-6 max-sm:gap-6 max-sm:p-5 overflow-y-auto'
 
   const titleWrapperClasses = isModernStep
-    ? 'flex w-full max-w-[360px] flex-col gap-2 text-left'
+    ? 'flex w-full max-w-[360px] flex-col gap-2 text-center'
     : 'flex relative justify-between items-start w-full max-sm:flex-col max-sm:gap-4'
 
   const titleTextClasses = isModernStep
@@ -291,7 +297,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
     : 'mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded'
 
   const contentWrapperClasses = isModernStep
-    ? 'flex w-full max-w-[360px] flex-col gap-4 items-start'
+    ? 'flex w-full max-w-[360px] flex-col gap-4 items-center'
     : 'flex relative flex-col gap-5 items-start self-stretch w-full'
 
   return (

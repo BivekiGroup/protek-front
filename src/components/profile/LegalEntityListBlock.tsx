@@ -118,7 +118,8 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
             type="button"
             onClick={onAddNew}
             disabled={Boolean(formNode)}
-            className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-5 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300"
+            className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            style={{ color: '#FFFFFF' }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 5V19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -128,12 +129,7 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
           </button>
         )}
         {formNode && (
-          <div className="w-full rounded-2xl border border-dashed border-red-200 bg-white px-6 py-6 shadow-sm">
-            <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-500">
-              <span className="text-lg font-semibold text-gray-950">Новое юридическое лицо</span>
-              <span className="hidden h-3 w-px bg-slate-200 md:inline" aria-hidden="true" />
-              <span className="text-xs uppercase tracking-wide text-gray-400">Заполните форму и сохраните</span>
-            </div>
+          <div className="w-full">
             {formNode}
           </div>
         )}
@@ -158,7 +154,8 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
             type="button"
             onClick={onAddNew}
             disabled={isFormVisible}
-            className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300"
+            className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            style={{ color: '#FFFFFF' }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 5V19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -170,12 +167,7 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
       </div>
 
       {formNode && isCreatingNew && (
-        <div className="w-full rounded-2xl border border-dashed border-red-200 bg-white px-6 py-6 shadow-sm">
-          <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-500">
-            <span className="text-lg font-semibold text-gray-950">Новое юридическое лицо</span>
-            <span className="hidden h-3 w-px bg-slate-200 md:inline" aria-hidden="true" />
-            <span className="text-xs uppercase tracking-wide text-gray-400">Заполните форму и сохраните</span>
-          </div>
+        <div className="w-full">
           {formNode}
         </div>
       )}

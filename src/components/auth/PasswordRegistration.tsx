@@ -148,7 +148,7 @@ const PasswordRegistration: React.FC<PasswordRegistrationProps> = ({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full flex-col items-start gap-[16px]">
+    <form onSubmit={handleSubmit} className="flex w-full flex-col items-center gap-[16px]">
       <div className="flex w-full max-w-[340px] flex-col gap-3">
         {/* Баннер для юридических лиц */}
         <div className="rounded-lg bg-red-50 border border-red-200 p-2.5 flex gap-2">

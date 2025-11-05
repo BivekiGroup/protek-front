@@ -10,8 +10,6 @@ interface ProfilePersonalDataProps {
   setLastName: (v: string) => void;
   phone: string;
   setPhone: (v: string) => void;
-  login: string;
-  setLogin: (v: string) => void;
   email: string;
   setEmail: (v: string) => void;
   password: string;
@@ -29,8 +27,6 @@ const ProfilePersonalData: React.FC<ProfilePersonalDataProps> = ({
   setLastName,
   phone,
   setPhone,
-  login,
-  setLogin,
   email,
   setEmail,
   password,
@@ -178,32 +174,11 @@ const ProfilePersonalData: React.FC<ProfilePersonalDataProps> = ({
             lineHeight: '130%'
           }}
         >
-          Вы можете добавить логин и пароль для входа (необязательно)
+          Вы можете изменить пароль для входа (необязательно)
         </div>
 
-        {/* Строка 2: Логин, Пароль */}
+        {/* Строка 2: Пароль */}
         <div className="flex flex-row items-start w-full" style={{ gap: '20px' }}>
-          {/* Логин */}
-          <div
-            className="flex flex-row items-center bg-[#F5F8FB] rounded-[12px] flex-1"
-            style={{ padding: '16px 24px', gap: '10px', height: '52px' }}
-          >
-            <input
-              type="text"
-              placeholder="Логин"
-              value={login}
-              onChange={(e) => setLogin(e.target.value)}
-              className="w-full bg-transparent outline-none text-[#424F60]"
-              style={{
-                fontFamily: 'Onest, sans-serif',
-                fontSize: '16px',
-                fontWeight: 500,
-                lineHeight: '100%'
-              }}
-              autoComplete="username"
-            />
-          </div>
-
           {/* Пароль */}
           <div
             className="flex flex-row items-center bg-[#F5F8FB] rounded-[12px] flex-1"
@@ -211,13 +186,13 @@ const ProfilePersonalData: React.FC<ProfilePersonalDataProps> = ({
           >
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
+              placeholder="Пароль"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-transparent outline-none text-[#424F60]"
               style={{
                 fontFamily: 'Onest, sans-serif',
-                fontSize: showPassword ? '16px' : '24px',
+                fontSize: '16px',
                 fontWeight: 500,
                 lineHeight: '100%'
               }}

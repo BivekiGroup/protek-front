@@ -18,7 +18,6 @@ const ProfileSettingsMain: React.FC = () => {
   const [firstName, setFirstName] = React.useState("");
   const [lastName, setLastName] = React.useState("");
   const [phone, setPhone] = React.useState("");
-  const [login, setLogin] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [emailNotifications, setEmailNotifications] = React.useState(false);
@@ -27,7 +26,6 @@ const ProfileSettingsMain: React.FC = () => {
   const [originalValues, setOriginalValues] = React.useState({
     firstName: '',
     lastName: '',
-    login: '',
     email: '',
     emailNotifications: false
   });
@@ -42,14 +40,12 @@ const ProfileSettingsMain: React.FC = () => {
       const nameParts = client.name?.split(' ') || [];
       const newFirstName = nameParts[0] || '';
       const newLastName = nameParts.slice(1).join(' ') || '';
-      const newLogin = (client as any).login || '';
       const newEmail = client.email || '';
       const newEmailNotifications = client.emailNotifications || false;
 
       setFirstName(newFirstName);
       setLastName(newLastName);
       setPhone(client.phone || '');
-      setLogin(newLogin);
       setEmail(newEmail);
       setEmailNotifications(newEmailNotifications);
 
@@ -57,7 +53,6 @@ const ProfileSettingsMain: React.FC = () => {
       setOriginalValues({
         firstName: newFirstName,
         lastName: newLastName,
-        login: newLogin,
         email: newEmail,
         emailNotifications: newEmailNotifications
       });
@@ -71,7 +66,6 @@ const ProfileSettingsMain: React.FC = () => {
   const hasChanges =
     firstName !== originalValues.firstName ||
     lastName !== originalValues.lastName ||
-    login !== originalValues.login ||
     email !== originalValues.email ||
     emailNotifications !== originalValues.emailNotifications ||
     password.length > 0;
@@ -85,7 +79,6 @@ const ProfileSettingsMain: React.FC = () => {
       setOriginalValues({
         firstName,
         lastName,
-        login,
         email,
         emailNotifications
       });
@@ -121,10 +114,7 @@ const ProfileSettingsMain: React.FC = () => {
         pushNotifications: false
       };
 
-      // Добавляем login, email и password только если они указаны
-      if (login) {
-        input.login = login;
-      }
+      // Добавляем email и password только если они указаны
       if (email) {
         input.email = email;
       }
@@ -178,8 +168,6 @@ const ProfileSettingsMain: React.FC = () => {
         setLastName={setLastName}
         phone={phone}
         setPhone={setPhone}
-        login={login}
-        setLogin={setLogin}
         email={email}
         setEmail={setEmail}
         password={password}

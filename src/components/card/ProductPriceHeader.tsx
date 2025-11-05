@@ -1,4 +1,5 @@
 import React from "react";
+import toast from "react-hot-toast";
 import { useCart } from "@/contexts/CartContext";
 
 interface ProductPriceHeaderProps {
@@ -80,22 +81,33 @@ const ProductPriceHeader = ({ offers, brand, articleNumber, name }: ProductPrice
       (offer.price || Infinity) < (min.price || Infinity) ? offer : min
     );
 
-    await addItem({
-      productId: cheapestOffer.id ? String(cheapestOffer.id) : undefined,
-      offerKey: cheapestOffer.offerKey || undefined,
-      name: name || `${brand} ${articleNumber}`,
-      description: name || `${brand} ${articleNumber}`,
-      price: cheapestOffer.price,
-      currency: 'RUB',
-      quantity: 1,
-      stock: cheapestOffer.quantity,
-      image: cheapestOffer.image || undefined,
-      brand: brand,
-      article: articleNumber,
-      supplier: cheapestOffer.supplier || (cheapestOffer.type === 'external' ? 'AutoEuro' : 'Внутренний'),
-      deliveryTime: cheapestOffer.deliveryTime || cheapestOffer.deliveryDays || 0,
-      isExternal: cheapestOffer.type === 'external'
-    });
+    try {
+      const result = await addItem({
+        productId: cheapestOffer.id ? String(cheapestOffer.id) : undefined,
+        offerKey: cheapestOffer.offerKey || undefined,
+        name: name || `${brand} ${articleNumber}`,
+        description: name || `${brand} ${articleNumber}`,
+        price: cheapestOffer.price,
+        currency: 'RUB',
+        quantity: 1,
+        stock: cheapestOffer.quantity,
+        image: cheapestOffer.image || undefined,
+        brand: brand,
+        article: articleNumber,
+        supplier: cheapestOffer.supplier || (cheapestOffer.type === 'external' ? 'AutoEuro' : 'Внутренний'),
+        deliveryTime: String(cheapestOffer.deliveryTime || cheapestOffer.deliveryDays || 0),
+        isExternal: cheapestOffer.type === 'external'
+      });
+
+      if (result.success) {
+        const productName = name || `${brand} ${articleNumber}`;
+        toast.success(`${productName} добавлен в корзину`);
+      }
+    } catch (error) {
+      console.error('Ошибка добавления в корзину:', error);
+      const productName = name || `${brand} ${articleNumber}`;
+      toast.error(`Не удалось добавить ${productName} в корзину`);
+    }
   };
 
   return (

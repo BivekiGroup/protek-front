@@ -284,10 +284,13 @@ const LegalEntityFormBlock: React.FC<LegalEntityFormBlockProps> = (props) => {
     setHasAutoData(false);
     setShowAutoDetails(false);
     setDaDataError(null);
-    setIsEditingDetails(true);
+    // Не сбрасываем isEditingDetails, чтобы форма оставалась открытой если пользователь редактирует
   };
 
-  const isFullFormVisible = !hasAutoData || isEditingDetails;
+  // Показываем детальные поля только если:
+  // 1. Пользователь редактирует существующее юрлицо (editingEntity)
+  // 2. Пользователь нажал "Редактировать вручную" (isEditingDetails)
+  const isFullFormVisible = !!editingEntity || isEditingDetails;
 
   return (
     <div className="flex flex-col gap-6 rounded-2xl border border-slate-200 bg-white p-8 max-md:px-5">
@@ -301,101 +304,120 @@ const LegalEntityFormBlock: React.FC<LegalEntityFormBlockProps> = (props) => {
         </span>
       </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-slate-50/60 px-5 py-6">
-        <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500">Данные юридического лица</h3>
-        <div className={fieldWrapperClass}>
-          <span className={labelClass}>ИНН*</span>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <input
-              type="text"
-              placeholder="10–12 цифр"
-              className={`${inputClass} ${validationErrors.inn ? inputErrorClass : ''} sm:flex-1`}
-              value={inn}
-              onChange={(event) => handleInnChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && inn.trim().length >= 10 && !daDataLoading) {
-                  event.preventDefault();
-                  handleFillFromInn();
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={handleFillFromInn}
-              disabled={daDataLoading || inn.trim().length < 10}
-              className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-colors sm:w-auto ${
-                daDataLoading
-                  ? 'cursor-wait bg-red-600/70 text-white'
-                  : inn.trim().length < 10
-                    ? 'cursor-not-allowed bg-slate-200 text-slate-500'
-                    : hasAutoData && !isEditingDetails
-                      ? 'bg-red-600 text-white opacity-60 hover:opacity-70 focus-visible:opacity-70'
-                      : 'bg-red-600 text-white hover:bg-red-700'
-              }`}
-              style={{ color: '#FFFFFF' }}
-            >
-              {daDataLoading ? 'Получаем…' : 'Заполнить по ИНН'}
-            </button>
-          </div>
-          <span className="text-xs text-gray-400">Мы подставим остальные поля автоматически, при необходимости их можно поправить.</span>
-          {daDataError && <span className="text-xs text-red-600">{daDataError}</span>}
+      <div className={fieldWrapperClass}>
+        <span className={labelClass}>ИНН*</span>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <input
+            type="text"
+            placeholder="10–12 цифр"
+            className={`${inputClass} ${validationErrors.inn ? inputErrorClass : ''} sm:flex-1`}
+            value={inn}
+            onChange={(event) => handleInnChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && inn.trim().length >= 10 && !daDataLoading) {
+                event.preventDefault();
+                handleFillFromInn();
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={handleFillFromInn}
+            disabled={daDataLoading || inn.trim().length < 10}
+            className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-colors sm:w-auto ${
+              daDataLoading
+                ? 'cursor-wait bg-red-600/70 text-white'
+                : inn.trim().length < 10
+                  ? 'cursor-not-allowed bg-slate-200 text-slate-500'
+                  : hasAutoData && !isEditingDetails
+                    ? 'bg-red-600 text-white opacity-60 hover:opacity-70 focus-visible:opacity-70'
+                    : 'bg-red-600 text-white hover:bg-red-700'
+            }`}
+            style={{ color: '#FFFFFF' }}
+          >
+            {daDataLoading ? 'Получаем…' : 'Заполнить по ИНН'}
+          </button>
         </div>
+        <span className="text-xs text-gray-400">Мы подставим остальные поля автоматически, при необходимости их можно поправить.</span>
+        {daDataError && <span className="text-xs text-red-600">{daDataError}</span>}
+      </div>
 
-        {hasAutoData && (
-          <div className="mt-5 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-xs font-bold text-green-700">✓</span>
-                <span className="text-sm font-semibold text-gray-900">Данные найдены по ИНН</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowAutoDetails((prev) => !prev)}
-                className="text-xs font-medium text-blue-600 transition hover:text-blue-700"
-              >
-                {showAutoDetails ? 'Скрыть детали' : 'Показать детали'}
-              </button>
-            </div>
-            {showAutoDetails && (
-              <div className="mt-4 grid gap-3 text-sm text-gray-700 md:grid-cols-2">
-                <div>
-                  <div className="text-gray-400">Краткое наименование</div>
-                  <div className="font-medium">{shortName || '—'}</div>
-                </div>
-                <div>
-                  <div className="text-gray-400">Полное наименование</div>
-                  <div className="font-medium">{fullName || '—'}</div>
-                </div>
-                <div>
-                  <div className="text-gray-400">Форма</div>
-                  <div className="font-medium">{form || '—'}</div>
-                </div>
-                <div>
-                  <div className="text-gray-400">ОГРН</div>
-                  <div className="font-medium">{ogrn || '—'}</div>
-                </div>
-                <div>
-                  <div className="text-gray-400">КПП</div>
-                  <div className="font-medium">{kpp || '—'}</div>
-                </div>
-                <div className="md:col-span-2">
-                  <div className="text-gray-400">Юридический адрес</div>
-                  <div className="font-medium">{jurAddress || '—'}</div>
-                </div>
-              </div>
-            )}
-            {!isFullFormVisible && (
+      {!hasAutoData && !isEditingDetails && !editingEntity && (
+        <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4">
+          <div className="flex items-start gap-3">
+            <svg className="h-5 w-5 flex-shrink-0 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-blue-900">Введите ИНН и нажмите кнопку "Заполнить по ИНН"</p>
+              <p className="mt-1 text-xs text-blue-700">Мы автоматически заполним все данные организации. При необходимости их можно будет отредактировать.</p>
               <button
                 type="button"
                 onClick={() => setIsEditingDetails(true)}
-                className="mt-4 -ml-5 inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 font-medium text-gray-700 transition hover:border-red-200 hover:text-red-600"
+                className="mt-3 text-xs font-medium text-blue-600 underline transition hover:text-blue-700"
               >
-                Редактировать вручную
+                Или заполните форму вручную
               </button>
-            )}
+            </div>
           </div>
-        )}
-      </section>
+        </div>
+      )}
+
+      {hasAutoData && (
+        <div className="mt-5 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-xs font-bold text-green-700">✓</span>
+              <span className="text-sm font-semibold text-gray-900">Данные найдены по ИНН</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAutoDetails((prev) => !prev)}
+              className="text-xs font-medium text-blue-600 transition hover:text-blue-700"
+            >
+              {showAutoDetails ? 'Скрыть детали' : 'Показать детали'}
+            </button>
+          </div>
+          {showAutoDetails && (
+            <div className="mt-4 grid gap-3 text-sm text-gray-700 md:grid-cols-2">
+              <div>
+                <div className="text-gray-400">Краткое наименование</div>
+                <div className="font-medium">{shortName || '—'}</div>
+              </div>
+              <div>
+                <div className="text-gray-400">Полное наименование</div>
+                <div className="font-medium">{fullName || '—'}</div>
+              </div>
+              <div>
+                <div className="text-gray-400">Форма</div>
+                <div className="font-medium">{form || '—'}</div>
+              </div>
+              <div>
+                <div className="text-gray-400">ОГРН</div>
+                <div className="font-medium">{ogrn || '—'}</div>
+              </div>
+              <div>
+                <div className="text-gray-400">КПП</div>
+                <div className="font-medium">{kpp || '—'}</div>
+              </div>
+              <div className="md:col-span-2">
+                <div className="text-gray-400">Юридический адрес</div>
+                <div className="font-medium">{jurAddress || '—'}</div>
+              </div>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => setIsEditingDetails(true)}
+            className="mt-4 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11.333 2A2.667 2.667 0 0 1 14 4.667v6.666A2.667 2.667 0 0 1 11.333 14H4.667A2.667 2.667 0 0 1 2 11.333V4.667A2.667 2.667 0 0 1 4.667 2h6.666zm0 1.333H4.667c-.736 0-1.333.597-1.333 1.334v6.666c0 .737.597 1.334 1.333 1.334h6.666c.737 0 1.334-.597 1.334-1.334V4.667c0-.737-.597-1.334-1.334-1.334zM9.724 5.61l.943.943-3.781 3.781H5.943V9.39l3.781-3.781zm1.414-1.414a.667.667 0 0 1 0 .943l-.471.471-.943-.943.471-.471a.667.667 0 0 1 .943 0z" fill="currentColor"/>
+            </svg>
+            Редактировать вручную
+          </button>
+        </div>
+      )}
 
       {isFullFormVisible && (
         <section className="rounded-2xl border border-slate-200 bg-slate-50/60 px-5 py-6">
