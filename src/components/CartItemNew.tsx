@@ -66,25 +66,25 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
     <div
       style={{
         background: '#fff',
-        borderRadius: '16px',
-        padding: '20px',
-        marginBottom: '12px',
+        borderRadius: '12px',
+        padding: '12px 16px',
+        marginBottom: '8px',
         border: '1px solid #E5E7EB',
         transition: 'box-shadow 0.2s',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
+        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.06)';
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
         {/* Чекбокс или номер */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', minWidth: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', minWidth: '20px' }}>
           {isSummaryStep ? (
             <div style={{
-              fontSize: '14px',
+              fontSize: '13px',
               fontWeight: 600,
               color: '#6B7280',
               lineHeight: '20px'
@@ -95,10 +95,10 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
             <div
               onClick={onSelect}
               style={{
-                width: '20px',
-                height: '20px',
+                width: '18px',
+                height: '18px',
                 border: `2px solid ${selected ? '#EC1C24' : '#D1D5DB'}`,
-                borderRadius: '6px',
+                borderRadius: '5px',
                 background: selected ? '#EC1C24' : '#fff',
                 cursor: 'pointer',
                 display: 'flex',
@@ -108,7 +108,7 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
               }}
             >
               {selected && (
-                <svg width="12" height="9" viewBox="0 0 12 9" fill="none">
+                <svg width="10" height="8" viewBox="0 0 12 9" fill="none">
                   <path
                     d="M1 4.5L4 7.5L11 1"
                     stroke="#fff"
@@ -124,54 +124,42 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
 
         {/* Информация о товаре */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Название и бренд */}
-          <div style={{ marginBottom: '8px' }}>
-            <h4 style={{
-              margin: 0,
-              fontSize: '16px',
-              fontWeight: 600,
-              color: '#111827',
-              lineHeight: '22px',
-              marginBottom: '4px',
-            }}>
-              {name}
-            </h4>
+          {/* Название и бренд/артикул в одной строке */}
+          <div style={{ marginBottom: '6px' }}>
             {(brand || article) && (
               <div style={{
                 fontSize: '13px',
                 color: '#6B7280',
                 lineHeight: '18px',
+                marginBottom: '2px',
               }}>
                 {brand && <span>{brand}</span>}
                 {brand && article && <span style={{ margin: '0 6px' }}>•</span>}
                 {article && <span>Артикул: {article}</span>}
               </div>
             )}
-          </div>
-
-          {/* Описание */}
-          {description && (
-            <div style={{
+            <h4 style={{
+              margin: 0,
               fontSize: '14px',
-              color: '#6B7280',
+              fontWeight: 600,
+              color: '#111827',
               lineHeight: '20px',
-              marginBottom: '12px',
             }}>
-              {description}
-            </div>
-          )}
+              {name}
+            </h4>
+          </div>
 
           {/* Доставка */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            fontSize: '13px',
+            gap: '6px',
+            fontSize: '12px',
             color: '#059669',
             fontWeight: 500,
-            marginBottom: showComment || comment ? '12px' : 0,
+            marginBottom: showComment || comment ? '8px' : 0,
           }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
               <path
                 d="M10.6667 2H2.66667C1.93333 2 1.34 2.6 1.34 3.33333L1.33333 12.6667C1.33333 13.4 1.92667 14 2.66 14H13.3333C14.0667 14 14.6667 13.4 14.6667 12.6667V5.33333L10.6667 2Z"
                 fill="currentColor"
@@ -200,8 +188,8 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: '#6B7280',
-                    fontSize: '13px',
+                    color: '#9CA3AF',
+                    fontSize: '12px',
                     cursor: 'pointer',
                     padding: 0,
                     textDecoration: 'underline',
@@ -211,7 +199,7 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
                   + Добавить комментарий
                 </button>
               ) : (
-                <div style={{ marginTop: '8px' }}>
+                <div style={{ marginTop: '6px' }}>
                   <input
                     type="text"
                     placeholder="Комментарий к товару"
@@ -219,10 +207,10 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
                     onChange={(e) => onComment(e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '8px 12px',
+                      padding: '6px 10px',
                       border: '1px solid #D1D5DB',
-                      borderRadius: '8px',
-                      fontSize: '14px',
+                      borderRadius: '6px',
+                      fontSize: '13px',
                       outline: 'none',
                       fontFamily: 'Onest, sans-serif',
                     }}
@@ -244,14 +232,14 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-end',
-          gap: '12px',
-          minWidth: '180px',
+          gap: '8px',
+          minWidth: '160px',
         }}>
           {/* Действия с товаром */}
           {!isSummaryStep && (
             <div style={{
               display: 'flex',
-              gap: '8px',
+              gap: '6px',
               alignItems: 'center',
             }}>
               <button
@@ -260,13 +248,13 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: '4px',
+                  padding: '2px',
                   color: favorite ? '#EC1C24' : '#9CA3AF',
                   transition: 'color 0.2s',
                 }}
                 title="В избранное"
               >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                   <path
                     d="M10 17.5L8.825 16.45C4.4 12.5 1.5 9.925 1.5 6.75C1.5 4.175 3.54 2.25 6.25 2.25C7.76 2.25 9.21 2.92 10 4.005C10.79 2.92 12.24 2.25 13.75 2.25C16.46 2.25 18.5 4.175 18.5 6.75C18.5 9.925 15.6 12.5 11.175 16.45L10 17.5Z"
                     fill={favorite ? 'currentColor' : 'none'}
@@ -281,7 +269,7 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: '4px',
+                  padding: '2px',
                   color: '#9CA3AF',
                   transition: 'color 0.2s',
                 }}
@@ -293,7 +281,7 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
                 }}
                 title="Удалить"
               >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                   <path
                     d="M5.5 18C5.0875 18 4.73433 17.8533 4.4405 17.5595C4.14667 17.2657 4 16.9125 4 16.5V5H3V3.5H7V2.75H13V3.5H17V5H16V16.5C16 16.9125 15.8533 17.2657 15.5595 17.5595C15.2657 17.8533 14.9125 18 14.5 18H5.5ZM7 14.25H8.5V6.75H7V14.25ZM11.5 14.25H13V6.75H11.5V14.25Z"
                     fill="currentColor"
@@ -307,10 +295,10 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '6px',
             background: '#F9FAFB',
-            borderRadius: '8px',
-            padding: '4px',
+            borderRadius: '6px',
+            padding: '3px',
           }}>
             {!isSummaryStep ? (
               <>
@@ -318,11 +306,11 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
                   onClick={() => onCountChange && onCountChange(Math.max(1, count - 1))}
                   disabled={count <= 1}
                   style={{
-                    width: '28px',
-                    height: '28px',
+                    width: '24px',
+                    height: '24px',
                     border: 'none',
                     background: count <= 1 ? '#E5E7EB' : '#fff',
-                    borderRadius: '6px',
+                    borderRadius: '5px',
                     cursor: count <= 1 ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -331,7 +319,7 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
                     transition: 'all 0.2s',
                   }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                     <path d="M2 6H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                 </button>
@@ -354,11 +342,11 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
                     }
                   }}
                   style={{
-                    width: '40px',
+                    width: '35px',
                     border: 'none',
                     background: 'transparent',
                     textAlign: 'center',
-                    fontSize: '14px',
+                    fontSize: '13px',
                     fontWeight: 600,
                     outline: 'none',
                     color: '#111827',
@@ -367,11 +355,11 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
                 <button
                   onClick={() => onCountChange && onCountChange(count + 1)}
                   style={{
-                    width: '28px',
-                    height: '28px',
+                    width: '24px',
+                    height: '24px',
                     border: 'none',
                     background: '#fff',
-                    borderRadius: '6px',
+                    borderRadius: '5px',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -380,15 +368,15 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
                     transition: 'all 0.2s',
                   }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                     <path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                 </button>
               </>
             ) : (
               <div style={{
-                padding: '4px 12px',
-                fontSize: '14px',
+                padding: '3px 10px',
+                fontSize: '13px',
                 fontWeight: 600,
                 color: '#111827',
               }}>
@@ -404,23 +392,23 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '6px',
                 justifyContent: 'flex-end',
-                marginBottom: '4px',
+                marginBottom: '3px',
               }}>
                 <span style={{
-                  fontSize: '14px',
+                  fontSize: '12px',
                   color: '#9CA3AF',
                   textDecoration: 'line-through',
                 }}>
                   {originalPrice?.toLocaleString('ru-RU')} ₽
                 </span>
                 <span style={{
-                  fontSize: '12px',
+                  fontSize: '11px',
                   fontWeight: 600,
                   color: '#EC1C24',
                   background: '#FEE2E2',
-                  padding: '2px 6px',
+                  padding: '2px 5px',
                   borderRadius: '4px',
                 }}>
                   −{discountPercent}%
@@ -430,10 +418,10 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
 
             {/* Текущая цена */}
             <div style={{
-              fontSize: '20px',
+              fontSize: '17px',
               fontWeight: 700,
               color: '#111827',
-              lineHeight: '28px',
+              lineHeight: '24px',
               fontFamily: 'Onest, sans-serif',
             }}>
               {price.toLocaleString('ru-RU')} ₽
@@ -442,7 +430,7 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
             {/* Цена за единицу */}
             {count > 1 && (
               <div style={{
-                fontSize: '13px',
+                fontSize: '12px',
                 color: '#6B7280',
                 marginTop: '2px',
               }}>

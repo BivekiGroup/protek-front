@@ -711,29 +711,37 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
                     />
                   </div>
                 </button>
-                {inCart && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '-8px',
-                      right: '-8px',
-                      backgroundColor: '#22c55e',
-                      color: 'white',
-                      borderRadius: '50%',
-                      width: '16px',
-                      height: '16px',
-                      fontSize: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 'bold',
-                      zIndex: 1
-                    }}
-                    title="В корзине"
-                  >
-                    ✓
-                  </div>
-                )}
+                {(() => {
+                  const existingQty = getExistingCartQuantity(offer);
+                  if (existingQty > 0) {
+                    return (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '-8px',
+                          right: '-8px',
+                          backgroundColor: '#dc2626',
+                          color: 'white',
+                          borderRadius: '50%',
+                          minWidth: '20px',
+                          height: '20px',
+                          fontSize: '11px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 'bold',
+                          zIndex: 1,
+                          padding: '0 4px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                        }}
+                        title={`В корзине: ${existingQty} шт.`}
+                      >
+                        {existingQty}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             </div>
           </div>
