@@ -171,6 +171,15 @@ export const REGISTER_NEW_CLIENT = gql`
 `
 
 // Новая система авторизации с паролем
+export const VERIFY_INN = gql`
+  query VerifyInn($inn: String!) {
+    verifyInn(inn: $inn) {
+      success
+      company
+    }
+  }
+`
+
 export const REGISTER_CLIENT_WITH_PASSWORD = gql`
   mutation RegisterClientWithPassword($input: RegisterClientInput!) {
     registerClientWithPassword(input: $input) {

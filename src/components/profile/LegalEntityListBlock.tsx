@@ -107,8 +107,26 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
   if (legalEntities.length === 0) {
     return (
       <div className="flex relative flex-col mt-5 gap-6 items-start self-stretch p-8 pl-8 bg-white rounded-2xl max-md:gap-5 max-md:p-5 max-sm:gap-4 max-sm:p-4">
-        <div className="text-3xl font-bold leading-8 text-gray-950 max-md:text-2xl max-sm:text-xl">
-          Юридические лица
+        <div className="flex items-center gap-3">
+          <div className="text-3xl font-bold leading-8 text-gray-950 max-md:text-2xl max-sm:text-xl">
+            Юридические лица
+          </div>
+          <div className="group relative flex items-center gap-2 cursor-help">
+            <img
+              src="/images/qwestions.svg"
+              loading="lazy"
+              alt="Подсказка"
+              className="w-5 h-5 transition-opacity group-hover:opacity-80"
+            />
+            <span className="text-xs text-gray-500 font-medium transition-colors group-hover:text-gray-700">Подсказка</span>
+            <div className="invisible group-hover:visible absolute left-0 top-8 z-50 w-72 rounded-lg bg-gray-900 p-3 text-xs text-white shadow-lg">
+              <div className="font-semibold mb-1">Управление реквизитами</div>
+              <div className="text-gray-300">
+                Здесь вы можете просмотреть и редактировать реквизиты вашей организации, а также добавить банковские реквизиты для выставления счетов и формирования документов.
+              </div>
+              <div className="absolute -top-1 left-3 h-2 w-2 rotate-45 bg-gray-900"></div>
+            </div>
+          </div>
         </div>
         <div className="text-gray-600">
           У вас пока нет добавленных юридических лиц. Нажмите кнопку ниже, чтобы добавить первое.
@@ -143,11 +161,29 @@ const LegalEntityListBlock: React.FC<LegalEntityListBlockProps> = ({
       className="flex relative flex-col mt-5 gap-6 items-start self-stretch p-8 pl-8 bg-white rounded-2xl max-md:gap-5 max-md:p-5 max-sm:gap-4 max-sm:p-4"
     >
       <div className="flex w-full flex-wrap items-center justify-between gap-4">
-        <div
-          layer-name="Юридические лица"
-          className="text-3xl font-bold leading-8 text-gray-950 max-md:text-2xl max-sm:text-xl"
-        >
-          Юридические лица
+        <div className="flex items-center gap-3">
+          <div
+            layer-name="Юридические лица"
+            className="text-3xl font-bold leading-8 text-gray-950 max-md:text-2xl max-sm:text-xl"
+          >
+            Юридические лица
+          </div>
+          <div className="group relative flex items-center gap-2 cursor-help">
+            <img
+              src="/images/qwestions.svg"
+              loading="lazy"
+              alt="Подсказка"
+              className="w-5 h-5 transition-opacity group-hover:opacity-80"
+            />
+            <span className="text-xs text-gray-500 font-medium transition-colors group-hover:text-gray-700">Подсказка</span>
+            <div className="invisible group-hover:visible absolute left-0 top-8 z-50 w-72 rounded-lg bg-gray-900 p-3 text-xs text-white shadow-lg">
+              <div className="font-semibold mb-1">Управление реквизитами</div>
+              <div className="text-gray-300">
+                Здесь вы можете просмотреть и редактировать реквизиты вашей организации, а также добавить банковские реквизиты для выставления счетов и формирования документов.
+              </div>
+              <div className="absolute -top-1 left-3 h-2 w-2 rotate-45 bg-gray-900"></div>
+            </div>
+          </div>
         </div>
         {onAddNew && (
           <button

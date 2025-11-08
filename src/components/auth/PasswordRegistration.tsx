@@ -1,23 +1,27 @@
 import React, { useState } from 'react'
-import { useMutation } from '@apollo/client'
-import { REGISTER_CLIENT_WITH_PASSWORD } from '@/lib/graphql'
-import { User, Mail, Building2, Phone } from 'lucide-react'
+import { useMutation, useLazyQuery } from '@apollo/client'
+import { REGISTER_CLIENT_WITH_PASSWORD, VERIFY_INN } from '@/lib/graphql'
+import { User, Mail, Building2, Phone, Lightbulb, Hash } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { z } from 'zod'
 
 const registrationSchema = z.object({
+  inn: z.string()
+    .min(10, 'ИНН должен содержать минимум 10 цифр')
+    .max(12, 'ИНН должен содержать максимум 12 цифр')
+    .regex(/^\d{10}$|^\d{12}$/, 'ИНН должен содержать 10 (ЮЛ) или 12 (ИП) цифр'),
   companyName: z.string().min(1, 'Введите название компании'),
   firstName: z.string().min(1, 'Введите имя'),
   lastName: z.string().min(1, 'Введите фамилию'),
+  email: z.string()
+    .min(1, 'Введите email')
+    .email('Введите корректный email'),
   phone: z.string()
     .regex(/^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/, 'Введите корректный номер телефона')
     .refine((val) => {
       const digits = val.replace(/\D/g, '')
       return digits.length === 11 && digits.startsWith('7')
-    }, 'Номер должен содержать 10 цифр'),
-  email: z.string()
-    .min(1, 'Введите email')
-    .email('Введите корректный email')
+    }, 'Номер должен содержать 10 цифр')
 })
 
 interface PasswordRegistrationProps {
@@ -29,14 +33,18 @@ const PasswordRegistration: React.FC<PasswordRegistrationProps> = ({
   onSuccess,
   onShowPendingVerification
 }) => {
+  const [inn, setInn] = useState('')
   const [companyName, setCompanyName] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('+7 ')
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingInn, setIsLoadingInn] = useState(false)
+  const [innData, setInnData] = useState<any>(null)
 
   const [registerClient] = useMutation(REGISTER_CLIENT_WITH_PASSWORD)
+  const [verifyInn] = useLazyQuery(VERIFY_INN)
 
   const formatPhone = (value: string) => {
     // Убираем все кроме цифр
@@ -77,16 +85,50 @@ const PasswordRegistration: React.FC<PasswordRegistrationProps> = ({
     setPhone(formatted)
   }
 
+  const handleInnChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 12)
+    setInn(value)
+
+    // Проверяем ИНН когда введено 10 или 12 цифр
+    if (value.length === 10 || value.length === 12) {
+      setIsLoadingInn(true)
+      try {
+        const { data } = await verifyInn({
+          variables: { inn: value }
+        })
+
+        if (data?.verifyInn?.success && data?.verifyInn?.company) {
+          const company = data.verifyInn.company
+          setInnData(company)
+          // Автозаполняем название компании
+          setCompanyName(company.name?.short_with_opf || company.name?.short || '')
+          toast.success('Данные компании загружены')
+        } else {
+          setInnData(null)
+          toast.error('Компания с таким ИНН не найдена')
+        }
+      } catch (error) {
+        console.error('Ошибка проверки ИНН:', error)
+        toast.error('Не удалось проверить ИНН')
+      } finally {
+        setIsLoadingInn(false)
+      }
+    } else {
+      setInnData(null)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     // Валидация через zod
     const validationResult = registrationSchema.safeParse({
+      inn: inn.trim(),
       companyName: companyName.trim(),
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      phone: phone.trim() || '+7 ',
-      email: email.trim()
+      email: email.trim(),
+      phone: phone.trim() || '+7 '
     })
 
     if (!validationResult.success) {
@@ -108,11 +150,20 @@ const PasswordRegistration: React.FC<PasswordRegistrationProps> = ({
       const { data, errors } = await registerClient({
         variables: {
           input: {
+            inn: inn.trim(),
             phone: phoneDigits,
             companyName: companyName.trim(),
             firstName: firstName.trim(),
             lastName: lastName.trim(),
-            email: email.trim()
+            email: email.trim(),
+            legalEntityData: innData ? {
+              shortName: innData.name?.short_with_opf || innData.name?.short || companyName.trim(),
+              fullName: innData.name?.full_with_opf || innData.name?.full || companyName.trim(),
+              inn: inn.trim(),
+              kpp: innData.kpp || null,
+              ogrn: innData.ogrn || null,
+              address: innData.address?.value || null
+            } : null
           }
         }
       })
@@ -152,14 +203,43 @@ const PasswordRegistration: React.FC<PasswordRegistrationProps> = ({
       <div className="flex w-full max-w-[340px] flex-col gap-3">
         {/* Баннер для юридических лиц */}
         <div className="rounded-lg bg-red-50 border border-red-200 p-2.5 flex gap-2">
-          <Building2 className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+          <Lightbulb className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-xs font-medium text-red-900">Только для юридических лиц и ИП</p>
             <p className="text-[10px] text-red-700 mt-0.5">
-              Регистрация доступна только для организаций. Временно не принимаем физических лиц.
+              Регистрация доступна только для организаций.
             </p>
           </div>
         </div>
+
+        {/* ИНН */}
+        <div className="flex h-[44px] w-full items-center gap-[10px] rounded-[12px] bg-[#F5F8FB] px-4 relative">
+          <Hash className="h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            value={inn}
+            onChange={handleInnChange}
+            placeholder="ИНН организации (10 или 12 цифр)"
+            maxLength={12}
+            className="w-full border-none bg-transparent text-[15px] font-medium leading-none text-[#424F60] placeholder:text-[#9CA3AF] focus:outline-none"
+            disabled={isLoading}
+          />
+          {isLoadingInn && (
+            <div className="absolute right-4">
+              <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
+        </div>
+
+        {/* Показываем найденные данные компании */}
+        {innData && (
+          <div className="rounded-lg bg-green-50 border border-green-200 p-2.5">
+            <p className="text-xs font-medium text-green-900">✓ Организация найдена</p>
+            <p className="text-[10px] text-green-700 mt-0.5">
+              {innData.name?.full_with_opf || innData.name?.short_with_opf}
+            </p>
+          </div>
+        )}
 
         {/* Название компании */}
         <div className="flex h-[44px] w-full items-center gap-[10px] rounded-[12px] bg-[#F5F8FB] px-4">
@@ -170,7 +250,7 @@ const PasswordRegistration: React.FC<PasswordRegistrationProps> = ({
             onChange={(e) => setCompanyName(e.target.value)}
             placeholder="Название компании"
             className="w-full border-none bg-transparent text-[15px] font-medium leading-none text-[#424F60] placeholder:text-[#9CA3AF] focus:outline-none"
-            disabled={isLoading}
+            disabled={isLoading || (innData && !!innData.name)}
           />
         </div>
 
@@ -201,19 +281,6 @@ const PasswordRegistration: React.FC<PasswordRegistrationProps> = ({
           </div>
         </div>
 
-        {/* Телефон */}
-        <div className="flex h-[44px] w-full items-center gap-[10px] rounded-[12px] bg-[#F5F8FB] px-4">
-          <Phone className="h-4 w-4 text-slate-400" />
-          <input
-            type="tel"
-            value={phone}
-            onChange={handlePhoneChange}
-            placeholder="+7 (999) 123-45-67"
-            className="w-full border-none bg-transparent text-[15px] font-medium leading-none text-[#424F60] placeholder:text-[#9CA3AF] focus:outline-none"
-            disabled={isLoading}
-          />
-        </div>
-
         {/* Email */}
         <div className="flex h-[44px] w-full items-center gap-[10px] rounded-[12px] bg-[#F5F8FB] px-4">
           <Mail className="h-4 w-4 text-slate-400" />
@@ -222,6 +289,19 @@ const PasswordRegistration: React.FC<PasswordRegistrationProps> = ({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
+            className="w-full border-none bg-transparent text-[15px] font-medium leading-none text-[#424F60] placeholder:text-[#9CA3AF] focus:outline-none"
+            disabled={isLoading}
+          />
+        </div>
+
+        {/* Телефон */}
+        <div className="flex h-[44px] w-full items-center gap-[10px] rounded-[12px] bg-[#F5F8FB] px-4">
+          <Phone className="h-4 w-4 text-slate-400" />
+          <input
+            type="tel"
+            value={phone}
+            onChange={handlePhoneChange}
+            placeholder="+7 (999) 123-45-67"
             className="w-full border-none bg-transparent text-[15px] font-medium leading-none text-[#424F60] placeholder:text-[#9CA3AF] focus:outline-none"
             disabled={isLoading}
           />
