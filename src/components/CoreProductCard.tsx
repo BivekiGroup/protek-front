@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { ChevronsUpDown, ChevronUp, ChevronDown } from "./icons";
 import { BadgeCheck } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
@@ -148,6 +149,9 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
     offers.reduce((acc, _, index) => ({ ...acc, [index]: "1" }), {})
   );
   const [localInCart, setLocalInCart] = useState<{ [key: number]: boolean }>({});
+
+  // Находим первый internal offer с productId для ссылки на карточку товара
+  const internalOfferWithProductId = offers.find(offer => offer.productId && !offer.isExternal);
 
   useEffect(() => {
     setInputValues(offers.reduce((acc, _, index) => ({ ...acc, [index]: "1" }), {}));
@@ -720,7 +724,7 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
                           position: 'absolute',
                           top: '-8px',
                           right: '-8px',
-                          backgroundColor: '#dc2626',
+                          backgroundColor: '#16a34a',
                           color: 'white',
                           borderRadius: '50%',
                           minWidth: '20px',
@@ -803,7 +807,42 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
                       </svg>
                     </div>
                   </div>
-                  <div className="text-block-21 mt-1">{name}</div>
+                  <div className="text-block-21 mt-1" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span>{name}</span>
+                    {internalOfferWithProductId && (
+                      <Link
+                        href={`/card?id=${internalOfferWithProductId.productId}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '4px 10px',
+                          backgroundColor: '#2563eb',
+                          color: 'white',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          textDecoration: 'none',
+                          transition: 'all 0.2s',
+                          whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#1d4ed8';
+                          e.currentTarget.style.transform = 'translateY(-1px)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#2563eb';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
+                        title="Перейти на карточку товара"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M13 7H7v10h10v-6m-5.75 5.75l8-8M15 5h4v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Подробнее
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
               {image && (

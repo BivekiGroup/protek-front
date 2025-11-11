@@ -71,6 +71,7 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
         marginBottom: '6px',
         border: '1px solid #E5E7EB',
         transition: 'box-shadow 0.2s',
+        overflow: 'hidden',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.06)';
@@ -79,14 +80,16 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', width: '100%', overflow: 'hidden' }}>
         {/* Чекбокс или номер */}
         {isSummaryStep ? (
           <div style={{
             fontSize: '12px',
             fontWeight: 600,
             color: '#6B7280',
+            width: '24px',
             minWidth: '24px',
+            flexShrink: 0,
           }}>
             {itemNumber}
           </div>
@@ -97,6 +100,7 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
               width: '20px',
               height: '20px',
               minWidth: '20px',
+              flexShrink: 0,
               border: `2px solid ${selected ? '#EC1C24' : '#D1D5DB'}`,
               borderRadius: '4px',
               background: selected ? '#EC1C24' : '#fff',
@@ -105,6 +109,7 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               transition: 'all 0.2s',
+              marginRight: '10px',
             }}
           >
             {selected && (
@@ -121,39 +126,59 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
           </div>
         )}
 
-        {/* Информация о товаре - всё в одну строку */}
+        {/* Информация о товаре - фиксированная структура */}
         <div style={{
           flex: 1,
           minWidth: 0,
+          maxWidth: '100%',
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
+          marginRight: '10px',
+          overflow: 'hidden',
         }}>
-          {/* Название с брендом/артикулом в одну строку */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
-              {(brand || article) && (
-                <span style={{
-                  fontSize: '12px',
-                  color: '#6B7280',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {brand && <span>{brand}</span>}
-                  {brand && article && <span style={{ margin: '0 4px' }}>•</span>}
-                  {article && <span>{article}</span>}
-                </span>
-              )}
+          {/* Бренд/Артикул - фиксированная ширина */}
+          <div style={{
+            width: '180px',
+            minWidth: '180px',
+            maxWidth: '180px',
+            flexShrink: 0,
+            marginRight: '10px',
+          }}>
+            {(brand || article) && (
               <span style={{
-                fontSize: '13px',
-                fontWeight: 600,
-                color: '#111827',
+                fontSize: '12px',
+                color: '#6B7280',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
+                display: 'block',
               }}>
-                {name}
+                {brand && <span>{brand}</span>}
+                {brand && article && <span style={{ margin: '0 4px' }}>•</span>}
+                {article && <span>{article}</span>}
               </span>
-            </div>
+            )}
+          </div>
+
+          {/* Название товара - flex с ограничением */}
+          <div style={{
+            flex: 1,
+            minWidth: 0,
+            maxWidth: '100%',
+            marginRight: '10px',
+            overflow: 'hidden',
+          }}>
+            <span style={{
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#111827',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              display: 'block',
+            }}>
+              {name}
+            </span>
           </div>
 
           {/* Доставка - компактно */}
@@ -166,6 +191,9 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
               color: '#059669',
               fontWeight: 500,
               whiteSpace: 'nowrap',
+              width: '120px',
+              minWidth: '120px',
+              flexShrink: 0,
             }}>
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                 <path
@@ -178,7 +206,7 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
                   fill="currentColor"
                 />
               </svg>
-              <span style={{ maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {delivery.replace('Доставка в течение ', '')}
               </span>
             </div>
@@ -193,6 +221,11 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
           background: '#F9FAFB',
           borderRadius: '6px',
           padding: '3px',
+          minWidth: '90px',
+          width: '90px',
+          flexShrink: 0,
+          marginRight: '10px',
+          justifyContent: 'center',
         }}>
           {!isSummaryStep ? (
             <>
@@ -286,7 +319,10 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          minWidth: '110px',
+          minWidth: '150px',
+          width: '150px',
+          flexShrink: 0,
+          marginRight: '10px',
         }}>
           {discount > 0 && (
             <span style={{
@@ -328,6 +364,9 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
             display: 'flex',
             gap: '4px',
             alignItems: 'center',
+            width: '50px',
+            minWidth: '50px',
+            flexShrink: 0,
           }}>
             <button
               onClick={onFavorite}

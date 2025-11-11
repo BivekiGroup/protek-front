@@ -420,7 +420,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
     setShowPlaceholder(false);
     if (searchQuery.trim() === '') {
       setShowSearchHistory(true);
-      getSearchHistory({ variables: { limit: 5 } });
+      getSearchHistory({ variables: { limit: 3 } });
     }
   };
 
@@ -428,13 +428,13 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
-    
+
     // Управляем placeholder в зависимости от наличия текста
     if (value.trim() === '') {
       setShowPlaceholder(false); // Скрываем placeholder пока в фокусе
       setShowSearchHistory(true);
       setShowResults(false);
-      getSearchHistory({ variables: { limit: 5 } });
+      getSearchHistory({ variables: { limit: 3 } });
     } else {
       setShowPlaceholder(false); // Скрываем placeholder когда есть текст
       setShowSearchHistory(false);
@@ -450,14 +450,30 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
   };
 
   // Обработчик клика по элементу истории
-  const handleHistoryItemClick = (searchQuery: string) => {
-    setSearchQuery(searchQuery);
+  const handleHistoryItemClick = (item: PartsSearchHistoryItem) => {
+    // Закрываем дропдаун
     setShowSearchHistory(false);
     setInputFocused(false);
-    setShowPlaceholder(false); // Скрываем placeholder так как теперь есть текст
-    // Фокусируем поле ввода для возможности редактирования
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
+    setShowPlaceholder(false);
+
+    // Определяем куда перенаправлять в зависимости от типа поиска (как в ProfileHistoryItem)
+    if (item.searchType === 'VIN' || item.searchType === 'PLATE') {
+      // Для VIN и госномера перенаправляем на vehicle-search-results
+      router.push(`/vehicle-search-results?q=${encodeURIComponent(item.searchQuery)}`);
+    } else if (item.searchType === 'ARTICLE' || item.searchType === 'OEM' || (item.searchType === 'TEXT' && item.articleNumber)) {
+      // Для поиска по артикулу/OEM или текстового поиска с артикулом
+      const searchBrand = item.brand || '';
+      const searchArticle = item.articleNumber || item.searchQuery;
+      router.push(`/search-result?article=${encodeURIComponent(searchArticle)}&brand=${encodeURIComponent(searchBrand)}`);
+    } else if (item.searchType === 'TEXT') {
+      // Для обычного текстового поиска
+      router.push(`/search?q=${encodeURIComponent(item.searchQuery)}&mode=parts`);
+    } else if (item.searchType === 'PART_VEHICLES') {
+      // Для поиска автомобилей по детали
+      router.push(`/vehicles-by-part?partNumber=${encodeURIComponent(item.searchQuery)}`);
+    } else {
+      // По умолчанию - обычный поиск
+      router.push(`/search?q=${encodeURIComponent(item.searchQuery)}&mode=parts`);
     }
   };
 
@@ -471,7 +487,6 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
               <Link href="/about" className="nav-link w-nav-link">О компании</Link>
               <Link href="/payments-method" className="nav-link w-nav-link">Оплата и доставка</Link>
               <Link href="/" className="nav-link w-nav-link">Гарантия и возврат</Link>
-              <Link href="/payments-method" className="nav-link w-nav-link">Покупателям</Link>
               <Link href="/wholesale" className="nav-link w-nav-link">Оптовым клиентам</Link>
               <Link href="/contacts" className="nav-link w-nav-link">Контакты</Link>
             </nav>
@@ -552,7 +567,15 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
                       onBlur={handleInputBlur}
                       disabled={isSearching}
                     />
-                    <div className="search-field-actions">
+                    <div className="search-field-actions" style={{ gap: '12px' }}>
+                      <Link
+                        href="/profile-history"
+                        className="search-field-icon-button"
+                        onClick={(event) => handleProtectedNavigation(event, '/profile-history')}
+                        aria-label="История поиска"
+                      >
+                        <HistoryIcon className="h-5 w-5" strokeWidth={2.2} />
+                      </Link>
                       <button
                         type="submit"
                         className="search-field-icon-button"
@@ -570,14 +593,6 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
                           </svg>
                         )}
                       </button>
-                      <Link
-                        href="/profile-history"
-                        className="search-field-icon-button"
-                        onClick={(event) => handleProtectedNavigation(event, '/profile-history')}
-                        aria-label="История поиска"
-                      >
-                        <HistoryIcon className="h-5 w-5" strokeWidth={2.2} />
-                      </Link>
                     </div>
                   </div>
                 </form>

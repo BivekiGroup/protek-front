@@ -1,7 +1,9 @@
 import * as React from "react";
+import { useRouter } from 'next/router';
 import { useQuery, useMutation } from '@apollo/client';
 import toast from 'react-hot-toast';
 import { GET_ORDERS, CANCEL_ORDER, REQUEST_ORDER_RETURN } from '@/lib/graphql';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 interface OrderItem {
   id: string;
@@ -105,6 +107,8 @@ const formatDateTime = (dateString: string) =>
   });
 
 const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
+  const router = useRouter();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const [activeTab, setActiveTab] = React.useState(0);
   const [search, setSearch] = React.useState("");
   const [clientId, setClientId] = React.useState<string | null>(null);
@@ -323,46 +327,90 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                   </div>
 
                   <div className="flex flex-col mt-5 w-full max-md:max-w-full">
-                    <div className="flex flex-wrap gap-5 items-center pr-24 pb-2.5 pl-2 w-full text-sm text-gray-400 whitespace-nowrap border-b border-solid border-b-stone-300 max-md:pr-5 max-md:max-w-full">
-                      <div className="gap-1.5 self-stretch my-auto w-9">№</div>
-                      <div className="flex gap-1.5 items-center self-stretch my-auto w-[130px]">
-                        <div className="self-stretch my-auto">Производитель</div>
-                      </div>
-                      <div className="gap-1.5 self-stretch my-auto w-[120px]">Артикул</div>
-                      <div className="flex flex-1 shrink gap-1.5 items-center self-stretch my-auto basis-0 min-w-[240px]">
-                        <div className="self-stretch my-auto">Наименование</div>
-                      </div>
-                      <div className="self-stretch my-auto w-[60px]">Кол-во</div>
-                      <div className="self-stretch my-auto text-right w-[90px]">Стоимость</div>
+                    <div className="flex items-center pb-2.5 pl-2 pr-7 w-full text-sm text-gray-400 border-b border-solid border-b-stone-300 max-md:pr-5 max-md:max-w-full">
+                      <div className="w-9 text-center shrink-0">№</div>
+                      <div className="w-[130px] shrink-0 ml-5">Производитель</div>
+                      <div className="w-[120px] shrink-0 ml-5">Артикул</div>
+                      <div className="flex-1 ml-5 min-w-[240px]">Наименование</div>
+                      <div className="w-[80px] text-center shrink-0 ml-5">Кол-во</div>
+                      <div className="w-[110px] text-right shrink-0 ml-5">Стоимость</div>
+                      <div className="w-[40px] shrink-0 ml-5"></div>
                     </div>
 
                     <div className="flex flex-col mt-1.5 w-full max-md:max-w-full">
-                      {order.items.map((item, index) => (
-                        <div key={item.id} className="flex flex-wrap gap-5 items-center pt-1.5 pr-7 pb-2 pl-2 w-full rounded-lg min-w-[420px] max-md:pr-5 max-md:max-w-full">
-                          <div className="self-stretch my-auto w-9 text-sm leading-4 text-center text-black">
-                            {index + 1}
-                          </div>
-                          <div className="flex flex-wrap flex-1 shrink gap-5 items-center self-stretch my-auto basis-0 min-w-[240px] max-md:max-w-full">
-                            <div className="self-stretch my-auto text-sm font-bold leading-snug text-gray-950 w-[130px]">
+                      {order.items.map((item, index) => {
+                        const isItemFavorite = isFavorite(undefined, undefined, item.article, item.brand);
+
+                        return (
+                          <div
+                            key={item.id}
+                            className="flex items-center pt-1.5 pb-2 pl-2 pr-7 w-full rounded-lg max-md:pr-5 max-md:max-w-full cursor-pointer hover:bg-gray-50 transition-colors"
+                            onClick={() => {
+                              if (item.article && item.brand) {
+                                router.push(`/search-result?article=${encodeURIComponent(item.article)}&brand=${encodeURIComponent(item.brand)}`);
+                              }
+                            }}
+                            title={item.article && item.brand ? "Перейти к поиску товара" : ""}
+                          >
+                            <div className="w-9 text-sm leading-4 text-center text-black shrink-0">
+                              {index + 1}
+                            </div>
+                            <div className="w-[130px] text-sm font-bold leading-snug text-gray-950 shrink-0 ml-5 truncate">
                               {item.brand || '-'}
                             </div>
-                            <div className="self-stretch my-auto text-sm font-bold leading-snug text-gray-950 w-[120px]">
+                            <div className="w-[120px] text-sm font-bold leading-snug text-gray-950 shrink-0 ml-5 truncate">
                               {item.article || '-'}
                             </div>
-                            <div className="flex-1 shrink self-stretch my-auto text-sm text-gray-400 basis-0">
+                            <div className="flex-1 text-sm text-gray-400 ml-5 min-w-[240px] truncate">
                               {item.name}
                             </div>
-                            <div className="self-stretch text-sm text-gray-400 w-[60px]">
+                            <div className="w-[80px] text-sm text-gray-400 text-center shrink-0 ml-5">
                               {item.quantity} шт.
                             </div>
-                            <div className="flex flex-col justify-center self-stretch my-auto text-right w-[90px]">
+                            <div className="w-[110px] text-right shrink-0 ml-5">
                               <div className="text-sm font-bold leading-snug text-gray-950">
                                 {formatPrice(item.totalPrice, order.currency)}
                               </div>
                             </div>
+                            <div className="w-[40px] flex justify-center shrink-0 ml-5">
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (isItemFavorite) {
+                                    // Найти и удалить из избранного
+                                    await removeFromFavorites(item.id);
+                                  } else {
+                                    // Добавить в избранное
+                                    await addToFavorites({
+                                      name: item.name,
+                                      brand: item.brand || '',
+                                      article: item.article || '',
+                                      price: item.price,
+                                      currency: order.currency
+                                    });
+                                  }
+                                }}
+                                className="p-1 hover:scale-110 transition-transform"
+                                title={isItemFavorite ? "Удалить из избранного" : "Добавить в избранное"}
+                              >
+                                <svg
+                                  width="20"
+                                  height="20"
+                                  viewBox="0 0 30 30"
+                                  fill={isItemFavorite ? "#EC1C24" : "none"}
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M15 25L13.405 23.5613C7.74 18.4714 4 15.1035 4 10.9946C4 7.6267 6.662 5 10.05 5C11.964 5 13.801 5.88283 15 7.26703C16.199 5.88283 18.036 5 19.95 5C23.338 5 26 7.6267 26 10.9946C26 15.1035 22.26 18.4714 16.595 23.5613L15 25Z"
+                                    stroke={isItemFavorite ? "#EC1C24" : "#9CA3AF"}
+                                    strokeWidth="2"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -425,15 +473,80 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
 
                   <div className="flex flex-wrap gap-3 mt-6">
                     {order.paymentMethod === 'invoice' && (
-                      <a
-                        href={order.invoiceUrl || `${process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL?.replace('/graphql', '')}/api/order-invoice/${order.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={async () => {
+                          try {
+                            // Если есть готовый invoiceUrl, используем его напрямую
+                            if (order.invoiceUrl) {
+                              console.log('🔍 Opening existing invoice URL:', order.invoiceUrl);
+                              window.open(order.invoiceUrl, '_blank');
+                              return;
+                            }
+
+                            const userData = typeof window !== "undefined" ? window.localStorage.getItem("userData") : null;
+                            console.log('🔍 userData from localStorage:', userData ? 'exists' : 'null');
+
+                            if (!userData) {
+                              alert('Необходимо авторизоваться для скачивания счёта');
+                              return;
+                            }
+
+                            const parsedData = JSON.parse(userData);
+
+                            // Создаем токен так же, как Apollo Client
+                            const token = parsedData?.token || `client_${parsedData?.id}`;
+                            console.log('🔍 token created:', token.substring(0, 20) + '...');
+
+                            if (!token) {
+                              alert('Токен авторизации не найден. Попробуйте войти заново.');
+                              return;
+                            }
+
+                            // Иначе генерируем через API с токеном
+                            const url = `${process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL?.replace('/api/graphql', '')}/api/order-invoice/${order.id}`;
+                            console.log('🔍 Fetching invoice from:', url);
+
+                            const response = await fetch(url, {
+                              headers: {
+                                'Authorization': `Bearer ${token}`
+                              }
+                            });
+
+                            console.log('🔍 Response status:', response.status);
+
+                            if (!response.ok) {
+                              const errorData = await response.text();
+                              console.error('🔍 Error response:', errorData);
+                              throw new Error(`Не удалось загрузить счёт: ${response.status}`);
+                            }
+
+                            // Получаем blob из ответа
+                            const blob = await response.blob();
+                            console.log('🔍 Blob size:', blob.size);
+
+                            // Создаем временную ссылку для скачивания
+                            const downloadUrl = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = downloadUrl;
+                            a.download = `Счет_${order.orderNumber}.pdf`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(downloadUrl);
+
+                            console.log('✅ Invoice downloaded successfully');
+                          } catch (error) {
+                            console.error('❌ Ошибка при скачивании счёта:', error);
+                            alert('Не удалось скачать счёт. Попробуйте позже или обратитесь в поддержку.');
+                          }
+                        }}
                         className="inline-flex items-center px-4 py-2 rounded font-medium transition-colors"
                         style={{
                           backgroundColor: '#f59e0b',
                           color: '#ffffff',
-                          textDecoration: 'none'
+                          textDecoration: 'none',
+                          border: 'none',
+                          cursor: 'pointer'
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.backgroundColor = '#d97706'
@@ -446,7 +559,7 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         <span style={{ color: '#ffffff' }}>Скачать счёт на оплату</span>
-                      </a>
+                      </button>
                     )}
                     {canCancel && (
                       <button

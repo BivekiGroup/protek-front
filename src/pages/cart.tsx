@@ -27,11 +27,14 @@ export default function CartPage() {
         padding: '40px 0',
         background: '#F9FAFB',
         minHeight: 'calc(100vh - 200px)',
+        overflowX: 'hidden',
       }}>
         <div style={{
           maxWidth: '1580px',
           margin: '0 auto',
           padding: '0 20px',
+          width: '100%',
+          boxSizing: 'border-box',
         }}>
           {/* Основной контент */}
           <div style={{
@@ -39,9 +42,11 @@ export default function CartPage() {
             gridTemplateColumns: hasItems ? '1fr 380px' : '1fr',
             gap: '24px',
             alignItems: 'flex-start',
+            width: '100%',
+            maxWidth: '100%',
           }}>
             {/* Левая колонка - список товаров */}
-            <div>
+            <div style={{ minWidth: 0, overflow: 'hidden', width: '100%' }}>
               <CartListNew isSummaryStep={step === 2} />
             </div>
 

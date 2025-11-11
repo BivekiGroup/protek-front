@@ -4,7 +4,7 @@ import { PartsSearchHistoryItem } from '@/lib/graphql/search-history';
 interface SearchHistoryDropdownProps {
   isVisible: boolean;
   historyItems: PartsSearchHistoryItem[];
-  onItemClick: (searchQuery: string) => void;
+  onItemClick: (item: PartsSearchHistoryItem) => void;
   loading?: boolean;
 }
 
@@ -54,25 +54,23 @@ const SearchHistoryDropdown: React.FC<SearchHistoryDropdownProps> = ({
           {uniqueQueries.map((item) => (
             <button
               key={item.id}
-              onClick={() => {
-                if ((item.searchType === 'ARTICLE' || item.searchType === 'OEM') && item.articleNumber) {
-                  onItemClick(item.articleNumber);
-                } else {
-                  onItemClick(item.searchQuery);
-                }
-              }}
+              onClick={() => onItemClick(item)}
               className="search-history-item-custom"
               style={{ cursor: 'pointer' }}
             >
               <div className="flex items-center gap-3">
                 <span className="search-history-icon-custom">
-                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10" />
                     <path d="M12 8v4l3 3" />
                   </svg>
                 </span>
                 <span className="search-history-inline">
-                  <span className="search-history-query-custom">{item.searchQuery}</span>
+                  <span className="search-history-query-custom">
+                    {(item.searchType === 'ARTICLE' || item.searchType === 'OEM') && item.articleNumber
+                      ? item.articleNumber
+                      : item.searchQuery}
+                  </span>
                   <span className="search-history-type-custom">{getSearchTypeLabel(item.searchType)}</span>
                 </span>
               </div>
@@ -91,14 +89,14 @@ const SearchHistoryDropdown: React.FC<SearchHistoryDropdownProps> = ({
           left: 0;
           right: 0;
           background: #fff;
-          border-radius: 16px;
-          box-shadow: 0 8px 32px rgba(44,62,80,0.10), 0 1.5px 4px rgba(44,62,80,0.08);
-          margin-top: 12px;
+          border-radius: 12px;
+          box-shadow: 0 4px 16px rgba(44,62,80,0.08), 0 1px 3px rgba(44,62,80,0.06);
+          margin-top: 8px;
           z-index: 50;
-          max-height: 260px;
+          max-height: 180px;
           overflow-y: auto;
           border: 1px solid #f0f0f0;
-          padding: 6px 0;
+          padding: 4px 0;
           scrollbar-width: none; /* Firefox */
           -ms-overflow-style: none; /* IE и Edge */
         }
@@ -110,13 +108,13 @@ const SearchHistoryDropdown: React.FC<SearchHistoryDropdownProps> = ({
           background: none;
           border: none;
           outline: none;
-          padding: 12px 20px;
+          padding: 8px 14px;
           border-radius: 0;
-          transition: background 0.18s;
+          transition: background 0.15s;
           display: block;
         }
         .search-history-item-custom:hover, .search-history-item-custom:focus {
-          background: #e5e7eb;
+          background: #f3f4f6;
         }
         .search-history-item-custom .flex {
           flex-direction: row-reverse;
@@ -125,13 +123,13 @@ const SearchHistoryDropdown: React.FC<SearchHistoryDropdownProps> = ({
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 32px;
-          height: 32px;
+          width: 24px;
+          height: 24px;
           border-radius: 50%;
           background: #f3f4f6;
-          color: #222;
+          color: #666;
           flex-shrink: 0;
-          margin-left: 12px;
+          margin-left: 8px;
           margin-right: 0;
         }
         .search-history-item-custom:hover .search-history-icon-custom,
@@ -144,10 +142,10 @@ const SearchHistoryDropdown: React.FC<SearchHistoryDropdownProps> = ({
           flex: 1 1 0%;
           min-width: 0;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
         }
         .search-history-query-custom {
-          font-size: 15px;
+          font-size: 13px;
           font-weight: 500;
           color: #222;
           margin: 0;
@@ -160,9 +158,9 @@ const SearchHistoryDropdown: React.FC<SearchHistoryDropdownProps> = ({
           min-width: 0;
         }
         .search-history-type-custom {
-          font-size: 12px;
+          font-size: 11px;
           color: #8e9aac;
-          margin: 0 0 0 8px;
+          margin: 0 0 0 6px;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;

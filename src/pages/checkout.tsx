@@ -31,6 +31,8 @@ export default function CheckoutNewPage() {
   const [showLegalEntityModal, setShowLegalEntityModal] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showRecipientModal, setShowRecipientModal] = useState(false);
+  const [showStockWarningModal, setShowStockWarningModal] = useState(false);
+  const [stockWarningItems, setStockWarningItems] = useState<Array<{name: string, available: number, requested: number, productId?: string}>>([]);
 
   const [createOrder] = useMutation(CREATE_ORDER);
 
@@ -99,6 +101,97 @@ export default function CheckoutNewPage() {
     return `${price.toLocaleString('ru-RU')} ₽`;
   };
 
+  // Функция для оформления заказа с доступным количеством
+  const handleOrderWithAvailableQuantity = async () => {
+    setShowStockWarningModal(false);
+    setIsProcessing(true);
+    setError("");
+
+    try {
+      const user = storedUserData;
+
+      // Создаем модифицированный список товаров с доступным количеством
+      const modifiedItems = selectedItems.map(item => {
+        const stockIssue = stockWarningItems.find(si => si.productId === item.productId);
+
+        return {
+          productId: item.productId,
+          externalId: item.offerKey,
+          name: item.name,
+          article: item.article || '',
+          brand: item.brand || '',
+          price: item.price,
+          quantity: stockIssue ? stockIssue.available : item.quantity
+        };
+      });
+
+      const orderResult = await createOrder({
+        variables: {
+          input: {
+            clientId: user.id,
+            clientEmail: user.email || '',
+            clientPhone: recipientPhone,
+            clientName: recipientName,
+            deliveryAddress: selectedDeliveryAddress.address,
+            deliveryTime: null,
+            legalEntityId: selectedLegalEntity.id,
+            paymentMethod: paymentMethod,
+            comment: `Адрес доставки: ${selectedDeliveryAddress.address}. Юридическое лицо: ${selectedLegalEntity.shortName || selectedLegalEntity.fullName}. Способ оплаты: ${getPaymentMethodName(paymentMethod)}. ВНИМАНИЕ: Заказ оформлен с доступным количеством товара на складе.`,
+            items: modifiedItems
+          }
+        }
+      });
+
+      const order = orderResult.data?.createOrder;
+      if (!order) {
+        throw new Error('Не удалось создать заказ');
+      }
+
+      clearCart();
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('cartSummaryState');
+      }
+
+      window.location.href = `/payment/success?orderId=${order.id}&orderNumber=${order.orderNumber}&paymentMethod=${paymentMethod}`;
+
+    } catch (error) {
+      console.error('Ошибка при создании заказа:', error);
+      setError(error instanceof Error ? error.message : 'Произошла ошибка при оформлении заказа');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Функция проверки наличия товаров на складе
+  const checkStockAvailability = () => {
+    const itemsWithStockIssues: Array<{name: string, available: number, requested: number, productId: string}> = [];
+
+    for (const item of selectedItems) {
+      // Проверяем только внутренние товары (с productId и не isExternal)
+      if (item.productId && !item.isExternal) {
+        // Парсим stock (может быть string или number)
+        let available = 0;
+        if (typeof item.stock === 'number') {
+          available = item.stock;
+        } else if (typeof item.stock === 'string') {
+          const match = item.stock.match(/\d+/);
+          available = match ? parseInt(match[0], 10) : 0;
+        }
+
+        if (available < item.quantity) {
+          itemsWithStockIssues.push({
+            name: item.name,
+            available: available,
+            requested: item.quantity,
+            productId: item.productId
+          });
+        }
+      }
+    }
+
+    return itemsWithStockIssues;
+  };
+
   const handleSubmit = async () => {
     if (!recipientName.trim() || !recipientPhone.trim()) {
       toast.error('Пожалуйста, укажите получателя');
@@ -117,6 +210,14 @@ export default function CheckoutNewPage() {
 
     if (!consent) {
       toast.error('Необходимо согласиться с условиями');
+      return;
+    }
+
+    // Проверяем наличие товаров ПЕРЕД отправкой заказа
+    const stockIssues = checkStockAvailability();
+    if (stockIssues.length > 0) {
+      setStockWarningItems(stockIssues);
+      setShowStockWarningModal(true);
       return;
     }
 
@@ -168,7 +269,24 @@ export default function CheckoutNewPage() {
 
     } catch (error) {
       console.error('Ошибка при создании заказа:', error);
-      setError(error instanceof Error ? error.message : 'Произошла ошибка при оформлении заказа');
+
+      // Проверяем, является ли это ошибкой недостатка товара
+      const errorMessage = error instanceof Error ? error.message : 'Произошла ошибка при оформлении заказа';
+
+      // Парсим ошибку о недостатке товара
+      const stockErrorMatch = errorMessage.match(/Недостаточно товара "([^"]+)" в наличии\. Доступно: (\d+), запрошено: (\d+)/);
+
+      if (stockErrorMatch) {
+        // Показываем модалку с предупреждением
+        setStockWarningItems([{
+          name: stockErrorMatch[1],
+          available: parseInt(stockErrorMatch[2], 10),
+          requested: parseInt(stockErrorMatch[3], 10)
+        }]);
+        setShowStockWarningModal(true);
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -211,7 +329,7 @@ export default function CheckoutNewPage() {
       <CartInfo />
 
       <section style={{
-        padding: '24px 0 40px 0',
+        padding: '16px 0 24px 0',
         background: '#F3F3F3',
         minHeight: 'calc(100vh - 200px)',
       }}>
@@ -222,17 +340,17 @@ export default function CheckoutNewPage() {
         }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 400px',
-            gap: '16px',
+            gridTemplateColumns: '1fr 360px',
+            gap: '12px',
             alignItems: 'flex-start',
           }}>
             {/* Левая колонка */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {/* Пункт выдачи */}
               <div style={{
                 background: '#fff',
-                borderRadius: '12px',
-                padding: '16px 20px',
+                borderRadius: '10px',
+                padding: '12px 16px',
                 border: '1px solid #E5E7EB',
                 cursor: 'pointer',
               }}
@@ -245,9 +363,9 @@ export default function CheckoutNewPage() {
                 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{
-                      fontSize: '13px',
+                      fontSize: '11px',
                       color: '#9CA3AF',
-                      marginBottom: '4px',
+                      marginBottom: '3px',
                       fontFamily: 'Onest, sans-serif',
                     }}>
                       Пункт выдачи
@@ -255,7 +373,7 @@ export default function CheckoutNewPage() {
                     {selectedDeliveryAddress ? (
                       <div>
                         <div style={{
-                          fontSize: '15px',
+                          fontSize: '13px',
                           fontWeight: 600,
                           color: '#111827',
                           marginBottom: '2px',
@@ -264,7 +382,7 @@ export default function CheckoutNewPage() {
                           {selectedDeliveryAddress.deliveryType === 'COURIER' ? 'Курьер' : 'Самовывоз'}
                         </div>
                         <div style={{
-                          fontSize: '13px',
+                          fontSize: '12px',
                           color: '#6B7280',
                           fontFamily: 'Onest, sans-serif',
                         }}>
@@ -273,7 +391,7 @@ export default function CheckoutNewPage() {
                       </div>
                     ) : (
                       <div style={{
-                        fontSize: '15px',
+                        fontSize: '13px',
                         color: '#111827',
                         fontFamily: 'Onest, sans-serif',
                       }}>
@@ -281,7 +399,7 @@ export default function CheckoutNewPage() {
                       </div>
                     )}
                   </div>
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                     <path d="M7 6L11 10L7 14" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
@@ -290,8 +408,8 @@ export default function CheckoutNewPage() {
               {/* Покупатель */}
               <div style={{
                 background: '#fff',
-                borderRadius: '12px',
-                padding: '16px 20px',
+                borderRadius: '10px',
+                padding: '12px 16px',
                 border: '1px solid #E5E7EB',
                 cursor: 'pointer',
               }}
@@ -304,9 +422,9 @@ export default function CheckoutNewPage() {
                 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{
-                      fontSize: '13px',
+                      fontSize: '11px',
                       color: '#9CA3AF',
-                      marginBottom: '4px',
+                      marginBottom: '3px',
                       fontFamily: 'Onest, sans-serif',
                     }}>
                       Покупатель
@@ -314,7 +432,7 @@ export default function CheckoutNewPage() {
                     {selectedLegalEntity ? (
                       <div>
                         <div style={{
-                          fontSize: '15px',
+                          fontSize: '13px',
                           fontWeight: 600,
                           color: '#111827',
                           marginBottom: '2px',
@@ -323,7 +441,7 @@ export default function CheckoutNewPage() {
                           {selectedLegalEntity.shortName || selectedLegalEntity.fullName}
                         </div>
                         <div style={{
-                          fontSize: '13px',
+                          fontSize: '12px',
                           color: '#6B7280',
                           fontFamily: 'Onest, sans-serif',
                         }}>
@@ -332,7 +450,7 @@ export default function CheckoutNewPage() {
                       </div>
                     ) : (
                       <div style={{
-                        fontSize: '15px',
+                        fontSize: '13px',
                         color: '#111827',
                         fontFamily: 'Onest, sans-serif',
                       }}>
@@ -340,7 +458,7 @@ export default function CheckoutNewPage() {
                       </div>
                     )}
                   </div>
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                     <path d="M7 6L11 10L7 14" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
@@ -350,22 +468,22 @@ export default function CheckoutNewPage() {
               {selectedLegalEntity && selectedLegalEntity.address && (
                 <div style={{
                   background: '#fff',
-                  borderRadius: '12px',
-                  padding: '16px 20px',
+                  borderRadius: '10px',
+                  padding: '12px 16px',
                   border: '1px solid #E5E7EB',
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ flex: 1 }}>
                       <div style={{
-                        fontSize: '13px',
+                        fontSize: '11px',
                         color: '#9CA3AF',
-                        marginBottom: '4px',
+                        marginBottom: '3px',
                         fontFamily: 'Onest, sans-serif',
                       }}>
                         Адрес регистрации юрлица или ИП
                       </div>
                       <div style={{
-                        fontSize: '13px',
+                        fontSize: '12px',
                         color: '#6B7280',
                         fontFamily: 'Onest, sans-serif',
                       }}>
@@ -379,8 +497,8 @@ export default function CheckoutNewPage() {
               {/* Кто получит заказ */}
               <div style={{
                 background: '#fff',
-                borderRadius: '12px',
-                padding: '16px 20px',
+                borderRadius: '10px',
+                padding: '12px 16px',
                 border: '1px solid #E5E7EB',
                 cursor: 'pointer',
               }}
@@ -393,9 +511,9 @@ export default function CheckoutNewPage() {
                 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{
-                      fontSize: '13px',
+                      fontSize: '11px',
                       color: '#9CA3AF',
-                      marginBottom: '4px',
+                      marginBottom: '3px',
                       fontFamily: 'Onest, sans-serif',
                     }}>
                       Кто получит заказ
@@ -403,7 +521,7 @@ export default function CheckoutNewPage() {
                     {recipientName && recipientPhone ? (
                       <div>
                         <div style={{
-                          fontSize: '15px',
+                          fontSize: '13px',
                           fontWeight: 500,
                           color: '#111827',
                           fontFamily: 'Onest, sans-serif',
@@ -413,7 +531,7 @@ export default function CheckoutNewPage() {
                       </div>
                     ) : (
                       <div style={{
-                        fontSize: '15px',
+                        fontSize: '13px',
                         color: '#111827',
                         fontFamily: 'Onest, sans-serif',
                       }}>
@@ -421,7 +539,7 @@ export default function CheckoutNewPage() {
                       </div>
                     )}
                   </div>
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                     <path d="M7 6L11 10L7 14" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
@@ -430,14 +548,14 @@ export default function CheckoutNewPage() {
               {/* Информация о доставке */}
               <div style={{
                 background: '#fff',
-                borderRadius: '12px',
-                padding: '20px',
+                borderRadius: '10px',
+                padding: '12px 16px',
                 border: '1px solid #E5E7EB',
-                marginTop: '8px',
+                marginTop: '6px',
               }}>
                 <h3 style={{
-                  margin: '0 0 16px 0',
-                  fontSize: '16px',
+                  margin: '0 0 8px 0',
+                  fontSize: '13px',
                   fontWeight: 600,
                   color: '#111827',
                   fontFamily: 'Onest, sans-serif',
@@ -450,7 +568,7 @@ export default function CheckoutNewPage() {
                   <div style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '12px',
+                    gap: '8px',
                   }}>
                     {/* Группируем товары по датам доставки */}
                     {(() => {
@@ -465,22 +583,22 @@ export default function CheckoutNewPage() {
 
                       return Object.entries(groupedByDate).map(([date, items]) => (
                         <div key={date} style={{
-                          padding: '12px',
+                          padding: '10px',
                           background: '#F9FAFB',
-                          borderRadius: '8px',
+                          borderRadius: '6px',
                           border: '1px solid #E5E7EB',
                         }}>
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '8px',
-                            marginBottom: '8px',
+                            gap: '6px',
+                            marginBottom: '6px',
                           }}>
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                               <path d="M2 6h12M2 8h12M5 2v2M11 2v2M3 4h10a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                             <div style={{
-                              fontSize: '14px',
+                              fontSize: '12px',
                               fontWeight: 600,
                               color: '#111827',
                               fontFamily: 'Onest, sans-serif',
@@ -489,7 +607,7 @@ export default function CheckoutNewPage() {
                             </div>
                           </div>
                           <div style={{
-                            fontSize: '13px',
+                            fontSize: '11px',
                             color: '#6B7280',
                             fontFamily: 'Onest, sans-serif',
                           }}>
@@ -504,29 +622,29 @@ export default function CheckoutNewPage() {
                 {/* Если нет дат доставки */}
                 {!selectedItems.some(item => item.deliveryDate) && (
                   <div style={{
-                    padding: '16px',
+                    padding: '10px',
                     background: '#FEF3C7',
-                    borderRadius: '8px',
+                    borderRadius: '6px',
                     border: '1px solid #FCD34D',
                     display: 'flex',
                     alignItems: 'start',
-                    gap: '12px',
+                    gap: '8px',
                   }}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0, marginTop: '2px' }}>
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0, marginTop: '2px' }}>
                       <path d="M10 6v4m0 4h.01M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     <div>
                       <div style={{
-                        fontSize: '14px',
+                        fontSize: '12px',
                         fontWeight: 600,
                         color: '#92400E',
-                        marginBottom: '4px',
+                        marginBottom: '3px',
                         fontFamily: 'Onest, sans-serif',
                       }}>
                         Дата доставки уточняется
                       </div>
                       <div style={{
-                        fontSize: '13px',
+                        fontSize: '11px',
                         color: '#78350F',
                         fontFamily: 'Onest, sans-serif',
                       }}>
@@ -540,14 +658,14 @@ export default function CheckoutNewPage() {
               {/* Список товаров */}
               <div style={{
                 background: '#fff',
-                borderRadius: '12px',
-                padding: '20px',
+                borderRadius: '10px',
+                padding: '12px 16px',
                 border: '1px solid #E5E7EB',
-                marginTop: '8px',
+                marginTop: '6px',
               }}>
                 <h3 style={{
-                  margin: '0 0 16px 0',
-                  fontSize: '16px',
+                  margin: '0 0 10px 0',
+                  fontSize: '13px',
                   fontWeight: 600,
                   color: '#111827',
                   fontFamily: 'Onest, sans-serif',
@@ -555,20 +673,20 @@ export default function CheckoutNewPage() {
                   Товары в заказе
                 </h3>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {selectedItems.map((item, idx) => (
                     <div key={item.id} style={{
                       display: 'flex',
-                      gap: '12px',
-                      paddingBottom: idx < selectedItems.length - 1 ? '16px' : '0',
+                      gap: '10px',
+                      paddingBottom: idx < selectedItems.length - 1 ? '10px' : '0',
                       borderBottom: idx < selectedItems.length - 1 ? '1px solid #F3F4F6' : 'none',
                     }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{
-                          fontSize: '14px',
+                          fontSize: '12px',
                           fontWeight: 500,
                           color: '#111827',
-                          marginBottom: '4px',
+                          marginBottom: '3px',
                           fontFamily: 'Onest, sans-serif',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -578,9 +696,9 @@ export default function CheckoutNewPage() {
                         </div>
                         {(item.brand || item.article) && (
                           <div style={{
-                            fontSize: '12px',
+                            fontSize: '11px',
                             color: '#6B7280',
-                            marginBottom: '4px',
+                            marginBottom: '3px',
                             fontFamily: 'Onest, sans-serif',
                           }}>
                             {item.brand && <span>{item.brand}</span>}
@@ -589,7 +707,7 @@ export default function CheckoutNewPage() {
                           </div>
                         )}
                         <div style={{
-                          fontSize: '12px',
+                          fontSize: '11px',
                           color: '#6B7280',
                           fontFamily: 'Onest, sans-serif',
                         }}>
@@ -597,7 +715,7 @@ export default function CheckoutNewPage() {
                         </div>
                       </div>
                       <div style={{
-                        fontSize: '15px',
+                        fontSize: '13px',
                         fontWeight: 600,
                         color: '#111827',
                         fontFamily: 'Onest, sans-serif',
@@ -612,18 +730,18 @@ export default function CheckoutNewPage() {
             </div>
 
             {/* Правая колонка - итоги */}
-            <div style={{ position: 'sticky', top: '20px' }}>
+            <div style={{ position: 'sticky', top: '16px' }}>
               <div style={{
                 background: '#fff',
-                borderRadius: '12px',
-                padding: '20px',
+                borderRadius: '10px',
+                padding: '14px 16px',
                 border: '1px solid #E5E7EB',
               }}>
                 {/* Способ оплаты - РАДИОКНОПКИ */}
-                <div style={{ marginBottom: '20px' }}>
+                <div style={{ marginBottom: '14px' }}>
                   <h3 style={{
-                    margin: '0 0 16px 0',
-                    fontSize: '16px',
+                    margin: '0 0 10px 0',
+                    fontSize: '14px',
                     fontWeight: 600,
                     color: '#111827',
                     fontFamily: 'Onest, sans-serif',
@@ -631,11 +749,11 @@ export default function CheckoutNewPage() {
                     Способ оплаты
                   </h3>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{
                       display: 'flex',
                       alignItems: 'flex-start',
-                      padding: '12px',
+                      padding: '10px',
                       border: `2px solid ${paymentMethod === 'balance' ? '#EC1C24' : '#E5E7EB'}`,
                       borderRadius: '8px',
                       cursor: 'pointer',
@@ -648,9 +766,9 @@ export default function CheckoutNewPage() {
                         checked={paymentMethod === 'balance'}
                         onChange={(e) => setPaymentMethod(e.target.value)}
                         style={{
-                          width: '18px',
-                          height: '18px',
-                          marginRight: '10px',
+                          width: '16px',
+                          height: '16px',
+                          marginRight: '8px',
                           marginTop: '2px',
                           accentColor: '#EC1C24',
                           cursor: 'pointer',
@@ -658,7 +776,7 @@ export default function CheckoutNewPage() {
                       />
                       <div style={{ flex: 1 }}>
                         <div style={{
-                          fontSize: '14px',
+                          fontSize: '13px',
                           fontWeight: 600,
                           color: '#111827',
                           marginBottom: '2px',
@@ -688,7 +806,7 @@ export default function CheckoutNewPage() {
                     <label style={{
                       display: 'flex',
                       alignItems: 'flex-start',
-                      padding: '12px',
+                      padding: '10px',
                       border: `2px solid ${paymentMethod === 'invoice' ? '#EC1C24' : '#E5E7EB'}`,
                       borderRadius: '8px',
                       cursor: 'pointer',
@@ -701,9 +819,9 @@ export default function CheckoutNewPage() {
                         checked={paymentMethod === 'invoice'}
                         onChange={(e) => setPaymentMethod(e.target.value)}
                         style={{
-                          width: '18px',
-                          height: '18px',
-                          marginRight: '10px',
+                          width: '16px',
+                          height: '16px',
+                          marginRight: '8px',
                           marginTop: '2px',
                           accentColor: '#EC1C24',
                           cursor: 'pointer',
@@ -711,7 +829,7 @@ export default function CheckoutNewPage() {
                       />
                       <div>
                         <div style={{
-                          fontSize: '14px',
+                          fontSize: '13px',
                           fontWeight: 600,
                           color: '#111827',
                           marginBottom: '2px',
@@ -720,7 +838,7 @@ export default function CheckoutNewPage() {
                           По счёту
                         </div>
                         <div style={{
-                          fontSize: '12px',
+                          fontSize: '11px',
                           color: '#6B7280',
                           fontFamily: 'Onest, sans-serif',
                         }}>
@@ -731,19 +849,19 @@ export default function CheckoutNewPage() {
                   </div>
                 </div>
 
-                <div style={{ height: '1px', background: '#E5E7EB', margin: '20px 0' }} />
+                <div style={{ height: '1px', background: '#E5E7EB', margin: '12px 0' }} />
 
                 {/* Стоимость */}
-                <div style={{ marginBottom: '20px' }}>
+                <div style={{ marginBottom: '12px' }}>
                   <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    marginBottom: '8px',
+                    marginBottom: '6px',
                   }}>
-                    <span style={{ fontSize: '14px', color: '#6B7280', fontFamily: 'Onest, sans-serif' }}>
+                    <span style={{ fontSize: '12px', color: '#6B7280', fontFamily: 'Onest, sans-serif' }}>
                       {summary.totalItems} товара
                     </span>
-                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#111827', fontFamily: 'Onest, sans-serif' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 500, color: '#111827', fontFamily: 'Onest, sans-serif' }}>
                       {formatPrice(summary.totalPrice)}
                     </span>
                   </div>
@@ -789,18 +907,18 @@ export default function CheckoutNewPage() {
                   </div>
                 </div>
 
-                <div style={{ height: '1px', background: '#E5E7EB', margin: '20px 0' }} />
+                <div style={{ height: '1px', background: '#E5E7EB', margin: '12px 0' }} />
 
                 {/* Итого */}
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  marginBottom: '20px',
+                  marginBottom: '12px',
                 }}>
-                  <span style={{ fontSize: '16px', fontWeight: 600, color: '#111827', fontFamily: 'Onest, sans-serif' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#111827', fontFamily: 'Onest, sans-serif' }}>
                     Итого
                   </span>
-                  <span style={{ fontSize: '20px', fontWeight: 700, color: '#111827', fontFamily: 'Onest, sans-serif' }}>
+                  <span style={{ fontSize: '18px', fontWeight: 700, color: '#111827', fontFamily: 'Onest, sans-serif' }}>
                     {formatPrice(summary.totalPrice - summary.totalDiscount)}
                   </span>
                 </div>
@@ -809,10 +927,10 @@ export default function CheckoutNewPage() {
                   <div style={{
                     background: '#FEE2E2',
                     border: '1px solid #F87171',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    marginBottom: '12px',
-                    fontSize: '13px',
+                    borderRadius: '6px',
+                    padding: '10px',
+                    marginBottom: '10px',
+                    fontSize: '12px',
                     color: '#991B1B',
                   }}>
                     {error}
@@ -824,16 +942,16 @@ export default function CheckoutNewPage() {
                   disabled={isProcessing || !consent || !selectedDeliveryAddress || !selectedLegalEntity}
                   style={{
                     width: '100%',
-                    padding: '14px',
+                    padding: '12px',
                     border: 'none',
                     borderRadius: '8px',
                     background: (isProcessing || !consent || !selectedDeliveryAddress || !selectedLegalEntity) ? '#D1D5DB' : '#EC1C24',
                     color: '#fff',
-                    fontSize: '15px',
+                    fontSize: '14px',
                     fontWeight: 600,
                     cursor: (isProcessing || !consent || !selectedDeliveryAddress || !selectedLegalEntity) ? 'not-allowed' : 'pointer',
                     fontFamily: 'Onest, sans-serif',
-                    marginBottom: '12px',
+                    marginBottom: '10px',
                   }}
                 >
                   {isProcessing ? 'Оформление...' : 'Оформить заказ'}
@@ -842,9 +960,9 @@ export default function CheckoutNewPage() {
                 <label style={{
                   display: 'flex',
                   alignItems: 'flex-start',
-                  gap: '8px',
+                  gap: '6px',
                   cursor: 'pointer',
-                  fontSize: '12px',
+                  fontSize: '11px',
                   color: '#6B7280',
                   fontFamily: 'Onest, sans-serif',
                 }}>
@@ -1135,6 +1253,190 @@ export default function CheckoutNewPage() {
             >
               Сохранить
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Модалка предупреждения о недостатке товара */}
+      {showStockWarningModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '20px',
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '500px',
+            width: '100%',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+          }}>
+            {/* Заголовок с иконкой */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '16px',
+            }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="10" stroke="#F59E0B" strokeWidth="2" />
+                <path d="M12 8v4M12 16h.01" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              <h3 style={{
+                margin: 0,
+                fontSize: '18px',
+                fontWeight: 600,
+                color: '#111827',
+                fontFamily: 'Onest, sans-serif',
+              }}>
+                Недостаточно товара на складе
+              </h3>
+            </div>
+
+            {/* Список товаров с проблемами */}
+            <div style={{
+              marginBottom: '20px',
+            }}>
+              {stockWarningItems.map((item, index) => (
+                <div key={index} style={{
+                  background: '#FEF3C7',
+                  border: '1px solid #FCD34D',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  marginBottom: index < stockWarningItems.length - 1 ? '8px' : '0',
+                }}>
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#92400E',
+                    marginBottom: '6px',
+                    fontFamily: 'Onest, sans-serif',
+                  }}>
+                    {item.name}
+                  </div>
+                  <div style={{
+                    fontSize: '13px',
+                    color: '#78350F',
+                    fontFamily: 'Onest, sans-serif',
+                  }}>
+                    В наличии: <strong>{item.available} шт.</strong> • Вы запросили: <strong>{item.requested} шт.</strong>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Описание */}
+            <p style={{
+              margin: '0 0 20px 0',
+              fontSize: '14px',
+              color: '#6B7280',
+              lineHeight: '1.5',
+              fontFamily: 'Onest, sans-serif',
+            }}>
+              К сожалению, на складе недостаточно товара для выполнения вашего заказа. Вы можете оформить заказ с доступным количеством или вернуться в корзину для редактирования.
+            </p>
+
+            {/* Кнопки */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+            }}>
+              <button
+                onClick={handleOrderWithAvailableQuantity}
+                disabled={isProcessing}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  background: isProcessing ? '#D1D5DB' : '#059669',
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: isProcessing ? 'not-allowed' : 'pointer',
+                  fontFamily: 'Onest, sans-serif',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isProcessing) e.currentTarget.style.background = '#047857';
+                }}
+                onMouseLeave={(e) => {
+                  if (!isProcessing) e.currentTarget.style.background = '#059669';
+                }}
+              >
+                {isProcessing ? 'Оформление...' : 'Оформить с доступным количеством'}
+              </button>
+              <div style={{
+                display: 'flex',
+                gap: '10px',
+              }}>
+                <button
+                  onClick={() => router.push('/cart')}
+                  disabled={isProcessing}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    border: '1px solid #EC1C24',
+                    borderRadius: '8px',
+                    background: '#fff',
+                    color: '#EC1C24',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: isProcessing ? 'not-allowed' : 'pointer',
+                    fontFamily: 'Onest, sans-serif',
+                    transition: 'background 0.2s',
+                    opacity: isProcessing ? 0.5 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isProcessing) e.currentTarget.style.background = '#FEE2E2';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isProcessing) e.currentTarget.style.background = '#fff';
+                  }}
+                >
+                  Вернуться в корзину
+                </button>
+                <button
+                  onClick={() => {
+                    setShowStockWarningModal(false);
+                    setStockWarningItems([]);
+                  }}
+                  disabled={isProcessing}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '8px',
+                    background: '#fff',
+                    color: '#374151',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: isProcessing ? 'not-allowed' : 'pointer',
+                    fontFamily: 'Onest, sans-serif',
+                    transition: 'background 0.2s',
+                    opacity: isProcessing ? 0.5 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isProcessing) e.currentTarget.style.background = '#F9FAFB';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isProcessing) e.currentTarget.style.background = '#fff';
+                  }}
+                >
+                  Отмена
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

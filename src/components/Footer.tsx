@@ -173,8 +173,7 @@ const Footer = () => (
             md:flex-nowrap
             gap-4 md:gap-8 lg:gap-40
           ">
-            <a href="/confidentiality-policy" className="hover:underline text-xs opacity-70 text-center md:text-left break-words min-w-0">Политика конфиденциальности</a>
-            <a href="#" className="hover:underline text-xs opacity-70 text-center md:text-left break-words min-w-0">Согласие на обработку персональных данных</a>
+            <a href="/privacy-policy" className="hover:underline text-xs opacity-70 text-center md:text-left break-words min-w-0">Политика конфиденциальности</a>
             <span className="text-xs opacity-70 break-words min-w-0">© 2025 Protek. Все права защищены.</span>
           </div>
           

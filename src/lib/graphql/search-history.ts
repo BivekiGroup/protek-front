@@ -32,6 +32,8 @@ export const GET_RECENT_SEARCH_QUERIES = gql`
         id
         searchQuery
         searchType
+        brand
+        articleNumber
         createdAt
       }
     }

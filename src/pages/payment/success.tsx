@@ -114,6 +114,13 @@ function PaymentSuccessContent() {
 
     hasAttemptedConfirmation.current = true;
 
+    // Для оплаты по счету не нужно подтверждать оплату
+    if (paymentMethodValue === 'invoice') {
+      console.log('🔍 Payment Success - Оплата по счету, пропускаем confirmPayment');
+      setConfirmationStatus("skipped");
+      return;
+    }
+
     const userData = typeof window !== "undefined" ? window.localStorage.getItem("userData") : null;
 
     if (!userData) {
@@ -178,9 +185,10 @@ function PaymentSuccessContent() {
     if (paymentId) {
       items.push({ label: "ID платежа", value: paymentId });
     }
-    if (orderId) {
-      items.push({ label: "ID заказа в системе", value: orderId });
-    }
+    // Не показываем внутренний ID заказа в системе клиенту
+    // if (orderId) {
+    //   items.push({ label: "ID заказа в системе", value: orderId });
+    // }
 
     return items;
   }, [orderId, orderNumber, paymentId, paymentMethodLabel]);
@@ -189,34 +197,34 @@ function PaymentSuccessContent() {
     switch (confirmationStatus) {
       case "pending":
         return (
-          <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-            <Loader2 className="h-5 w-5 animate-spin" />
+          <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+            <Loader2 className="h-4 w-4 animate-spin" />
             <span>Обновляем статус заказа…</span>
           </div>
         );
       case "success":
         return (
-          <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            <CheckCircle2 className="h-5 w-5" />
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+            <CheckCircle2 className="h-4 w-4" />
             <span>Статус заказа обновлён. Можно отслеживать его в личном кабинете.</span>
           </div>
         );
       case "error":
         return (
-          <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            <AlertCircle className="mt-0.5 h-5 w-5 flex-none" />
+          <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-none" />
             <div>
               <p className="font-medium">Не удалось автоматически обновить статус заказа.</p>
               {confirmationError ? (
-                <p className="mt-1 text-xs text-rose-600 sm:text-sm">{confirmationError}</p>
+                <p className="mt-1 text-[11px] text-rose-600">{confirmationError}</p>
               ) : null}
             </div>
           </div>
         );
       case "skipped":
         return (
-          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-            <Info className="mt-0.5 h-5 w-5 flex-none" />
+          <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            <Info className="mt-0.5 h-4 w-4 flex-none" />
             <p>
               Войдите в личный кабинет, чтобы мы подтвердили оплату и показали актуальный статус заказа.
             </p>
@@ -270,26 +278,26 @@ function PaymentSuccessContent() {
 
       <section className="main">
         <div className="w-layout-blockcontainer container w-container">
-          <div className="grid gap-8 pb-16 lg:grid-cols-[minmax(0,1fr),360px]">
-            <section className="rounded-3xl border border-slate-100 bg-white px-6 py-8 shadow-lg shadow-slate-900/5 sm:px-10 sm:py-12">
-              <div className="flex flex-col gap-8">
-                <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-6">
-                  <span className={`flex h-16 w-16 flex-none items-center justify-center rounded-2xl text-white sm:h-20 sm:w-20 ${paymentMethod === 'invoice' ? 'bg-amber-500' : 'bg-emerald-500'}`}>
-                    {paymentMethod === 'invoice' ? <Clock className="h-8 w-8" /> : <CheckCircle2 className="h-8 w-8" />}
+          <div className="grid gap-5 pb-10 lg:grid-cols-[minmax(0,1fr),320px]">
+            <section className="rounded-2xl border border-slate-100 bg-white px-5 py-6 shadow-lg shadow-slate-900/5 sm:px-7 sm:py-8">
+              <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-4">
+                  <span className={`flex h-12 w-12 flex-none items-center justify-center rounded-xl text-white sm:h-14 sm:w-14 ${paymentMethod === 'invoice' ? 'bg-amber-500' : 'bg-emerald-500'}`}>
+                    {paymentMethod === 'invoice' ? <Clock className="h-6 w-6" /> : <CheckCircle2 className="h-6 w-6" />}
                   </span>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
                         {paymentMethod === 'invoice' ? 'Ожидает оплаты' : 'Оплата получена'}
                       </p>
-                      <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
+                      <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">
                         {paymentMethod === 'invoice'
                           ? (orderNumber ? `Заказ №${orderNumber} ожидает оплаты` : "Заказ ожидает оплаты")
                           : (orderNumber ? `Заказ №${orderNumber} принят в работу` : "Заказ принят в работу")
                         }
                       </h1>
                     </div>
-                    <p className="text-base text-slate-600 sm:text-lg lg:max-w-none">
+                    <p className="text-sm text-slate-600 sm:text-base lg:max-w-none">
                       {paymentMethod === 'invoice'
                         ? `Мы выставили счёт на оплату. Скачайте счёт ниже и произведите оплату. После получения оплаты мы начнём подготовку заказа.`
                         : (paymentMethodLabel
@@ -305,40 +313,97 @@ function PaymentSuccessContent() {
                 {renderConfirmationBanner()}
 
                 {detailItems.length > 0 && (
-                  <dl className="grid gap-6 rounded-2xl border border-slate-100 bg-slate-50/70 p-6 sm:grid-cols-2">
+                  <dl className="grid gap-4 rounded-xl border border-slate-100 bg-slate-50/70 p-4 sm:grid-cols-2">
                     {detailItems.map((item) => (
                       <div key={item.label}>
-                        <dt className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+                        <dt className="text-[10px] font-medium uppercase tracking-[0.1em] text-slate-500">
                           {item.label}
                         </dt>
-                        <dd className="mt-2 break-all text-lg font-semibold text-slate-900">{item.value}</dd>
+                        <dd className="mt-1.5 break-all text-base font-semibold text-slate-900">{item.value}</dd>
                       </div>
                     ))}
                   </dl>
                 )}
 
                 {paymentMethod === 'invoice' && orderId && (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-3">Счёт на оплату</h3>
-                    <p className="text-sm text-slate-600 mb-4">
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                    <h3 className="text-base font-semibold text-slate-900 mb-2">Счёт на оплату</h3>
+                    <p className="text-xs text-slate-600 mb-3">
                       Скачайте счёт и произведите оплату в течение 3 рабочих дней. После получения оплаты мы сразу начнём обработку заказа.
                     </p>
-                    <a
-                      href={`${process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL?.replace('/graphql', '')}/api/order-invoice/${orderId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={async () => {
+                        try {
+                          const userData = typeof window !== "undefined" ? window.localStorage.getItem("userData") : null;
+                          console.log('🔍 userData from localStorage:', userData ? 'exists' : 'null');
+
+                          if (!userData) {
+                            alert('Необходимо авторизоваться для скачивания счёта');
+                            return;
+                          }
+
+                          const parsedData = JSON.parse(userData);
+
+                          // Создаем токен так же, как Apollo Client
+                          const token = parsedData?.token || `client_${parsedData?.id}`;
+                          console.log('🔍 token created:', token.substring(0, 20) + '...');
+
+                          if (!token) {
+                            alert('Токен авторизации не найден. Попробуйте войти заново.');
+                            return;
+                          }
+
+                          const url = `${process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL?.replace('/api/graphql', '')}/api/order-invoice/${orderId}`;
+                          console.log('🔍 Fetching invoice from:', url);
+
+                          const response = await fetch(url, {
+                            headers: {
+                              'Authorization': `Bearer ${token}`
+                            }
+                          });
+
+                          console.log('🔍 Response status:', response.status);
+
+                          if (!response.ok) {
+                            const errorData = await response.text();
+                            console.error('🔍 Error response:', errorData);
+                            throw new Error(`Не удалось загрузить счёт: ${response.status}`);
+                          }
+
+                          // Получаем blob из ответа
+                          const blob = await response.blob();
+                          console.log('🔍 Blob size:', blob.size);
+
+                          // Создаем временную ссылку для скачивания
+                          const downloadUrl = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = downloadUrl;
+                          a.download = `Счет_${orderNumber || orderId}.pdf`;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          window.URL.revokeObjectURL(downloadUrl);
+
+                          console.log('✅ Invoice downloaded successfully');
+                        } catch (error) {
+                          console.error('❌ Ошибка при скачивании счёта:', error);
+                          alert('Не удалось скачать счёт. Попробуйте позже или обратитесь в поддержку.');
+                        }
+                      }}
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        borderRadius: '0.75rem',
+                        borderRadius: '0.5rem',
                         backgroundColor: '#EC1C24',
-                        padding: '0.75rem 1.5rem',
-                        fontSize: '0.875rem',
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.813rem',
                         fontWeight: 600,
                         color: '#ffffff',
                         textDecoration: 'none',
-                        transition: 'background-color 0.2s'
+                        transition: 'background-color 0.2s',
+                        border: 'none',
+                        cursor: 'pointer'
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = '#D01920'
@@ -347,22 +412,22 @@ function PaymentSuccessContent() {
                         e.currentTarget.style.backgroundColor = '#EC1C24'
                       }}
                     >
-                      <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#ffffff' }}>
+                      <svg className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#ffffff' }}>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                       <span style={{ color: '#ffffff' }}>Скачать счёт</span>
-                    </a>
+                    </button>
                   </div>
                 )}
 
-                <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-lg shadow-slate-900/5">
-                  <h2 className="text-lg font-semibold text-slate-900">Документы и уведомления</h2>
-                  <p className="mt-2 text-sm text-slate-600">
+                <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-lg shadow-slate-900/5">
+                  <h2 className="text-base font-semibold text-slate-900">Документы и уведомления</h2>
+                  <p className="mt-1.5 text-xs text-slate-600">
                     Мы отправили чек и подтверждение заказа на указанную вами электронную почту. Если письмо не
                     пришло, проверьте папку «Спам» или обратитесь в поддержку.
                   </p>
                   {orderNumber ? (
-                    <p className="mt-4 text-sm text-slate-500">
+                    <p className="mt-3 text-xs text-slate-500">
                       В переписке и платежных документах указывайте номер заказа:
                       <span className="ml-1 font-semibold text-slate-800">№{orderNumber}</span>.
                     </p>
@@ -388,42 +453,42 @@ function PaymentSuccessContent() {
               </div>
             </section>
 
-            <aside className="space-y-6">
-              <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-lg shadow-slate-900/5">
-                <h2 className="text-lg font-semibold text-slate-900">Что дальше</h2>
-                <ul className="mt-4 space-y-4">
+            <aside className="space-y-4">
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-lg shadow-slate-900/5">
+                <h2 className="text-base font-semibold text-slate-900">Что дальше</h2>
+                <ul className="mt-3 space-y-3">
                   {NEXT_STEPS.map(({ title, description, icon: Icon }) => (
-                    <li key={title} className="flex gap-4">
-                      <span className="mt-1 flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                        <Icon className="h-5 w-5" />
+                    <li key={title} className="flex gap-3">
+                      <span className="mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                        <Icon className="h-4 w-4" />
                       </span>
                       <div>
-                        <p className="text-base font-medium text-slate-900">{title}</p>
-                        <p className="mt-1 text-sm text-slate-600">{description}</p>
+                        <p className="text-sm font-medium text-slate-900">{title}</p>
+                        <p className="mt-0.5 text-xs text-slate-600">{description}</p>
                       </div>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="rounded-3xl bg-[#0d336c] p-6 text-white shadow-lg shadow-slate-900/10">
-                <div className="flex items-start gap-4">
-                  <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-white/10">
-                    <Headset className="h-6 w-6" />
+              <div className="rounded-2xl bg-[#0d336c] p-4 text-white shadow-lg shadow-slate-900/10">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-white/10">
+                    <Headset className="h-5 w-5" />
                   </span>
-                  <div className="space-y-3">
-                    <h2 className="text-lg font-semibold">Нужна помощь?</h2>
-                    <p className="text-sm text-white/80">
+                  <div className="space-y-2">
+                    <h2 className="text-base font-semibold">Нужна помощь?</h2>
+                    <p className="text-xs text-white/80">
                       Команда поддержки подскажет по статусу заказа, доставке и документам.
                     </p>
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-1.5 text-xs">
                       <a
                         href={`tel:${SUPPORT_INFO.phone.replace(/[^+\d]/g, "")}`}
                         className="block font-semibold text-white transition-opacity hover:opacity-80"
                       >
                         {SUPPORT_INFO.phone}
                       </a>
-                      <div className="text-white/70">{SUPPORT_INFO.schedule}</div>
+                      <div className="text-white/70 text-[11px]">{SUPPORT_INFO.schedule}</div>
                       <a
                         href={`mailto:${SUPPORT_INFO.email}`}
                         className="block text-white transition-opacity hover:opacity-80"

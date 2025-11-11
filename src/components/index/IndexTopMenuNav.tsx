@@ -14,9 +14,6 @@ const IndexTopMenuNav = ({ isIndexPage = false }: { isIndexPage?: boolean }) => 
         <Link href="/guarantee" className="link-block-8 w-inline-block">
           <div>Гарантия и возврат</div>
         </Link>
-        <Link href="/payments-method" className="link-block-8 w-inline-block">
-          <div>Покупателям</div>
-        </Link>
         <Link href="/wholesale" className="link-block-8 w-inline-block">
           <div>Оптовым клиентам</div>
         </Link>
