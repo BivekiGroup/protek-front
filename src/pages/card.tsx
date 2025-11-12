@@ -16,7 +16,8 @@ import ProductList from "@/components/card/ProductList";
 import ProductPriceHeader from "@/components/card/ProductPriceHeader";
 import ProductCharacteristics from "@/components/card/ProductCharacteristics";
 import ProductDescriptionTabs from "@/components/card/ProductDescriptionTabs";
-import { SEARCH_PRODUCT_OFFERS, PARTS_INDEX_SEARCH_BY_ARTICLE, GET_ANALOG_OFFERS } from "@/lib/graphql";
+import CatalogInfoHeader from "@/components/CatalogInfoHeader";
+import { SEARCH_PRODUCT_OFFERS, PARTS_INDEX_SEARCH_BY_ARTICLE, GET_ANALOG_OFFERS, GET_CATEGORIES } from "@/lib/graphql";
 import { useArticleImage } from "@/hooks/useArticleImage";
 import { useRecommendedProducts } from "../hooks/useRecommendedProducts";
 import { emitAnalyticsView } from "@/lib/utils";
@@ -61,6 +62,11 @@ export default function CardPage() {
     errorPolicy: 'all'
   });
 
+  // Запрос для получения категорий
+  const { data: categoriesData, loading: categoriesLoading } = useQuery(GET_CATEGORIES, {
+    errorPolicy: 'ignore'
+  });
+
   // УБИРАЕМ ЗАПРОС К PARTSINDEX ДЛЯ ОПТИМИЗАЦИИ
   // Теперь данные PartsIndex будут получаться только по требованию
   // const { data: partsIndexData, loading: partsIndexLoading } = useQuery(PARTS_INDEX_SEARCH_BY_ARTICLE, {
@@ -76,6 +82,93 @@ export default function CardPage() {
   const { imageUrl: mainImageUrl } = useArticleImage(artId as string, { enabled: !!artId });
 
   const result = data?.searchProductOffers;
+
+  // Функция для поиска категории по ID (рекурсивно по всему дереву)
+  const findCategoryById = (categories: any[], targetId: string): any | null => {
+    if (!categories) return null;
+    for (const cat of categories) {
+      if (cat.id === targetId) return cat;
+      if (cat.children && cat.children.length > 0) {
+        const found = findCategoryById(cat.children, targetId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  // Функция для получения всех родительских категорий до корня
+  const getCategoryPath = (categoryId: string, allCategories: any[]): any[] => {
+    const category = findCategoryById(allCategories, categoryId);
+    if (!category) return [];
+
+    if (category.parentId) {
+      const parentPath = getCategoryPath(category.parentId, allCategories);
+      return [...parentPath, category];
+    }
+    return [category];
+  };
+
+  // Получаем полный путь категорий для продукта
+  const categoryPath = useMemo(() => {
+    console.log('🔍 Card Page - Building category path:', {
+      hasResult: !!result,
+      hasCategoriesData: !!categoriesData,
+      resultCategories: result?.categories,
+      allCategoriesCount: categoriesData?.categories?.length
+    });
+
+    if (!result?.categories || !categoriesData?.categories) {
+      console.log('⚠️ Card Page - Missing data for category path');
+      return [];
+    }
+
+    // Используем первую категорию продукта
+    const productCategory = result.categories[0];
+    if (!productCategory) {
+      console.log('⚠️ Card Page - No product category found');
+      return [];
+    }
+
+    console.log('📍 Card Page - Product category:', productCategory);
+
+    // Строим полный путь от корня до текущей категории
+    const path = getCategoryPath(productCategory.id, categoriesData.categories);
+    console.log('🗺️ Card Page - Category path built:', path.map(c => c.name).join(' → '));
+    return path;
+  }, [result, categoriesData]);
+
+  // Генерируем breadcrumbs
+  const breadcrumbs = useMemo(() => {
+    console.log('🍞 Card Page - Building breadcrumbs:', {
+      categoryPathLength: categoryPath.length,
+      categoryPathNames: categoryPath.map(c => c.name),
+      resultName: result?.name
+    });
+
+    const crumbs = [
+      { label: "Главная", href: "/" },
+      { label: "Каталог", href: "/catalog" }
+    ];
+
+    // Добавляем все категории как ссылки (включая последнюю)
+    categoryPath.forEach((cat) => {
+      crumbs.push({
+        label: cat.name,
+        href: `/catalog/${cat.slug}`
+      });
+    });
+
+    // Добавляем название товара в конце БЕЗ ссылки
+    if (result?.name) {
+      crumbs.push({
+        label: result.name,
+        href: ''
+      });
+    }
+
+    console.log('🍞 Card Page - Breadcrumbs built:', crumbs.map(c => c.label).join(' → '));
+    return crumbs;
+  }, [categoryPath, result]);
 
   // Аналитика: просмотр карточки товара (на клиенте)
   useEffect(() => {
@@ -349,6 +442,14 @@ export default function CardPage() {
         })()}
       />
       {/* Аналитика отправляется в useEffect выше */}
+      {!loading && !categoriesLoading && breadcrumbs.length > 2 && categoryPath.length > 0 && (
+        <CatalogInfoHeader
+          title={result?.name || "Товар"}
+          breadcrumbs={breadcrumbs}
+          showCount={false}
+          showProductHelp={false}
+        />
+      )}
       <section className="main">
         <div className="w-layout-blockcontainer container w-container">
           <div className="w-layout-vflex flex-block-14">

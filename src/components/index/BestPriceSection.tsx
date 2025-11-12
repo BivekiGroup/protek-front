@@ -26,6 +26,22 @@ interface BestPriceProductData {
     wholesalePrice?: number;
     stock?: number;
     images: { url: string; alt?: string }[];
+    firstExternalOffer?: {
+      offerKey: string;
+      brand: string;
+      code: string;
+      name: string;
+      price: number;
+      currency: string;
+      deliveryTime: number;
+      deliveryTimeMax: number;
+      quantity: number;
+      warehouse: string;
+      warehouseName?: string;
+      supplier: string;
+      canPurchase: boolean;
+      isInCart: boolean;
+    };
   };
 }
 
@@ -133,9 +149,27 @@ const BestPriceSection: React.FC = () => {
         .slice(0, 8)
         .map((item) => {
           const basePrice = item.product.retailPrice ?? item.product.wholesalePrice ?? null;
-          const discountedPrice = calculateDiscountedPrice(basePrice, item.discount);
-          const hasDiscount = !!item.discount && item.discount > 0 && basePrice != null;
+          const hasInternalPrice = basePrice != null;
           const hasStock = (item.product.stock ?? 0) > 0;
+          const externalOffer = item.product.firstExternalOffer;
+
+          // Если нет внутренней цены или наличия, используем внешнее предложение
+          const useExternalOffer = (!hasInternalPrice || !hasStock) && externalOffer;
+
+          let finalPrice = basePrice;
+          let finalHasStock = hasStock;
+          let finalArticle = item.product.article;
+          let finalBrand = item.product.brand || "";
+
+          if (useExternalOffer) {
+            finalPrice = externalOffer.price;
+            finalHasStock = externalOffer.quantity > 0;
+            finalArticle = externalOffer.code;
+            finalBrand = externalOffer.brand;
+          }
+
+          const discountedPrice = calculateDiscountedPrice(finalPrice, item.discount);
+          const hasDiscount = !!item.discount && item.discount > 0 && finalPrice != null;
 
           const imageUrl = item.product.images?.[0]?.url;
           const isPlaceholder = (url?: string) => {
@@ -153,13 +187,13 @@ const BestPriceSection: React.FC = () => {
           return {
             image: imageUrl && !isPlaceholder(imageUrl) ? imageUrl : "/images/no-photo.svg",
             salePercent: hasDiscount ? item.discount : undefined,
-            newPrice: formatPrice(hasDiscount ? discountedPrice : basePrice),
-            oldPrice: hasDiscount ? formatOldPrice(basePrice) : undefined,
+            newPrice: formatPrice(hasDiscount ? discountedPrice : finalPrice),
+            oldPrice: hasDiscount ? formatOldPrice(finalPrice) : undefined,
             title: item.product.name,
-            brand: item.product.brand || "",
-            article: item.product.article,
+            brand: finalBrand,
+            article: finalArticle,
             productId: item.product.id,
-            outOfStock: !hasStock,
+            outOfStock: !finalHasStock,
           };
         }),
     [bestPriceProducts]

@@ -1453,13 +1453,15 @@ a.link-block-2.w-inline-block  {
   margin-left: 0 !important;
 }
 
-/* Top Sales Grid Layout - 6 equal columns filling full width */
+/* Top Sales Grid Layout - always 1 row with 6 items max */
 .top-sales-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: 1fr;
   gap: 16px;
   margin-top: 20px;
   width: 100%;
+  overflow: hidden;
 }
 
 .top-sales-grid .top-sales-item {
@@ -1504,13 +1506,15 @@ a.link-block-2.w-inline-block  {
   color: #000814 !important;
 }
 
-/* New Arrivals Grid Layout - same as TopSales */
+/* New Arrivals Grid Layout - always 1 row with 6 items max */
 .new-arrivals-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: 1fr;
   gap: 16px;
   margin-top: 20px;
   width: 100%;
+  overflow: hidden;
 }
 
 .new-arrivals-grid .top-sales-item {
@@ -1566,28 +1570,32 @@ a.link-block-2.w-inline-block  {
   height: 24px !important;
 }
 
-/* NewArrivals responsive design */
+/* NewArrivals responsive design - always 1 row */
 @media screen and (max-width: 1279px) {
   .new-arrivals-grid {
     grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 1fr;
   }
 }
 
 @media screen and (max-width: 991px) {
   .new-arrivals-grid {
     grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr;
   }
 }
 
 @media screen and (max-width: 767px) {
   .new-arrivals-grid {
     grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 1fr;
   }
 }
 
 @media screen and (max-width: 479px) {
   .new-arrivals-grid {
     grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
   }
 }
 
@@ -1657,6 +1665,7 @@ a.link-block-2.w-inline-block  {
 @media screen and (max-width: 1279px) {
   .top-sales-grid {
     grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 1fr;
     gap: 14px;
   }
 }
@@ -1664,6 +1673,7 @@ a.link-block-2.w-inline-block  {
 @media screen and (max-width: 991px) {
   .top-sales-grid {
     grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr;
     gap: 12px;
   }
 }
@@ -1671,6 +1681,7 @@ a.link-block-2.w-inline-block  {
 @media screen and (max-width: 767px) {
   .top-sales-grid {
     grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 1fr;
     gap: 12px;
   }
 }
@@ -1678,6 +1689,7 @@ a.link-block-2.w-inline-block  {
 @media screen and (max-width: 479px) {
   .top-sales-grid {
     grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
     gap: 16px;
   }
 }

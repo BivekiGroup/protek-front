@@ -301,6 +301,44 @@ const PasswordRegistration: React.FC<PasswordRegistrationProps> = ({
             type="tel"
             value={phone}
             onChange={handlePhoneChange}
+            onKeyDown={(e) => {
+              if (e.key === 'Backspace') {
+                e.preventDefault()
+
+                // Получаем только цифры (убираем +7)
+                const digits = phone.replace(/\D/g, '')
+                const phoneDigits = digits.startsWith('7') ? digits.slice(1) : digits
+
+                // Если есть цифры для удаления
+                if (phoneDigits.length > 0) {
+                  const newDigits = phoneDigits.slice(0, -1)
+
+                  // Форматируем заново
+                  let formatted = '+7 '
+                  if (newDigits.length > 0) {
+                    formatted += '('
+                    formatted += newDigits.slice(0, 3)
+                    if (newDigits.length >= 3) {
+                      formatted += ') '
+                      formatted += newDigits.slice(3, 6)
+                      if (newDigits.length >= 6) {
+                        formatted += '-'
+                        formatted += newDigits.slice(6, 8)
+                        if (newDigits.length >= 8) {
+                          formatted += '-'
+                          formatted += newDigits.slice(8, 10)
+                        }
+                      }
+                    }
+                  }
+
+                  setPhone(formatted)
+                } else {
+                  // Если цифр нет, возвращаем к начальному состоянию
+                  setPhone('+7 ')
+                }
+              }
+            }}
             placeholder="+7 (999) 123-45-67"
             className="w-full border-none bg-transparent text-[15px] font-medium leading-none text-[#424F60] placeholder:text-[#9CA3AF] focus:outline-none"
             disabled={isLoading}

@@ -477,6 +477,12 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
   }
 
   if (!offers || offers.length === 0) {
+    // Если нет предложений и нет кнопки загрузки - не рендерим карточку вообще
+    if (!onLoadOffers) {
+      return null;
+    }
+
+    // Если есть кнопка загрузки - показываем карточку с кнопкой
     return (
         <div className={`w-layout-hflex core-product-search-s1 ${!hasStock ? 'out-of-stock-highlight' : ''}`} style={!hasStock ? { backgroundColor: '#fee', borderColor: '#f87171' } : {}}>
             <div className="w-layout-vflex core-product-s1">
@@ -515,16 +521,12 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
                 )}
             </div>
             <div className="w-layout-vflex flex-block-48-copy items-center justify-center">
-                {onLoadOffers ? (
-                     <button
-                        onClick={onLoadOffers}
-                        className="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                        Загрузить предложения
-                    </button>
-                ) : (
-                    <p className="text-gray-500">Предложений не найдено.</p>
-                )}
+                <button
+                    onClick={onLoadOffers}
+                    className="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                    Загрузить предложения
+                </button>
             </div>
         </div>
     );

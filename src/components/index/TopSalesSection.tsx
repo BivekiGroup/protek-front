@@ -18,6 +18,22 @@ interface TopSalesProductData {
     retailPrice?: number;
     stock?: number;
     images: { url: string; alt?: string }[];
+    firstExternalOffer?: {
+      offerKey: string;
+      brand: string;
+      code: string;
+      name: string;
+      price: number;
+      currency: string;
+      deliveryTime: number;
+      deliveryTimeMax: number;
+      quantity: number;
+      warehouse: string;
+      warehouseName?: string;
+      supplier: string;
+      canPurchase: boolean;
+      isInCart: boolean;
+    };
   };
 }
 
@@ -113,7 +129,7 @@ const TopSalesSection: React.FC = () => {
     }
   ];
 
-  const activeTopSalesProducts = [...realTopSalesProducts, ...mockTopSalesItems];
+  const activeTopSalesProducts = [...realTopSalesProducts, ...mockTopSalesItems].slice(0, 6);
 
   if (activeTopSalesProducts.length === 0) {
     return (
@@ -152,8 +168,27 @@ const TopSalesSection: React.FC = () => {
           <div className="top-sales-grid">
             {activeTopSalesProducts.map((item: TopSalesProductData) => {
               const product = item.product;
-              const price = product.retailPrice
-                ? `от ${product.retailPrice.toLocaleString('ru-RU')} ₽`
+              const hasInternalPrice = !!product.retailPrice;
+              const hasStock = (product.stock ?? 0) > 0;
+              const externalOffer = product.firstExternalOffer;
+
+              // Если нет внутренней цены или наличия, используем внешнее предложение
+              const useExternalOffer = (!hasInternalPrice || !hasStock) && externalOffer;
+
+              let finalPrice = product.retailPrice;
+              let finalHasStock = hasStock;
+              let finalArticle = product.article;
+              let finalBrand = product.brand || 'Неизвестный бренд';
+
+              if (useExternalOffer) {
+                finalPrice = externalOffer.price;
+                finalHasStock = externalOffer.quantity > 0;
+                finalArticle = externalOffer.code;
+                finalBrand = externalOffer.brand;
+              }
+
+              const price = finalPrice
+                ? `от ${finalPrice.toLocaleString('ru-RU')} ₽`
                 : 'По запросу';
 
               const imageUrl = product.images?.[0]?.url;
@@ -171,9 +206,7 @@ const TopSalesSection: React.FC = () => {
               const image = imageUrl && !isPlaceholder(imageUrl) ? imageUrl : '/images/no-photo.svg';
 
               const title = product.name;
-              const brand = product.brand || 'Неизвестный бренд';
-              const isInCart = isItemInCart(product.id, undefined, product.article, brand);
-              const hasStock = (product.stock ?? 0) > 0;
+              const isInCart = isItemInCart(product.id, undefined, finalArticle, finalBrand);
 
               return (
                 <TopSalesItem
@@ -181,11 +214,11 @@ const TopSalesSection: React.FC = () => {
                   image={image}
                   price={price}
                   title={title}
-                  brand={brand}
-                  article={product.article}
+                  brand={finalBrand}
+                  article={finalArticle}
                   productId={product.id}
                   isInCart={isInCart}
-                  outOfStock={!hasStock}
+                  outOfStock={!finalHasStock}
                 />
               );
             })}

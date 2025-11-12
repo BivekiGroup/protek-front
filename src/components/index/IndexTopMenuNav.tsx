@@ -5,6 +5,9 @@ const IndexTopMenuNav = ({ isIndexPage = false }: { isIndexPage?: boolean }) => 
   <section className={`topmenub${!isIndexPage ? ' topmenub-white' : ''}`} style={!isIndexPage ? { background: '#fff' } : undefined}>
     <div className="w-layout-blockcontainer tb nav w-container">
       <div className="w-layout-hflex flex-block-107">
+        <Link href="/catalog" className="link-block-8 w-inline-block">
+          <div>Каталог</div>
+        </Link>
         <Link href="/about" className="link-block-8 w-inline-block">
           <div>О компании</div>
         </Link>

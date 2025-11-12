@@ -20,6 +20,22 @@ export const GET_BEST_PRICE_PRODUCTS = gql`
           url
           alt
         }
+        firstExternalOffer {
+          offerKey
+          brand
+          code
+          name
+          price
+          currency
+          deliveryTime
+          deliveryTimeMax
+          quantity
+          warehouse
+          warehouseName
+          supplier
+          canPurchase
+          isInCart
+        }
       }
     }
   }
@@ -43,6 +59,22 @@ export const GET_TOP_SALES_PRODUCTS = gql`
         images {
           url
           alt
+        }
+        firstExternalOffer {
+          offerKey
+          brand
+          code
+          name
+          price
+          currency
+          deliveryTime
+          deliveryTimeMax
+          quantity
+          warehouse
+          warehouseName
+          supplier
+          canPurchase
+          isInCart
         }
       }
     }
@@ -1280,6 +1312,12 @@ export const SEARCH_PRODUCT_OFFERS = gql`
       hasInternalStock
       totalOffers
       isInCart
+      categories {
+        id
+        name
+        slug
+        parentId
+      }
       stockCalculation {
         totalInternalStock
         totalExternalStock
@@ -2165,6 +2203,7 @@ export const GET_CATEGORIES = gql`
         slug
         image
         isHidden
+        parentId
         level
         children {
           id
@@ -2172,7 +2211,26 @@ export const GET_CATEGORIES = gql`
           slug
           image
           isHidden
+          parentId
           level
+          children {
+            id
+            name
+            slug
+            image
+            isHidden
+            parentId
+            level
+            children {
+              id
+              name
+              slug
+              image
+              isHidden
+              parentId
+              level
+            }
+          }
         }
       }
     }
@@ -2241,6 +2299,23 @@ export const SEARCH_PRODUCTS_BY_ARTICLE = gql`
         id
         url
         alt
+      }
+    }
+  }
+`;
+
+export const GET_PRODUCT_BY_ID = gql`
+  query GetProductById($id: ID!) {
+    productById(id: $id) {
+      id
+      name
+      article
+      brand
+      categories {
+        id
+        name
+        slug
+        parentId
       }
     }
   }

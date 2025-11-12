@@ -14,6 +14,11 @@ import { GET_PRODUCTS_BY_CATEGORY, GET_CATEGORIES } from "@/lib/graphql";
 import { getMetaByPath } from "@/lib/meta-config";
 import { useCart } from "@/contexts/CartContext";
 import toast from "react-hot-toast";
+import {
+  Package, Wrench, Zap, Droplet, Settings,
+  Battery, Sparkles, Tag, Cog, Gauge, Circle, CircleDot,
+  Square, Filter, GitBranch, Radio, Puzzle, Box
+} from 'lucide-react';
 
 interface CategoryProduct {
   id: string;
@@ -48,6 +53,9 @@ interface Category {
   parentId?: string;
   level: number;
   children: Category[];
+  _count?: {
+    products: number;
+  };
 }
 
 const PAGE_SIZE = 24;
@@ -82,6 +90,66 @@ const SORT_OPTIONS = [
   { key: "price_desc", label: "Сначала дороже" },
   { key: "newest", label: "Новинки" },
 ];
+
+// Расширенная система иконок для категорий
+const getCategoryIcon = (name: string) => {
+  const lowerName = name.toLowerCase();
+
+  // Масла и жидкости
+  if (lowerName.includes('масл') || lowerName.includes('жидкост')) return Droplet;
+
+  // Электрика
+  if (lowerName.includes('электр') || lowerName.includes('провод') || lowerName.includes('свеч')) return Zap;
+
+  // Инструменты
+  if (lowerName.includes('инструмент') || lowerName.includes('техник') || lowerName.includes('оборудован')) return Wrench;
+
+  // АКБ и батареи
+  if (lowerName.includes('акб') || lowerName.includes('батаре') || lowerName.includes('аккумулятор')) return Battery;
+
+  // Химия
+  if (lowerName.includes('химия') || lowerName.includes('очист') || lowerName.includes('мойк')) return Sparkles;
+
+  // Аксессуары
+  if (lowerName.includes('аксессуар') || lowerName.includes('украш')) return Tag;
+
+  // Двигатель
+  if (lowerName.includes('двигател') || lowerName.includes('мотор') || lowerName.includes('поршн')) return Cog;
+
+  // Тормозная система
+  if (lowerName.includes('тормоз') || lowerName.includes('колодк')) return CircleDot;
+
+  // Подвеска
+  if (lowerName.includes('подвеск') || lowerName.includes('амортизатор') || lowerName.includes('стойк')) return GitBranch;
+
+  // Фильтры
+  if (lowerName.includes('фильтр')) return Filter;
+
+  // Шины и диски
+  if (lowerName.includes('шин') || lowerName.includes('покрышк')) return Radio;
+  if (lowerName.includes('диск')) return Circle;
+
+  // Кузов
+  if (lowerName.includes('кузов') || lowerName.includes('бампер') || lowerName.includes('крыл')) return Square;
+
+  // Трансмиссия
+  if (lowerName.includes('трансмисс') || lowerName.includes('кпп') || lowerName.includes('сцепл')) return Settings;
+
+  // Салон
+  if (lowerName.includes('салон') || lowerName.includes('сидень')) return Box;
+
+  // Система охлаждения
+  if (lowerName.includes('охлажд') || lowerName.includes('радиатор')) return Gauge;
+
+  // Запчасти и детали
+  if (lowerName.includes('деталь') || lowerName.includes('запчаст') || lowerName.includes('комплект')) return Puzzle;
+
+  // ТО
+  if (lowerName.includes(' то') || lowerName.includes('обслуж')) return Settings;
+
+  // По умолчанию
+  return Package;
+};
 
 export default function CategoryPage() {
   const router = useRouter();
@@ -132,6 +200,46 @@ export default function CategoryPage() {
     if (!categoriesData?.categories || !slug) return null;
     return findCategoryBySlug(categoriesData.categories, slug as string);
   }, [categoriesData, slug]);
+
+  // Функция для построения пути категории (иерархия от корня до текущей)
+  const getCategoryPath = (category: Category | null, categories: Category[]): Category[] => {
+    if (!category) return [];
+
+    const buildPath = (cat: Category, allCats: Category[]): Category[] => {
+      if (!cat.parentId) {
+        return [cat];
+      }
+
+      const parent = findCategoryById(allCats, cat.parentId);
+      if (parent) {
+        return [...buildPath(parent, allCats), cat];
+      }
+
+      return [cat];
+    };
+
+    return buildPath(category, categories);
+  };
+
+  // Функция для поиска категории по ID
+  const findCategoryById = (categories: Category[], targetId: string): Category | null => {
+    for (const cat of categories) {
+      if (cat.id === targetId) return cat;
+      if (cat.children && cat.children.length > 0) {
+        const found = findCategoryById(cat.children, targetId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  // Получаем полный путь категории
+  const categoryPath = useMemo(() => {
+    if (!currentCategory || !categoriesData?.categories) return [];
+    const path = getCategoryPath(currentCategory, categoriesData.categories);
+    console.log('🍞 Category Path:', path.map(c => c.name).join(' → '));
+    return path;
+  }, [currentCategory, categoriesData]);
 
   // Фильтрация и сортировка
   const products = useMemo(() => {
@@ -276,11 +384,27 @@ export default function CategoryPage() {
     }
   };
 
-  // Хлебные крошки
-  const breadcrumbs = [
-    { label: "Главная", href: "/" },
-    { label: currentCategory?.name || "Каталог" }
-  ];
+  // Хлебные крошки - строим полный путь от Главной через Каталог и все родительские категории
+  const breadcrumbs = useMemo(() => {
+    const crumbs = [
+      { label: "Главная", href: "/" },
+      { label: "Каталог", href: "/catalog" }
+    ];
+
+    // Добавляем все категории из пути
+    categoryPath.forEach((cat, index) => {
+      crumbs.push({
+        label: cat.name,
+        href: index === categoryPath.length - 1 ? '' : `/catalog/${cat.slug}` // Последняя категория без ссылки
+      });
+    });
+
+    console.log('🍞 Breadcrumbs:', crumbs.map(c => c.label).join(' → '));
+    return crumbs;
+  }, [categoryPath]);
+
+  // Проверяем, есть ли у категории подкатегории
+  const hasSubcategories = currentCategory?.children && currentCategory.children.length > 0;
 
   return (
     <>
@@ -294,12 +418,78 @@ export default function CategoryPage() {
       <CatalogInfoHeader
         title={currentCategory?.name || "Каталог"}
         breadcrumbs={breadcrumbs}
-        count={products.length}
+        count={hasSubcategories ? undefined : products.length}
       />
-      <section className="main">
-        <div className="w-layout-blockcontainer container w-container">
-          {/* Layout с фильтрами слева и товарами справа */}
-          <div className="flex gap-6 items-start">
+
+      {/* Если есть подкатегории - показываем их */}
+      {hasSubcategories ? (
+        <section style={{ padding: '40px 0', background: '#F9FAFB', minHeight: 'calc(100vh - 200px)' }}>
+          <div style={{ maxWidth: '1580px', margin: '0 auto', padding: '0 20px' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {currentCategory.children.map((subcategory: Category) => {
+                const Icon = getCategoryIcon(subcategory.name);
+                const hasChildren = subcategory.children && subcategory.children.length > 0;
+                const productCount = subcategory._count?.products || 0;
+
+                return (
+                  <a
+                    key={subcategory.id}
+                    href={`/catalog/${subcategory.slug}`}
+                    className="group relative bg-white rounded-xl p-4 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 hover:border-[#EC1C24]/30 overflow-hidden"
+                  >
+                    {/* Градиентный фон при ховере */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#EC1C24]/0 to-[#EC1C24]/0 group-hover:from-[#EC1C24]/5 group-hover:to-transparent transition-all duration-300 rounded-xl"></div>
+
+                    {/* Декоративные элементы */}
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#EC1C24]/5 to-transparent rounded-full blur-2xl group-hover:from-[#EC1C24]/10 transition-all duration-300 -mr-12 -mt-12"></div>
+
+                    <div className="relative z-10">
+                      {/* Иконка категории */}
+                      <div className="mb-3 inline-flex items-center justify-center w-11 h-11 rounded-lg bg-gradient-to-br from-[#EC1C24]/10 to-[#EC1C24]/5 group-hover:from-[#EC1C24]/20 group-hover:to-[#EC1C24]/10 transition-all duration-300">
+                        <Icon className="w-5 h-5 text-[#EC1C24]" strokeWidth={2} />
+                      </div>
+
+                      {/* Название категории */}
+                      <h3 className="font-onest font-semibold text-base text-[#041124] mb-1.5 group-hover:text-[#EC1C24] transition-colors">
+                        {subcategory.name}
+                      </h3>
+
+                      {/* Счетчик товаров */}
+                      <div className="flex items-center justify-between">
+                        {productCount > 0 && (
+                          <span className="font-onest text-xs text-gray-500">
+                            {productCount} {productCount === 1 ? 'товар' : productCount < 5 ? 'товара' : 'товаров'}
+                          </span>
+                        )}
+
+                        {/* Индикатор подкатегорий или перехода */}
+                        <div className="flex items-center gap-1 ml-auto">
+                          {hasChildren && (
+                            <span className="font-onest text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                              {subcategory.children.length} {subcategory.children.length === 1 ? 'подкат.' : 'подкат.'}
+                            </span>
+                          )}
+                          <svg className="w-4 h-4 text-gray-400 group-hover:text-[#EC1C24] group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Индикатор активности */}
+                    <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-[#EC1C24] to-[#FF3838] group-hover:w-full transition-all duration-300 rounded-b-xl"></div>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      ) : (
+        /* Если нет подкатегорий - показываем товары */
+        <section className="main">
+          <div className="w-layout-blockcontainer container w-container">
+            {/* Layout с фильтрами слева и товарами справа */}
+            <div className="flex gap-6 items-start">
             {/* Фильтры слева */}
             {filters.length > 0 && (
               <div className="w-[280px] flex-shrink-0 relative z-10">
@@ -412,6 +602,8 @@ export default function CategoryPage() {
           </div>
         </div>
       </section>
+      )}
+
       <section className="section-3">
         <CatalogSubscribe />
       </section>

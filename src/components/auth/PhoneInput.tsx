@@ -22,9 +22,14 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ onSuccess, onError, onRegister,
   void onRegister
 
   const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const digitsOnly = event.target.value.replace(/\D/g, '').replace(/^7/, '')
+    // Получаем значение из инпута без "+7 "
+    const inputValue = event.target.value.replace(/^\+7\s*/, '')
+    // Убираем все нецифровые символы
+    const digitsOnly = inputValue.replace(/\D/g, '')
+    // Ограничиваем до 10 цифр
     const trimmed = digitsOnly.slice(0, 10)
 
+    // Форматируем: XXX XXX XX XX
     let formatted = ''
     if (trimmed.length > 0) {
       formatted = trimmed.slice(0, 3)
@@ -85,6 +90,36 @@ const PhoneInput: React.FC<PhoneInputProps> = ({ onSuccess, onError, onRegister,
             type="tel"
             value={phone ? `+7 ${phone}` : '+7 '}
             onChange={handlePhoneChange}
+            onKeyDown={(e) => {
+              if (e.key === 'Backspace') {
+                e.preventDefault()
+
+                // Получаем только цифры
+                const digitsOnly = phone.replace(/\D/g, '')
+
+                // Если есть цифры для удаления
+                if (digitsOnly.length > 0) {
+                  const newDigits = digitsOnly.slice(0, -1)
+
+                  // Форматируем заново
+                  let formatted = ''
+                  if (newDigits.length > 0) {
+                    formatted = newDigits.slice(0, 3)
+                  }
+                  if (newDigits.length > 3) {
+                    formatted += ` ${newDigits.slice(3, 6)}`
+                  }
+                  if (newDigits.length > 6) {
+                    formatted += ` ${newDigits.slice(6, 8)}`
+                  }
+                  if (newDigits.length > 8) {
+                    formatted += ` ${newDigits.slice(8, 10)}`
+                  }
+
+                  setPhone(formatted)
+                }
+              }
+            }}
             placeholder="+7 909 797 66 45"
             className="w-full border-none bg-transparent text-[16px] font-medium leading-none text-[#424F60] placeholder:text-[#424F60] focus:outline-none"
             disabled={isLoading}

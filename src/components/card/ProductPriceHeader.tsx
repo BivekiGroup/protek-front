@@ -12,19 +12,19 @@ interface ProductPriceHeaderProps {
 const ProductPriceHeader = ({ offers, brand, articleNumber, name }: ProductPriceHeaderProps) => {
   const { addItem } = useCart();
 
-  // Filter valid offers with prices, prioritizing database (internal) offers
+  // Filter valid offers with prices - use ALL valid offers (both internal and external)
   const validOffers = offers.filter(offer => offer && offer.price && offer.price > 0);
-  
-  // PRIORITIZE DATABASE OFFERS: Use only internal offers (from database) first
+
+  // Use all valid offers instead of prioritizing only database offers
+  const offersToUse = validOffers;
+
   const databaseOffers = validOffers.filter(offer => offer.type === 'internal');
-  
-  // Only use external API offers if no database offers are available
-  const offersToUse = databaseOffers.length > 0 ? databaseOffers : validOffers;
-  
-  console.log('ProductPriceHeader: Using offers from', databaseOffers.length > 0 ? 'DATABASE' : 'API', {
+  const externalOffers = validOffers.filter(offer => offer.type === 'external');
+
+  console.log('ProductPriceHeader: Using ALL valid offers', {
     databaseOffers: databaseOffers.length,
-    totalOffers: validOffers.length,
-    usingOffers: offersToUse.length
+    externalOffers: externalOffers.length,
+    totalOffers: validOffers.length
   });
 
   if (offersToUse.length === 0) {

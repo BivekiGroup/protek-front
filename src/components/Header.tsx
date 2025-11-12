@@ -9,6 +9,7 @@ import { FIND_LAXIMO_VEHICLE, DOC_FIND_OEM, FIND_LAXIMO_VEHICLE_BY_PLATE_GLOBAL,
 import { LaximoVehicleSearchResult, LaximoDocFindOEMResult, LaximoVehiclesByPartResult } from '@/types/laximo';
 import Link from "next/link";
 import CartButton from './CartButton';
+import FavoriteButton from './FavoriteButton';
 import SearchHistoryDropdown from './SearchHistoryDropdown';
 import { GET_RECENT_SEARCH_QUERIES, PartsSearchHistoryItem } from '@/lib/graphql/search-history';
 import { onAuthChanged } from '@/lib/authEvents'
@@ -534,7 +535,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
               onClick={() => setMenuOpen((open) => !open)}
               style={{ cursor: "pointer" }}
             >
-              <div className="code-embed-5 w-embed"><svg width="currentwidth" height="currenthieght" viewBox="0 0 30 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div className="code-embed-5 w-embed"><svg width="30" height="18" viewBox="0 0 30 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M0 0H30V3H0V0Z" fill="currentColor"></path>
                 <path d="M0 7.5H30V10.5H0V7.5Z" fill="currentColor"></path>
                 <path d="M0 15H30V18H0V15Z" fill="currentColor"></path>
@@ -912,14 +913,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenAuthModal = () => console.log('Au
                   <div className="code-embed-7 w-embed"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M27 10.8V24H24.6V13.2H5.4V24H3V10.8L15 6L27 10.8ZM23.4 14.4H6.6V16.8H23.4V14.4ZM23.4 18H6.6V20.4H23.4V18Z" fill="currentColor" /><path d="M6.6 21.6H23.4V24H6.6V21.6Z" fill="currentColor" /></svg></div>
                   <div className="text-block-2">Гараж</div>
                 </Link>
-                <Link
-                  href="/favorite"
-                  className="button_h w-inline-block"
-                  onClick={(event) => handleProtectedNavigation(event, '/favorite')}
-                >
-                  <div className="code-embed-7 w-embed"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 25L13.405 23.5613C7.74 18.4714 4 15.1035 4 10.9946C4 7.6267 6.662 5 10.05 5C11.964 5 13.801 5.88283 15 7.26703C16.199 5.88283 18.036 5 19.95 5C23.338 5 26 7.6267 26 10.9946C26 15.1035 22.26 18.4714 16.595 23.5613L15 25Z" fill="currentColor" /></svg></div>
-                  <div className="text-block-2">Избранное</div>
-                </Link>
+                <FavoriteButton onProtectedNavigation={handleProtectedNavigation} />
                 <button
                   onClick={() => {
                     if (currentUser) {
