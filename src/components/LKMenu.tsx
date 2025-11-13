@@ -55,7 +55,7 @@ const LKMenu = React.forwardRef<HTMLDivElement>((props, ref) => {
   };
 
   return (
-    <div ref={ref} className="flex flex-col max-w-xs max-md:w-full max-md:max-w-full w-full text-xl font-semibold leading-none text-gray-950">
+    <div ref={ref} className="flex flex-col w-full max-w-xs max-md:max-w-full text-xl font-semibold leading-none text-gray-950">
       <div className="flex flex-col px-4 pt-4 pb-6 w-full bg-white rounded-3xl">
         <div className="gap-2.5 self-start px-2.5 pt-2.5 text-gray-950">
           Личный кабинет

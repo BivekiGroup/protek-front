@@ -1,9 +1,9 @@
-import * as React from "react";
-import { useRouter } from 'next/router';
-import { useQuery, useMutation } from '@apollo/client';
-import toast from 'react-hot-toast';
-import { GET_ORDERS, CANCEL_ORDER, REQUEST_ORDER_RETURN } from '@/lib/graphql';
 import { useFavorites } from '@/contexts/FavoritesContext';
+import { CANCEL_ORDER, GET_ORDERS, REQUEST_ORDER_RETURN } from '@/lib/graphql';
+import { useMutation, useQuery } from '@apollo/client';
+import { useRouter } from 'next/router';
+import * as React from 'react';
+import toast from 'react-hot-toast';
 
 interface OrderItem {
   id: string;
@@ -52,11 +52,21 @@ interface Order {
 interface ProfileOrdersMainProps {}
 
 const tabs: Array<{ label: string; status: OrderStatus[] | null }> = [
-  { label: "Все", status: null },
-  { label: "Текущие", status: ['PENDING', 'PAID', 'PROCESSING', 'ASSEMBLING', 'IN_DELIVERY', 'AWAITING_PICKUP'] },
-  { label: "Выполненные", status: ['DELIVERED'] },
-  { label: "Возврат", status: ['RETURN_REQUESTED', 'REFUNDED'] },
-  { label: "Отмененные", status: ['CANCELED'] }
+  { label: 'Все', status: null },
+  {
+    label: 'Текущие',
+    status: [
+      'PENDING',
+      'PAID',
+      'PROCESSING',
+      'ASSEMBLING',
+      'IN_DELIVERY',
+      'AWAITING_PICKUP',
+    ],
+  },
+  { label: 'Выполненные', status: ['DELIVERED'] },
+  { label: 'Возврат', status: ['RETURN_REQUESTED', 'REFUNDED'] },
+  { label: 'Отмененные', status: ['CANCELED'] },
 ];
 
 const statusLabels: Record<OrderStatus, string> = {
@@ -69,7 +79,7 @@ const statusLabels: Record<OrderStatus, string> = {
   DELIVERED: 'Доставлен',
   RETURN_REQUESTED: 'Возврат запрошен',
   CANCELED: 'Отказ',
-  REFUNDED: 'Возврат оформлен'
+  REFUNDED: 'Возврат оформлен',
 };
 
 const statusColors: Record<OrderStatus, string> = {
@@ -82,10 +92,15 @@ const statusColors: Record<OrderStatus, string> = {
   DELIVERED: '#10B981',
   RETURN_REQUESTED: '#F97316',
   CANCELED: '#EF4444',
-  REFUNDED: '#6B7280'
+  REFUNDED: '#6B7280',
 };
 
-const clientCancelableStatuses: OrderStatus[] = ['PENDING', 'PAID', 'PROCESSING', 'ASSEMBLING'];
+const clientCancelableStatuses: OrderStatus[] = [
+  'PENDING',
+  'PAID',
+  'PROCESSING',
+  'ASSEMBLING',
+];
 
 const formatPrice = (price: number, currency = 'RUB') =>
   `${price.toLocaleString('ru-RU')} ${currency === 'RUB' ? '₽' : currency}`;
@@ -94,7 +109,7 @@ const formatDate = (dateString: string) =>
   new Date(dateString).toLocaleDateString('ru-RU', {
     day: 'numeric',
     month: 'long',
-    year: 'numeric'
+    year: 'numeric',
   });
 
 const formatDateTime = (dateString: string) =>
@@ -103,22 +118,29 @@ const formatDateTime = (dateString: string) =>
     month: 'long',
     year: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 
 const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
   const router = useRouter();
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const [activeTab, setActiveTab] = React.useState(0);
-  const [search, setSearch] = React.useState("");
+  const [search, setSearch] = React.useState('');
   const [clientId, setClientId] = React.useState<string | null>(null);
-  const [actionDialog, setActionDialog] = React.useState<{ type: 'cancel' | 'return'; order: Order } | null>(null);
+  const [actionDialog, setActionDialog] = React.useState<{
+    type: 'cancel' | 'return';
+    order: Order;
+  } | null>(null);
   const [actionReason, setActionReason] = React.useState('');
-  const [pendingAction, setPendingAction] = React.useState<{ orderId: string; type: 'cancel' | 'return' } | null>(null);
+  const [pendingAction, setPendingAction] = React.useState<{
+    orderId: string;
+    type: 'cancel' | 'return';
+  } | null>(null);
   const [feedbackError, setFeedbackError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const userData = typeof window !== 'undefined' ? localStorage.getItem('userData') : null;
+    const userData =
+      typeof window !== 'undefined' ? localStorage.getItem('userData') : null;
     if (userData) {
       try {
         const user = JSON.parse(userData);
@@ -131,16 +153,20 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
 
   const { data, loading, error, refetch } = useQuery(GET_ORDERS, {
     variables: {
-      clientId: clientId?.startsWith('client_') ? clientId.substring(7) : clientId,
+      clientId: clientId?.startsWith('client_')
+        ? clientId.substring(7)
+        : clientId,
       limit: 100,
-      offset: 0
+      offset: 0,
     },
     skip: !clientId,
-    fetchPolicy: 'cache-and-network'
+    fetchPolicy: 'cache-and-network',
   });
 
-  const [cancelOrderMutation, { loading: cancelLoading }] = useMutation(CANCEL_ORDER);
-  const [requestOrderReturnMutation, { loading: returnLoading }] = useMutation(REQUEST_ORDER_RETURN);
+  const [cancelOrderMutation, { loading: cancelLoading }] =
+    useMutation(CANCEL_ORDER);
+  const [requestOrderReturnMutation, { loading: returnLoading }] =
+    useMutation(REQUEST_ORDER_RETURN);
 
   const orders: Order[] = data?.orders?.orders || [];
 
@@ -149,19 +175,21 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
     if (!currentTab.status) {
       return orders;
     }
-    return orders.filter(order => currentTab.status!.includes(order.status));
+    return orders.filter((order) => currentTab.status!.includes(order.status));
   }, [orders, activeTab]);
 
   const filteredOrders = React.useMemo(() => {
     if (!search) return filteredOrdersByTab;
     const searchLower = search.toLowerCase();
-    return filteredOrdersByTab.filter(order =>
-      order.orderNumber.toLowerCase().includes(searchLower) ||
-      order.items.some(item =>
-        item.name.toLowerCase().includes(searchLower) ||
-        item.article?.toLowerCase().includes(searchLower) ||
-        item.brand?.toLowerCase().includes(searchLower)
-      )
+    return filteredOrdersByTab.filter(
+      (order) =>
+        order.orderNumber.toLowerCase().includes(searchLower) ||
+        order.items.some(
+          (item) =>
+            item.name.toLowerCase().includes(searchLower) ||
+            item.article?.toLowerCase().includes(searchLower) ||
+            item.brand?.toLowerCase().includes(searchLower)
+        )
     );
   }, [filteredOrdersByTab, search]);
 
@@ -170,7 +198,9 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
   const openActionDialog = (type: 'cancel' | 'return', order: Order) => {
     setFeedbackError(null);
     setActionDialog({ type, order });
-    setActionReason(type === 'return' ? order.returnReason || '' : order.cancelReason || '');
+    setActionReason(
+      type === 'return' ? order.returnReason || '' : order.cancelReason || ''
+    );
   };
 
   const closeActionDialog = () => {
@@ -182,22 +212,25 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
   const handleConfirmAction = async () => {
     if (!actionDialog) return;
     setFeedbackError(null);
-    setPendingAction({ orderId: actionDialog.order.id, type: actionDialog.type });
+    setPendingAction({
+      orderId: actionDialog.order.id,
+      type: actionDialog.type,
+    });
     try {
       if (actionDialog.type === 'cancel') {
         await cancelOrderMutation({
           variables: {
             id: actionDialog.order.id,
-            reason: actionReason.trim() || null
-          }
+            reason: actionReason.trim() || null,
+          },
         });
         toast.success('Заказ отменён.');
       } else {
         await requestOrderReturnMutation({
           variables: {
             id: actionDialog.order.id,
-            reason: actionReason.trim() || null
-          }
+            reason: actionReason.trim() || null,
+          },
         });
         toast.success('Запрос на возврат отправлен.');
       }
@@ -206,7 +239,9 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
       await refetch();
     } catch (mutationError: any) {
       console.error('Ошибка при выполнении действия с заказом:', mutationError);
-      const message = mutationError?.message || 'Не удалось выполнить действие. Попробуйте позже.';
+      const message =
+        mutationError?.message ||
+        'Не удалось выполнить действие. Попробуйте позже.';
       setFeedbackError(message);
       toast.error(message);
     } finally {
@@ -216,9 +251,11 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
 
   if (!clientId) {
     return (
-      <div className="flex flex-col flex-1 shrink justify-center basis-0 min-w-[240px] max-md:max-w-full">
+      <div className="flex flex-col flex-1 shrink justify-center basis-0 w-full min-w-[240px] max-md:max-w-full">
         <div className="text-center py-8">
-          <p className="text-gray-500">Необходимо авторизоваться для просмотра заказов</p>
+          <p className="text-gray-500">
+            Необходимо авторизоваться для просмотра заказов
+          </p>
         </div>
       </div>
     );
@@ -226,7 +263,7 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col flex-1 shrink justify-center basis-0 min-w-[240px] max-md:max-w-full">
+      <div className="flex flex-col flex-1 shrink justify-center basis-0 w-full min-w-[240px] max-md:max-w-full">
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
           <p className="text-gray-500">Загрузка заказов...</p>
@@ -237,9 +274,11 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col flex-1 shrink justify-center basis-0 min-w-[240px] max-md:max-w-full">
+      <div className="flex flex-col flex-1 shrink justify-center basis-0 w-full min-w-[240px] max-md:max-w-full">
         <div className="text-center py-8">
-          <p className="text-red-500">Ошибка загрузки заказов: {error.message}</p>
+          <p className="text-red-500">
+            Ошибка загрузки заказов: {error.message}
+          </p>
           <button
             onClick={() => refetch()}
             className="mt-4 px-4 py-2 bg-red-600 !text-white rounded hover:bg-red-700 transition-colors"
@@ -252,18 +291,26 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
   }
 
   return (
-    <div className="flex flex-col flex-1 shrink justify-center basis-0 w-full max-md:max-w-full">
+    <div className="flex flex-col flex-1 shrink justify-center basis-0 min-w-0 max-md:max-w-full">
       <div className="flex flex-wrap gap-5 w-full whitespace-nowrap max-md:max-w-full">
         <div className="flex flex-wrap flex-1 shrink gap-5 self-start text-lg font-medium leading-tight text-center basis-[60px] min-w-[240px] text-gray-950 max-md:max-w-full">
           {tabs.map((tab, idx) => (
             <div
               key={tab.label}
-              className={`flex flex-1 shrink gap-5 items-center h-full rounded-xl basis-0 text-[14px] ${activeTab === idx ? "bg-red-600 text-white" : "bg-slate-200 text-gray-950"}`}
-              style={{ cursor: "pointer" }}
+              className={`flex flex-1 shrink gap-5 items-center h-full rounded-xl basis-0 text-[14px] ${
+                activeTab === idx
+                  ? 'bg-red-600 text-white'
+                  : 'bg-slate-200 text-gray-950'
+              }`}
+              style={{ cursor: 'pointer' }}
               onClick={() => setActiveTab(idx)}
             >
               <div
-                className={`flex-1 shrink gap-5 self-stretch px-6 py-3.5 my-auto w-full rounded-xl basis-0 max-md:px-5 text-[14px] ${activeTab === idx ? "bg-red-600 text-white" : "bg-slate-200 text-gray-950"}`}
+                className={`flex-1 shrink gap-5 self-stretch px-6 py-3.5 my-auto w-full rounded-xl basis-0 max-md:px-5 text-[14px] ${
+                  activeTab === idx
+                    ? 'bg-red-600 text-white'
+                    : 'bg-slate-200 text-gray-950'
+                }`}
               >
                 {tab.label}
               </div>
@@ -274,7 +321,7 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
           <input
             type="text"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Поиск по заказам"
             className="flex-1 shrink self-stretch my-auto basis-0 text-ellipsis outline-none bg-transparent text-gray-950 placeholder:text-gray-400"
           />
@@ -286,9 +333,11 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
         </div>
       </div>
 
-      <div className="flex overflow-hidden flex-col p-8 mt-5 w-full bg-white rounded-2xl max-md:px-5 max-md:max-w-full">
-        <div className="text-3xl font-bold leading-none text-gray-950">{tabs[activeTab].label}</div>
-        
+      <div className="flex overflow-hidden flex-col p-8 mt-5 w-full bg-white rounded-2xl max-md:px-5 min-w-0">
+        <div className="text-3xl font-bold leading-none text-gray-950">
+          {tabs[activeTab].label}
+        </div>
+
         {filteredOrders.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-400 text-lg mb-2">
@@ -309,37 +358,56 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
               const isProcessingThisOrder = pendingAction?.orderId === order.id;
 
               return (
-                <div key={order.id} className="flex flex-col justify-center px-5 py-8 w-full bg-white rounded-2xl border border-gray-200">
+                <div
+                  key={order.id}
+                  className="flex flex-col justify-center px-5 py-8 bg-white rounded-2xl border border-gray-200"
+                >
                   <div className="flex flex-col pr-7 pl-5 w-full max-md:pr-5 max-md:max-w-full">
                     <div className="flex flex-wrap gap-10 justify-between items-center w-full max-md:max-w-full">
                       <div className="flex gap-5 items-center self-stretch my-auto min-w-[240px]">
                         <div
                           className="gap-5 self-stretch px-6 py-3.5 my-auto text-sm font-medium leading-snug text-center text-white whitespace-nowrap rounded-xl max-md:px-5"
-                          style={{ backgroundColor: statusColors[order.status] }}
+                          style={{
+                            backgroundColor: statusColors[order.status],
+                          }}
                         >
                           {statusLabels[order.status]}
                         </div>
                         <div className="self-stretch my-auto text-xl font-semibold leading-tight text-gray-950">
-                          Заказ {order.orderNumber} от {formatDate(order.createdAt)}
+                          Заказ {order.orderNumber} от{' '}
+                          {formatDate(order.createdAt)}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col mt-5 w-full max-md:max-w-full">
-                    <div className="flex items-center pb-2.5 pl-2 pr-7 w-full text-sm text-gray-400 border-b border-solid border-b-stone-300 max-md:pr-5 max-md:max-w-full">
+                  <div className="flex flex-col mt-5 w-full max-md:max-w-full overflow-x-auto">
+                    <div className="flex items-center pb-2.5 pl-2 pr-7 w-full text-sm text-gray-400 border-b border-solid border-b-stone-300 max-md:pr-5 max-md:max-w-full min-w-[876px]">
                       <div className="w-9 text-center shrink-0">№</div>
-                      <div className="w-[130px] shrink-0 ml-5">Производитель</div>
+                      <div className="w-[130px] shrink-0 ml-5">
+                        Производитель
+                      </div>
                       <div className="w-[120px] shrink-0 ml-5">Артикул</div>
-                      <div className="flex-1 ml-5 min-w-[240px]">Наименование</div>
-                      <div className="w-[80px] text-center shrink-0 ml-5">Кол-во</div>
-                      <div className="w-[110px] text-right shrink-0 ml-5">Стоимость</div>
+                      <div className="flex-1 ml-5 min-w-[240px]">
+                        Наименование
+                      </div>
+                      <div className="w-[80px] text-center shrink-0 ml-5">
+                        Кол-во
+                      </div>
+                      <div className="w-[110px] text-right shrink-0 ml-5">
+                        Стоимость
+                      </div>
                       <div className="w-[40px] shrink-0 ml-5"></div>
                     </div>
 
                     <div className="flex flex-col mt-1.5 w-full max-md:max-w-full">
                       {order.items.map((item, index) => {
-                        const isItemFavorite = isFavorite(undefined, undefined, item.article, item.brand);
+                        const isItemFavorite = isFavorite(
+                          undefined,
+                          undefined,
+                          item.article,
+                          item.brand
+                        );
 
                         return (
                           <div
@@ -347,10 +415,18 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                             className="flex items-center pt-1.5 pb-2 pl-2 pr-7 w-full rounded-lg max-md:pr-5 max-md:max-w-full cursor-pointer hover:bg-gray-50 transition-colors"
                             onClick={() => {
                               if (item.article && item.brand) {
-                                router.push(`/search-result?article=${encodeURIComponent(item.article)}&brand=${encodeURIComponent(item.brand)}`);
+                                router.push(
+                                  `/search-result?article=${encodeURIComponent(
+                                    item.article
+                                  )}&brand=${encodeURIComponent(item.brand)}`
+                                );
                               }
                             }}
-                            title={item.article && item.brand ? "Перейти к поиску товара" : ""}
+                            title={
+                              item.article && item.brand
+                                ? 'Перейти к поиску товара'
+                                : ''
+                            }
                           >
                             <div className="w-9 text-sm leading-4 text-center text-black shrink-0">
                               {index + 1}
@@ -386,23 +462,29 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                                       brand: item.brand || '',
                                       article: item.article || '',
                                       price: item.price,
-                                      currency: order.currency
+                                      currency: order.currency,
                                     });
                                   }
                                 }}
                                 className="p-1 hover:scale-110 transition-transform"
-                                title={isItemFavorite ? "Удалить из избранного" : "Добавить в избранное"}
+                                title={
+                                  isItemFavorite
+                                    ? 'Удалить из избранного'
+                                    : 'Добавить в избранное'
+                                }
                               >
                                 <svg
                                   width="20"
                                   height="20"
                                   viewBox="0 0 30 30"
-                                  fill={isItemFavorite ? "#EC1C24" : "none"}
+                                  fill={isItemFavorite ? '#EC1C24' : 'none'}
                                   xmlns="http://www.w3.org/2000/svg"
                                 >
                                   <path
                                     d="M15 25L13.405 23.5613C7.74 18.4714 4 15.1035 4 10.9946C4 7.6267 6.662 5 10.05 5C11.964 5 13.801 5.88283 15 7.26703C16.199 5.88283 18.036 5 19.95 5C23.338 5 26 7.6267 26 10.9946C26 15.1035 22.26 18.4714 16.595 23.5613L15 25Z"
-                                    stroke={isItemFavorite ? "#EC1C24" : "#9CA3AF"}
+                                    stroke={
+                                      isItemFavorite ? '#EC1C24' : '#9CA3AF'
+                                    }
                                     strokeWidth="2"
                                   />
                                 </svg>
@@ -417,11 +499,13 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                   <div className="flex justify-end mt-4 pt-4 border-t border-gray-200">
                     <div className="text-right space-y-1">
                       <div className="text-sm text-gray-500">
-                        Сумма товаров: {formatPrice(order.totalAmount, order.currency)}
+                        Сумма товаров:{' '}
+                        {formatPrice(order.totalAmount, order.currency)}
                       </div>
                       {order.discountAmount > 0 && (
                         <div className="text-sm text-gray-500">
-                          Скидка: -{formatPrice(order.discountAmount, order.currency)}
+                          Скидка: -
+                          {formatPrice(order.discountAmount, order.currency)}
                         </div>
                       )}
                       <div className="text-lg font-bold text-gray-950">
@@ -432,41 +516,67 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
 
                   {order.deliveryAddress && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="text-sm text-gray-500 mb-1">Адрес доставки:</div>
-                      <div className="text-sm text-gray-950">{order.deliveryAddress}</div>
+                      <div className="text-sm text-gray-500 mb-1">
+                        Адрес доставки:
+                      </div>
+                      <div className="text-sm text-gray-950">
+                        {order.deliveryAddress}
+                      </div>
                     </div>
                   )}
 
                   {order.comment && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="text-sm text-gray-500 mb-1">Комментарий:</div>
-                      <div className="text-sm text-gray-950 whitespace-pre-line">{order.comment}</div>
+                      <div className="text-sm text-gray-500 mb-1">
+                        Комментарий:
+                      </div>
+                      <div className="text-sm text-gray-950 whitespace-pre-line">
+                        {order.comment}
+                      </div>
                     </div>
                   )}
 
                   {order.cancelReason && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="text-sm text-gray-500 mb-1">Причина отмены:</div>
-                      <div className="text-sm text-gray-950">{order.cancelReason}</div>
+                      <div className="text-sm text-gray-500 mb-1">
+                        Причина отмены:
+                      </div>
+                      <div className="text-sm text-gray-950">
+                        {order.cancelReason}
+                      </div>
                       {order.canceledAt && (
-                        <div className="text-xs text-gray-400 mt-1">от {formatDateTime(order.canceledAt)}</div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          от {formatDateTime(order.canceledAt)}
+                        </div>
                       )}
                     </div>
                   )}
 
-                  {(order.returnReason || order.returnRequestedAt || order.returnedAt) && (
+                  {(order.returnReason ||
+                    order.returnRequestedAt ||
+                    order.returnedAt) && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="text-sm text-gray-500 mb-1">Информация о возврате:</div>
+                      <div className="text-sm text-gray-500 mb-1">
+                        Информация о возврате:
+                      </div>
                       {order.returnReason ? (
-                        <div className="text-sm text-gray-950">{order.returnReason}</div>
+                        <div className="text-sm text-gray-950">
+                          {order.returnReason}
+                        </div>
                       ) : (
-                        <div className="text-sm text-gray-950">Причина не указана</div>
+                        <div className="text-sm text-gray-950">
+                          Причина не указана
+                        </div>
                       )}
                       {order.returnRequestedAt && (
-                        <div className="text-xs text-gray-400 mt-1">запрошен {formatDateTime(order.returnRequestedAt)}</div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          запрошен {formatDateTime(order.returnRequestedAt)}
+                        </div>
                       )}
                       {order.returnedAt && (
-                        <div className="text-xs text-gray-400 mt-1">возврат оформлен {formatDateTime(order.returnedAt)}</div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          возврат оформлен {formatDateTime(order.returnedAt)}
+                        </div>
                       )}
                     </div>
                   )}
@@ -478,38 +588,58 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                           try {
                             // Если есть готовый invoiceUrl, используем его напрямую
                             if (order.invoiceUrl) {
-                              console.log('🔍 Opening existing invoice URL:', order.invoiceUrl);
+                              console.log(
+                                '🔍 Opening existing invoice URL:',
+                                order.invoiceUrl
+                              );
                               window.open(order.invoiceUrl, '_blank');
                               return;
                             }
 
-                            const userData = typeof window !== "undefined" ? window.localStorage.getItem("userData") : null;
-                            console.log('🔍 userData from localStorage:', userData ? 'exists' : 'null');
+                            const userData =
+                              typeof window !== 'undefined'
+                                ? window.localStorage.getItem('userData')
+                                : null;
+                            console.log(
+                              '🔍 userData from localStorage:',
+                              userData ? 'exists' : 'null'
+                            );
 
                             if (!userData) {
-                              alert('Необходимо авторизоваться для скачивания счёта');
+                              alert(
+                                'Необходимо авторизоваться для скачивания счёта'
+                              );
                               return;
                             }
 
                             const parsedData = JSON.parse(userData);
 
                             // Создаем токен так же, как Apollo Client
-                            const token = parsedData?.token || `client_${parsedData?.id}`;
-                            console.log('🔍 token created:', token.substring(0, 20) + '...');
+                            const token =
+                              parsedData?.token || `client_${parsedData?.id}`;
+                            console.log(
+                              '🔍 token created:',
+                              token.substring(0, 20) + '...'
+                            );
 
                             if (!token) {
-                              alert('Токен авторизации не найден. Попробуйте войти заново.');
+                              alert(
+                                'Токен авторизации не найден. Попробуйте войти заново.'
+                              );
                               return;
                             }
 
                             // Иначе генерируем через API с токеном
-                            const url = `${process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL?.replace('/api/graphql', '')}/api/order-invoice/${order.id}`;
+                            const url = `${process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL?.replace(
+                              '/api/graphql',
+                              ''
+                            )}/api/order-invoice/${order.id}`;
                             console.log('🔍 Fetching invoice from:', url);
 
                             const response = await fetch(url, {
                               headers: {
-                                'Authorization': `Bearer ${token}`
-                              }
+                                Authorization: `Bearer ${token}`,
+                              },
                             });
 
                             console.log('🔍 Response status:', response.status);
@@ -517,7 +647,9 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                             if (!response.ok) {
                               const errorData = await response.text();
                               console.error('🔍 Error response:', errorData);
-                              throw new Error(`Не удалось загрузить счёт: ${response.status}`);
+                              throw new Error(
+                                `Не удалось загрузить счёт: ${response.status}`
+                              );
                             }
 
                             // Получаем blob из ответа
@@ -525,7 +657,8 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                             console.log('🔍 Blob size:', blob.size);
 
                             // Создаем временную ссылку для скачивания
-                            const downloadUrl = window.URL.createObjectURL(blob);
+                            const downloadUrl =
+                              window.URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = downloadUrl;
                             a.download = `Счет_${order.orderNumber}.pdf`;
@@ -536,8 +669,13 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
 
                             console.log('✅ Invoice downloaded successfully');
                           } catch (error) {
-                            console.error('❌ Ошибка при скачивании счёта:', error);
-                            alert('Не удалось скачать счёт. Попробуйте позже или обратитесь в поддержку.');
+                            console.error(
+                              '❌ Ошибка при скачивании счёта:',
+                              error
+                            );
+                            alert(
+                              'Не удалось скачать счёт. Попробуйте позже или обратитесь в поддержку.'
+                            );
                           }
                         }}
                         className="inline-flex items-center px-4 py-2 rounded font-medium transition-colors"
@@ -546,19 +684,32 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                           color: '#ffffff',
                           textDecoration: 'none',
                           border: 'none',
-                          cursor: 'pointer'
+                          cursor: 'pointer',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#d97706'
+                          e.currentTarget.style.backgroundColor = '#d97706';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '#f59e0b'
+                          e.currentTarget.style.backgroundColor = '#f59e0b';
                         }}
                       >
-                        <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#ffffff' }}>
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        <svg
+                          className="mr-2 h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          style={{ color: '#ffffff' }}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
                         </svg>
-                        <span style={{ color: '#ffffff' }}>Скачать счёт на оплату</span>
+                        <span style={{ color: '#ffffff' }}>
+                          Скачать счёт на оплату
+                        </span>
                       </button>
                     )}
                     {canCancel && (
@@ -576,7 +727,9 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                         className="px-4 py-2 bg-slate-200 text-gray-900 rounded hover:bg-slate-300 disabled:opacity-50 transition-colors"
                         disabled={isSubmitting || isProcessingThisOrder}
                       >
-                        {canUpdateReturn ? 'Изменить заявку на возврат' : 'Оформить возврат'}
+                        {canUpdateReturn
+                          ? 'Изменить заявку на возврат'
+                          : 'Оформить возврат'}
                       </button>
                     )}
                   </div>
@@ -591,7 +744,9 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-lg bg-white rounded-2xl p-6 shadow-xl">
             <h3 className="text-xl font-semibold text-gray-900">
-              {actionDialog.type === 'cancel' ? 'Отмена заказа' : 'Запрос на возврат'}
+              {actionDialog.type === 'cancel'
+                ? 'Отмена заказа'
+                : 'Запрос на возврат'}
             </h3>
             <p className="mt-2 text-sm text-gray-500">
               {actionDialog.type === 'cancel'
@@ -602,7 +757,11 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
               value={actionReason}
               onChange={(event) => setActionReason(event.target.value)}
               className="mt-4 w-full min-h-[120px] rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500"
-              placeholder={actionDialog.type === 'cancel' ? 'Например: хочу изменить заказ' : 'Например: деталь не подошла'}
+              placeholder={
+                actionDialog.type === 'cancel'
+                  ? 'Например: хочу изменить заказ'
+                  : 'Например: деталь не подошла'
+              }
             />
             {feedbackError && (
               <div className="mt-3 px-3 py-2 text-sm text-red-600 bg-red-50 rounded-lg">
