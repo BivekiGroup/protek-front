@@ -180,28 +180,46 @@ const getBestOffers = (offers: any[]) => {
 
   if (baseOffers.length === 0 && analogOffers.length === 0) return [];
 
+  // Разделяем на внутренние (наши) и внешние предложения
+  const internalOffers = baseOffers.filter((offer) => offer.productId && !offer.isExternal);
+  const externalOffers = baseOffers.filter((offer) => !offer.productId || offer.isExternal);
+
   const result: { offer: any; type: string }[] = [];
 
-  // 1. Самая низкая цена (среди всех предложений)
-  const lowestPriceOffer = [...baseOffers].sort((a, b) => a.price - b.price)[0];
+  // 1. Самая низкая цена - приоритет внутренним предложениям
+  let lowestPriceOffer;
+  if (internalOffers.length > 0) {
+    // Если есть внутренние предложения, выбираем из них
+    lowestPriceOffer = [...internalOffers].sort((a, b) => a.price - b.price)[0];
+  } else {
+    // Если нет внутренних, берем из всех базовых
+    lowestPriceOffer = [...baseOffers].sort((a, b) => a.price - b.price)[0];
+  }
   if (lowestPriceOffer) {
     result.push({ offer: lowestPriceOffer, type: 'Самая низкая цена' });
   }
 
-  // 3. Самая быстрая доставка (среди всех предложений)
-  const fastestDeliveryOffer = [...baseOffers].sort((a, b) => a.deliveryDuration - b.deliveryDuration)[0];
+  // 2. Самая быстрая доставка - приоритет внутренним предложениям
+  let fastestDeliveryOffer;
+  if (internalOffers.length > 0) {
+    // Если есть внутренние предложения, выбираем из них
+    fastestDeliveryOffer = [...internalOffers].sort((a, b) => a.deliveryDuration - b.deliveryDuration)[0];
+  } else {
+    // Если нет внутренних, берем из всех базовых
+    fastestDeliveryOffer = [...baseOffers].sort((a, b) => a.deliveryDuration - b.deliveryDuration)[0];
+  }
   if (fastestDeliveryOffer) {
     result.push({ offer: fastestDeliveryOffer, type: 'Самая быстрая доставка' });
   }
 
-  // 4. Самый дешевый аналог (если есть аналоги)
+  // 3. Самый дешевый аналог (если есть аналоги)
   if (analogOffers.length > 0) {
     const cheapestAnalog = [...analogOffers].sort((a, b) => a.price - b.price)[0];
     if (cheapestAnalog) {
       result.push({ offer: cheapestAnalog, type: 'Самый дешевый аналог' });
     }
   }
-  
+
   return result;
 };
 
@@ -317,13 +335,14 @@ export default function SearchResult() {
     setVisibleAnalogsCount(ANALOGS_CHUNK_SIZE);
   }, [article, brand]);
 
-  // Подготавливаем данные корзины для отправки на backend
-  const cartSnapshotRef = useRef<{ productId?: string; offerKey?: string; article: string; brand: string; quantity: number }[] | null>(null);
+  // Подготавливаем данные корзины для отправки на backend ТОЛЬКО при первой загрузке
+  const initialCartSnapshotRef = useRef<{ productId?: string; offerKey?: string; article: string; brand: string; quantity: number }[] | null>(null);
   const lastSnapshotSearchKey = useRef<string | null>(null);
   const currentSnapshotKey = `${searchQuery || ''}__${brandQuery || ''}`;
 
-  if (cartSnapshotRef.current === null || lastSnapshotSearchKey.current !== currentSnapshotKey) {
-    cartSnapshotRef.current = cartState.items.map(item => ({
+  // Update snapshot ONLY if search key changed (not when cart changes!)
+  if (initialCartSnapshotRef.current === null || lastSnapshotSearchKey.current !== currentSnapshotKey) {
+    initialCartSnapshotRef.current = cartState.items.map(item => ({
       productId: item.productId,
       offerKey: item.offerKey,
       article: item.article || '',
@@ -333,17 +352,23 @@ export default function SearchResult() {
     lastSnapshotSearchKey.current = currentSnapshotKey;
   }
 
-  const cartItems = cartSnapshotRef.current;
+  const initialCartItems = initialCartSnapshotRef.current;
 
-  const { data, loading, error } = useQuery(SEARCH_PRODUCT_OFFERS, {
+  const { data, loading, error, networkStatus } = useQuery(SEARCH_PRODUCT_OFFERS, {
     variables: {
       articleNumber: searchQuery,
       brand: brandQuery || '', // Используем пустую строку если бренд не указан
-      cartItems: cartItems
+      cartItems: initialCartItems // Используем снапшот, который НЕ меняется при добавлении в корзину
     },
     skip: !searchQuery,
-    errorPolicy: 'all'
+    errorPolicy: 'all',
+    fetchPolicy: 'network-only', // Всегда делаем запрос к серверу для актуальных данных
+    notifyOnNetworkStatusChange: true // Получаем обновления networkStatus
   });
+
+  // Показываем полноэкранный лоадер только при первоначальной загрузке страницы (когда еще нет данных)
+  // При обновлении корзины (networkStatus 2,3,6,7,8) уже есть данные, поэтому лоадер не показываем
+  const isInitialLoading = loading && !data;
   
   const { imageUrl: mainImageUrl } = useArticleImage(artId as string, { enabled: !!artId });
   
@@ -622,7 +647,7 @@ export default function SearchResult() {
     return "-";
   }, [result, allOffers]);
 
-  if (loading) {
+  if (isInitialLoading) {
     return (
       <>
         <Head>

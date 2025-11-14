@@ -10,34 +10,109 @@ interface ProductPriceHeaderProps {
 }
 
 const ProductPriceHeader = ({ offers, brand, articleNumber, name }: ProductPriceHeaderProps) => {
-  const { addItem } = useCart();
+  const { addItem, state: cartState } = useCart();
 
-  // Filter valid offers with prices - use ALL valid offers (both internal and external)
+  // Filter valid offers with prices
   const validOffers = offers.filter(offer => offer && offer.price && offer.price > 0);
-
-  // Use all valid offers instead of prioritizing only database offers
-  const offersToUse = validOffers;
 
   const databaseOffers = validOffers.filter(offer => offer.type === 'internal');
   const externalOffers = validOffers.filter(offer => offer.type === 'external');
 
-  console.log('ProductPriceHeader: Using ALL valid offers', {
+  console.log('ProductPriceHeader: Internal offers only', {
+    totalOffers: offers.length,
+    validOffers: validOffers.length,
     databaseOffers: databaseOffers.length,
     externalOffers: externalOffers.length,
-    totalOffers: validOffers.length
+    allOffers: offers.map(o => ({
+      type: o.type,
+      price: o.price,
+      quantity: o.quantity,
+      id: o.id,
+      offerKey: o.offerKey
+    }))
   });
 
-  if (offersToUse.length === 0) {
-    return null;
+  // Если нет внутренних офферов - показываем сообщение "нет на нашем складе"
+  if (databaseOffers.length === 0) {
+    return (
+      <div
+        style={{
+          backgroundColor: '#FFF9E6',
+          borderRadius: '12px',
+          padding: '20px 40px',
+          margin: '0 0 16px 0',
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+          width: '100%',
+          border: '1px solid #FFC107'
+        } as React.CSSProperties}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#F59E0B"/>
+          </svg>
+          <div>
+            <h3 style={{
+              fontFamily: 'Onest',
+              fontWeight: 600,
+              fontSize: '18px',
+              color: '#92400E',
+              margin: 0
+            }}>
+              Товара нет на нашем складе
+            </h3>
+            <p style={{
+              fontFamily: 'Onest',
+              fontWeight: 400,
+              fontSize: '14px',
+              color: '#78350F',
+              margin: '4px 0 0 0'
+            }}>
+              Вы можете посмотреть предложения от других поставщиков в таблице ниже
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
+
+  // Используем ТОЛЬКО внутренние офферы
+  const offersToUse = databaseOffers;
 
   // Get minimum price from database offers first, then fallback to all offers
   const minPrice = Math.min(...offersToUse.map(offer => offer.price || Infinity));
-  
-  // Calculate total stock from database offers first
-  const totalStock = offersToUse.reduce((total, offer) => {
+
+  // Calculate total stock ONLY from internal (database) offers
+  const totalStock = databaseOffers.reduce((total, offer) => {
     const stock = typeof offer.quantity === 'number' ? offer.quantity : 0;
     return total + stock;
+  }, 0);
+
+  // Get the cheapest INTERNAL offer that will be added to cart (button only adds internal offers)
+  const cheapestInternalOffer = databaseOffers.length > 0
+    ? databaseOffers.reduce((min, offer) =>
+        (offer.price || Infinity) < (min.price || Infinity) ? offer : min
+      )
+    : null;
+
+  // If no internal offers, use the cheapest offer from all
+  const cheapestOffer = cheapestInternalOffer || offersToUse.reduce((min, offer) =>
+    (offer.price || Infinity) < (min.price || Infinity) ? offer : min
+  );
+
+  // Calculate quantity in cart for the cheapest offer specifically
+  const totalInCart = cartState.items.reduce((total, item) => {
+    // For internal offers, prioritize productId over offerKey (since offerKey might be synthetic)
+    if (cheapestOffer.id && item.productId === String(cheapestOffer.id)) {
+      return total + item.quantity;
+    }
+    // For external offers, match by offerKey
+    if (cheapestOffer.offerKey && item.offerKey === cheapestOffer.offerKey && !cheapestOffer.id) {
+      return total + item.quantity;
+    }
+    return total;
   }, 0);
 
   // Calculate delivery time based on the fastest available offer
@@ -73,13 +148,9 @@ const ProductPriceHeader = ({ offers, brand, articleNumber, name }: ProductPrice
   // Determine if button should be disabled
   const isDisabled = totalStock === 0 || minPrice === 0 || minPrice === Infinity;
 
-  // Handle add to cart - add cheapest database offer first
+  // Handle add to cart - add cheapest offer
   const handleAddToCart = async () => {
     if (isDisabled) return;
-
-    const cheapestOffer = offersToUse.reduce((min, offer) =>
-      (offer.price || Infinity) < (min.price || Infinity) ? offer : min
-    );
 
     try {
       const result = await addItem({
@@ -144,36 +215,63 @@ const ProductPriceHeader = ({ offers, brand, articleNumber, name }: ProductPrice
         </span>
       </div>
 
-      {/* Add to cart button */}
-      <button
-        disabled={isDisabled}
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '10px',
-          padding: '12px 30px',
-          backgroundColor: isDisabled ? '#CCCCCC' : '#EC1C24',
-          border: 'none',
-          borderRadius: '13px',
-          cursor: isDisabled ? 'not-allowed' : 'pointer',
-          fontFamily: 'Onest',
-          fontWeight: 600,
-          fontSize: '16px',
-          lineHeight: '1.3em',
-          color: '#FFFFFF',
-          opacity: isDisabled ? 0.6 : 1
-        } as React.CSSProperties}
-        onClick={handleAddToCart}
-      >
-        <svg width="20" height="20" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path 
-            d="M10.1998 22.2C8.8798 22.2 7.81184 23.28 7.81184 24.6C7.81184 25.92 8.8798 27 10.1998 27C11.5197 27 12.5997 25.92 12.5997 24.6C12.5997 23.28 11.5197 22.2 10.1998 22.2ZM3 3V5.4H5.39992L9.71977 14.508L8.09982 17.448C7.90783 17.784 7.79984 18.18 7.79984 18.6C7.79984 19.92 8.8798 21 10.1998 21H24.5993V18.6H10.7037C10.5357 18.6 10.4037 18.468 10.4037 18.3L10.4397 18.156L11.5197 16.2H20.4594C21.3594 16.2 22.1513 15.708 22.5593 14.964L26.8552 7.176C26.9542 6.99286 27.004 6.78718 26.9997 6.57904C26.9955 6.37089 26.9373 6.16741 26.8309 5.98847C26.7245 5.80952 26.5736 5.66124 26.3927 5.55809C26.2119 5.45495 26.0074 5.40048 25.7992 5.4H8.05183L6.92387 3H3ZM22.1993 22.2C20.8794 22.2 19.8114 23.28 19.8114 24.6C19.8114 25.92 20.8794 27 22.1993 27C23.5193 27 24.5993 25.92 24.5993 24.6C24.5993 23.28 23.5193 22.2 22.1993 22.2Z" 
-            fill="#FFFFFF" 
-          />
-        </svg>
-        Добавить в корзину
-      </button>
+      {/* Add to cart button with quantity badge */}
+      <div style={{ position: 'relative', display: 'inline-block' } as React.CSSProperties}>
+        <button
+          disabled={isDisabled}
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '12px 30px',
+            backgroundColor: isDisabled ? '#CCCCCC' : '#EC1C24',
+            border: 'none',
+            borderRadius: '13px',
+            cursor: isDisabled ? 'not-allowed' : 'pointer',
+            fontFamily: 'Onest',
+            fontWeight: 600,
+            fontSize: '16px',
+            lineHeight: '1.3em',
+            color: '#FFFFFF',
+            opacity: isDisabled ? 0.6 : 1
+          } as React.CSSProperties}
+          onClick={handleAddToCart}
+        >
+          <svg width="20" height="20" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M10.1998 22.2C8.8798 22.2 7.81184 23.28 7.81184 24.6C7.81184 25.92 8.8798 27 10.1998 27C11.5197 27 12.5997 25.92 12.5997 24.6C12.5997 23.28 11.5197 22.2 10.1998 22.2ZM3 3V5.4H5.39992L9.71977 14.508L8.09982 17.448C7.90783 17.784 7.79984 18.18 7.79984 18.6C7.79984 19.92 8.8798 21 10.1998 21H24.5993V18.6H10.7037C10.5357 18.6 10.4037 18.468 10.4037 18.3L10.4397 18.156L11.5197 16.2H20.4594C21.3594 16.2 22.1513 15.708 22.5593 14.964L26.8552 7.176C26.9542 6.99286 27.004 6.78718 26.9997 6.57904C26.9955 6.37089 26.9373 6.16741 26.8309 5.98847C26.7245 5.80952 26.5736 5.66124 26.3927 5.55809C26.2119 5.45495 26.0074 5.40048 25.7992 5.4H8.05183L6.92387 3H3ZM22.1993 22.2C20.8794 22.2 19.8114 23.28 19.8114 24.6C19.8114 25.92 20.8794 27 22.1993 27C23.5193 27 24.5993 25.92 24.5993 24.6C24.5993 23.28 23.5193 22.2 22.1993 22.2Z"
+              fill="#FFFFFF"
+            />
+          </svg>
+          Добавить в корзину
+        </button>
+        {totalInCart > 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '-8px',
+              right: '-8px',
+              backgroundColor: 'var(--green)',
+              color: 'white',
+              borderRadius: '50%',
+              minWidth: '24px',
+              height: '24px',
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              zIndex: 1,
+              padding: '0 6px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            } as React.CSSProperties}
+            title={`В корзине: ${totalInCart} шт.`}
+          >
+            {totalInCart}
+          </div>
+        )}
+      </div>
       {/* Stock and delivery info in the middle */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' } as React.CSSProperties}>
         <span

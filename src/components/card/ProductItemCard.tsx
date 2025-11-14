@@ -125,11 +125,15 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
 
   const getExistingCartQuantity = (): number => {
     const existingItem = cartState.items.find(item => {
-      if (offer.offerKey && item.offerKey) return item.offerKey === offer.offerKey;
-      if (offer.id && item.productId) return item.productId === String(offer.id);
-      if (item.article && item.brand) {
-        return item.article === offer.articleNumber && item.brand === offer.brand;
+      // For internal offers, prioritize productId over offerKey (since offerKey might be synthetic)
+      if (offer.id && item.productId) {
+        return item.productId === String(offer.id);
       }
+      // For external offers, match by offerKey
+      if (offer.offerKey && item.offerKey && !offer.id) {
+        return item.offerKey === offer.offerKey;
+      }
+      // Don't fallback to article+brand match as it's too broad
       return false;
     });
 
@@ -137,6 +141,12 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
   };
 
   const getRemainingStock = (): number | undefined => {
+    // Используем remainingStock из backend, если он есть
+    if (offer.remainingStock !== undefined && offer.remainingStock !== null) {
+      return typeof offer.remainingStock === 'number' ? offer.remainingStock : parseStock(offer.remainingStock);
+    }
+
+    // Fallback на старую логику, если remainingStock не пришел с backend
     if (typeof availableStock !== 'number' || Number.isNaN(availableStock)) {
       return undefined;
     }
@@ -157,24 +167,9 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
 
     const requested = Math.max(1, parseInt(val, 10) || 1);
 
-    // При вводе в поле разрешаем указать полное количество со склада
-    let finalQuantity = requested;
-    if (typeof availableStock === 'number') {
-      finalQuantity = Math.min(requested, Math.max(availableStock, 0));
-    }
-
-    if (finalQuantity < 1) {
-      finalQuantity = 1;
-    }
-
-    // Устанавливаем скорректированное значение
-    setInputValue(String(finalQuantity));
-    setQuantity(finalQuantity);
-
-    // Показываем предупреждение если пытаются ввести больше чем есть на складе
-    if (typeof availableStock === 'number' && requested > availableStock) {
-      toast.error(`На складе доступно только ${availableStock} шт.`);
-    }
+    // Просто устанавливаем введенное значение без валидации
+    setInputValue(String(requested));
+    setQuantity(requested);
   };
 
   const handleInputFocus = () => {
@@ -190,7 +185,12 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
     }
   };
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (e?: React.MouseEvent) => {
+    // Предотвращаем дефолтное поведение и всплытие события
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     // Убрана проверка авторизации - теперь неавторизованные пользователи могут добавлять в корзину
     setIsLocallyInCart(true);
     const remainingStock = getRemainingStock();
@@ -295,6 +295,26 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
               <TextWithTooltip text={offer.name || `${offer.brand} ${offer.articleNumber}`} />
             </span>
           </div>
+          {offer.type === 'internal' && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                marginLeft: '8px',
+                padding: '2px 8px',
+                backgroundColor: 'var(--green)',
+                color: 'white',
+                borderRadius: '4px',
+                fontSize: '11px',
+                fontWeight: '600',
+                whiteSpace: 'nowrap'
+              }}
+              title="Оригинальное предложение Protek"
+            >
+              Наше предложение
+            </span>
+          )}
         </div>
       </div>
 
@@ -330,8 +350,13 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
                 max={maxCount && maxCount > 0 ? maxCount : undefined}
                 value={inputValue}
                 onChange={e => handleInputChange(e.target.value)}
-                onFocus={handleInputFocus}
+                onClick={() => setInputValue("")}
                 onBlur={handleInputBlur}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
                 className="text-block-26 w-full text-center outline-none"
                 aria-label="Количество"
               />
@@ -339,7 +364,13 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
             <div style={{ position: 'relative', display: 'inline-block' }}>
               <button
                 type="button"
-                onClick={handleAddToCart}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.nativeEvent?.stopImmediatePropagation?.();
+                  handleAddToCart(e);
+                  return false;
+                }}
                 className={`button-icon w-inline-block ${inCart || isLocallyInCart ? 'in-cart' : ''}`}
                 style={{
                   cursor: addDisabled ? 'not-allowed' : 'pointer',
@@ -354,35 +385,40 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
                     src="/images/cart_icon.svg"
                     alt={addDisabled ? 'Недоступно' : (inCart || isLocallyInCart ? 'В корзине' : 'В корзину')}
                     className="image-11"
-                    style={{
-                      filter: inCart || isLocallyInCart ? 'brightness(0.7)' : undefined
-                    }}
                   />
                 </div>
               </button>
-              {inCart && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '-8px',
-                    right: '-8px',
-                    backgroundColor: '#22c55e',
-                    color: 'white',
-                    borderRadius: '50%',
-                    width: '16px',
-                    height: '16px',
-                    fontSize: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 'bold',
-                    zIndex: 1
-                  }}
-                  title="В корзине"
-                >
-                  ✓
-                </div>
-              )}
+              {(() => {
+                const existingQty = getExistingCartQuantity();
+                if (existingQty > 0) {
+                  return (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '-8px',
+                        right: '-8px',
+                        backgroundColor: 'var(--green)',
+                        color: 'white',
+                        borderRadius: '50%',
+                        minWidth: '20px',
+                        height: '20px',
+                        fontSize: '11px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 'bold',
+                        zIndex: 1,
+                        padding: '0 4px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                      }}
+                      title={`В корзине: ${existingQty} шт.`}
+                    >
+                      {existingQty}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </div>
         </div>

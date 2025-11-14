@@ -93,7 +93,29 @@ const TopSalesSection: React.FC = () => {
 
   // Фильтруем активные товары и сортируем по sortOrder
   const realTopSalesProducts = (data?.topSalesProducts || [])
-    .filter((item: TopSalesProductData) => item.isActive)
+    .filter((item: TopSalesProductData) => {
+      if (!item.isActive) return false;
+
+      // Проверяем внутреннюю цену и наличие
+      const hasInternalPrice = !!item.product.retailPrice;
+      const hasStock = (item.product.stock ?? 0) > 0;
+      const externalOffer = item.product.firstExternalOffer;
+
+      // Если есть внутренняя цена И наличие - показываем
+      if (hasInternalPrice && item.product.retailPrice! > 0 && hasStock) {
+        return true;
+      }
+
+      // Если нет внутренней цены ИЛИ наличия, проверяем внешнее предложение
+      if (externalOffer) {
+        const hasExternalPrice = externalOffer.price > 0;
+        const hasExternalStock = externalOffer.quantity > 0;
+        return hasExternalPrice && hasExternalStock;
+      }
+
+      // Если ни внутреннего, ни внешнего предложения нет - не показываем
+      return false;
+    })
     .sort((a: TopSalesProductData, b: TopSalesProductData) => a.sortOrder - b.sortOrder)
     .slice(0, 6); // Ограничиваем до 6 товаров
 

@@ -270,13 +270,13 @@ const BottomHead = ({ menuOpen, onClose }: { menuOpen: boolean; onClose: () => v
           top: "100%",
           left: 0,
           width: "100%",
-          backgroundColor: "white",
-          zIndex: 99999,
+          backgroundColor: "transparent",
+          zIndex: 2000,
           minHeight: "200px"
         }}
         onClick={e => e.stopPropagation()}
       >
-        <div className="div-block-28" style={{ backgroundColor: "white", padding: "20px" }}>
+        <div className="div-block-28" style={{ backgroundColor: "white", padding: "20px", position: "relative", zIndex: 1 }}>
           <div className="w-layout-hflex flex-block-90" style={{ backgroundColor: "#fff", display: "flex", gap: "0", height: "600px" }}>
             <div className="w-layout-vflex flex-block-88" style={{ height: "100%", overflowY: "auto", width: "280px", flex: "0 0 280px", backgroundColor: "#f8f8f8", padding: "20px 10px" }}>
               {/* Меню с иконками */}

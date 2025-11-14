@@ -1895,7 +1895,7 @@ a.link-block-2.w-inline-block  {
 
 .protekauto-logo {
   position: fixed;
-  z-index: 3000;
+  z-index: 100000;
 }
 
 .hide-on-991 {

@@ -260,11 +260,19 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
 
   const getExistingCartQuantity = (offer: CoreProductCardOffer): number => {
     const existingItem = cartState.items.find(item => {
-      if (offer.offerKey && item.offerKey) return item.offerKey === offer.offerKey;
-      if (offer.productId && item.productId) return item.productId === offer.productId;
-      if (item.article && item.brand) {
-        return item.article === article && item.brand === brand;
+      // Проверяем по offerKey (для внешних и уникальных офферов)
+      if (offer.offerKey && item.offerKey) {
+        return item.offerKey === offer.offerKey;
       }
+
+      // Для внутренних офферов проверяем по productId + price (у разных офферов одного товара разные цены)
+      if (offer.productId && item.productId) {
+        const offerPrice = parsePrice(offer.price);
+        const priceMatches = Math.abs(item.price - offerPrice) < 0.01;
+        return item.productId === offer.productId && priceMatches;
+      }
+
+      // НЕТ fallback на article+brand - он слишком широкий и показывает количество для всех товаров
       return false;
     });
 
@@ -292,29 +300,11 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
       return;
     }
 
-    const offer = offers[idx];
     const requested = Math.max(1, parseInt(val, 10) || 1);
-    // Используем offer.quantity если есть, иначе парсим pcs
-    const availableStock = typeof offer.quantity === 'number' ? offer.quantity : parseStock(offer.pcs);
 
-    // При вводе в поле разрешаем указать полное количество со склада
-    let finalQuantity = requested;
-    if (typeof availableStock === 'number' && !Number.isNaN(availableStock)) {
-      finalQuantity = Math.min(requested, Math.max(availableStock, 0));
-    }
-
-    if (finalQuantity < 1) {
-      finalQuantity = 1;
-    }
-
-    // Устанавливаем скорректированное значение
-    setInputValues(prev => ({ ...prev, [idx]: String(finalQuantity) }));
-    setQuantities(prev => ({ ...prev, [idx]: finalQuantity }));
-
-    // Показываем предупреждение если пытаются ввести больше чем есть на складе
-    if (typeof availableStock === 'number' && !Number.isNaN(availableStock) && requested > availableStock) {
-      toast.error(`На складе доступно только ${availableStock} шт.`);
-    }
+    // Просто устанавливаем введенное значение без валидации
+    setInputValues(prev => ({ ...prev, [idx]: String(requested) }));
+    setQuantities(prev => ({ ...prev, [idx]: requested }));
   };
 
   const handleInputFocus = (idx: number) => {
@@ -330,7 +320,12 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
     }
   };
 
-  const handleAddToCart = async (offer: CoreProductCardOffer, index: number) => {
+  const handleAddToCart = async (offer: CoreProductCardOffer, index: number, e?: React.MouseEvent) => {
+    // Предотвращаем дефолтное поведение и всплытие события
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     // Убрана проверка авторизации - теперь неавторизованные пользователи могут добавлять в корзину
     setLocalInCart(prev => ({ ...prev, [index]: true }));
     const quantity = quantities[index] || 1;
@@ -679,23 +674,34 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
         <div className="core-offers-table__cell core-offers-table__cell--actions">
           <div className="w-layout-hflex add-to-cart-block-s1">
             <div className="w-layout-hflex flex-block-82">
-      <div className="input-pcs input-pcs--standalone">
-        <input
-          type="number"
-          min={1}
-          max={maxCount && maxCount > 0 ? maxCount : undefined}
-          value={inputValues[idx]}
-          onChange={e => handleInputChange(idx, e.target.value)}
-          onFocus={() => handleInputFocus(idx)}
-          onBlur={() => handleInputBlur(idx)}
-          className="text-block-26 w-full text-center outline-none"
-          aria-label="Количество"
-        />
-      </div>
+              <div className="input-pcs input-pcs--standalone">
+                <input
+                  type="number"
+                  min={1}
+                  max={maxCount && maxCount > 0 ? maxCount : undefined}
+                  value={inputValues[idx] || ""}
+                  onChange={e => handleInputChange(idx, e.target.value)}
+                  onClick={() => setInputValues(prev => ({ ...prev, [idx]: "" }))}
+                  onBlur={() => handleInputBlur(idx)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
+                  className="text-block-26 w-full text-center outline-none"
+                  aria-label="Количество"
+                />
+              </div>
               <div style={{ position: 'relative', display: 'inline-block' }}>
                 <button
                   type="button"
-                  onClick={() => handleAddToCart(offer, idx)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.nativeEvent?.stopImmediatePropagation?.();
+                    handleAddToCart(offer, idx, e);
+                    return false;
+                  }}
                   className={`button-icon w-inline-block ${inCart || isLocallyInCart ? 'in-cart' : ''}`}
                   style={{
                     cursor: addDisabled ? 'not-allowed' : 'pointer',
@@ -813,7 +819,7 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
                     <span>{name}</span>
                     {internalOfferWithProductId && (
                       <Link
-                        href={`/card?id=${internalOfferWithProductId.productId}`}
+                        href={`/card?article=${article}&brand=${brand}`}
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',

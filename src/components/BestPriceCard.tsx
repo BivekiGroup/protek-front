@@ -24,6 +24,12 @@ const BestPriceCard: React.FC<BestPriceCardProps> = ({
 }) => {
   const { addItem, state: cartState } = useCart();
 
+  // Функция для парсинга цены из строки - объявляем ПЕРЕД использованием
+  const parsePrice = (priceStr: string): number => {
+    const cleanPrice = priceStr.replace(/[^\d.,]/g, '').replace(',', '.');
+    return parseFloat(cleanPrice) || 0;
+  };
+
   // Парсим stock в число, если возможно
   const parsedStock = parseInt(stock.replace(/[^\d]/g, ""), 10);
   const maxCount = isNaN(parsedStock) ? undefined : parsedStock;
@@ -33,72 +39,40 @@ const BestPriceCard: React.FC<BestPriceCardProps> = ({
   // Функция для получения количества товара уже добавленного в корзину
   const getExistingCartQuantity = (): number => {
     if (!offer) {
-      console.log('❌ No offer');
       return 0;
     }
 
     if (!cartState || !cartState.items || cartState.items.length === 0) {
-      console.log('❌ No cart items:', { hasCartState: !!cartState, itemsLength: cartState?.items?.length });
       return 0;
     }
 
-    // Для отладки - логируем структуру offer (показываем ВСЕ поля)
-    console.log('🔍 BestPriceCard offer (ALL FIELDS):', offer);
-    console.log('🔍 BestPriceCard offer (KEY FIELDS):', {
-      offerKey: offer.offerKey,
-      productId: offer.productId,
-      articleNumber: offer.articleNumber,
-      code: offer.code,
-      brand: offer.brand,
-      type: offer.type
-    });
-
-    console.log('🛒 Cart items:', cartState.items.map(item => ({
-      article: item.article,
-      brand: item.brand,
-      productId: item.productId,
-      offerKey: item.offerKey,
-      quantity: item.quantity
-    })));
+    const numericPrice = parsePrice(price);
 
     const existingItem = cartState.items.find(item => {
-      // Проверка по offerKey (приоритет)
-      if (offer.offerKey && item.offerKey) {
+      // Для BestPriceCard нужно точное совпадение по productId и цене
+      // У разных офферов одного товара разные цены, поэтому это уникальный идентификатор
+
+      // For internal offers, match by productId + price (delivery time может быть в разных форматах)
+      if (offer.productId && item.productId) {
+        const priceMatches = Math.abs(item.price - numericPrice) < 0.01;
+        return item.productId === offer.productId && priceMatches;
+      }
+
+      // For external offers, match by offerKey
+      if (offer.offerKey && item.offerKey && !offer.productId) {
         return item.offerKey === offer.offerKey;
       }
 
-      // Проверка по productId
-      if (offer.productId && item.productId) {
-        return item.productId === offer.productId;
-      }
-
-      // Проверка по артикулу и бренду (нормализуем для сравнения)
-      if (offer.articleNumber && offer.brand && item.article && item.brand) {
-        const offerArticle = offer.articleNumber.toUpperCase().trim();
-        const itemArticle = item.article.toUpperCase().trim();
-        const offerBrand = offer.brand.toUpperCase().trim();
-        const itemBrand = item.brand.toUpperCase().trim();
-
-        const match = offerArticle === itemArticle && offerBrand === itemBrand;
-        if (match) {
-          console.log('✅ Found match:', { offerArticle, offerBrand, itemArticle, itemBrand, quantity: item.quantity });
-        }
-        return match;
-      }
-
+      // Don't fallback to article+brand match as it's too broad
       return false;
     });
 
-    const quantity = existingItem?.quantity ?? 0;
-    console.log('📊 Cart quantity for offer:', quantity);
-    return quantity;
+    return existingItem?.quantity ?? 0;
   };
 
   // Вычисляем количество товара в корзине с использованием useMemo
   const existingCartQuantity = useMemo(() => {
-    const qty = getExistingCartQuantity();
-    console.log('🎯 BestPriceCard existingCartQuantity:', qty, 'for offer:', offer?.articleNumber, offer?.brand);
-    return qty;
+    return getExistingCartQuantity();
   }, [cartState, offer]);
 
   useEffect(() => {
@@ -116,18 +90,22 @@ const BestPriceCard: React.FC<BestPriceCardProps> = ({
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    setInputValue(val);
     if (val === "") {
-      // Не обновляем count, пока не будет blur
+      setInputValue(val);
       return;
     }
-    let value = parseInt(val, 10);
-    if (isNaN(value) || value < 1) value = 1;
-    if (maxCount !== undefined && value > maxCount) {
-      toast.error(`Максимум ${maxCount} шт.`);
-      return;
+
+    const requested = Math.max(1, parseInt(val, 10) || 1);
+
+    // Просто устанавливаем введенное значение без валидации
+    setInputValue(String(requested));
+    setCount(requested);
+  };
+
+  const handleInputFocus = () => {
+    if (inputValue === "1") {
+      setInputValue("");
     }
-    setCount(value);
   };
 
   const handleInputBlur = () => {
@@ -135,12 +113,6 @@ const BestPriceCard: React.FC<BestPriceCardProps> = ({
       setInputValue("1");
       setCount(1);
     }
-  };
-
-  // Функция для парсинга цены из строки
-  const parsePrice = (priceStr: string): number => {
-    const cleanPrice = priceStr.replace(/[^\d.,]/g, '').replace(',', '.');
-    return parseFloat(cleanPrice) || 0;
   };
 
   // Note: BestPriceCard doesn't receive isInCart flags from backend
@@ -235,19 +207,23 @@ const BestPriceCard: React.FC<BestPriceCardProps> = ({
                 <div className="text-block-24">{stock}</div>
               </div>
             </div>
-            <div className="w-layout-hflex pcs-cart-s1">
-              <div className="input-pcs w-16">
-                <input
-                  type="number"
-                  min={1}
-                  max={maxCount}
-                  value={inputValue}
-                  onChange={handleInput}
-                  onBlur={handleInputBlur}
-                  className="text-block-26 w-full text-center outline-none"
-                  aria-label="Количество"
-                />
-              </div>
+            <div className="input-pcs w-16">
+              <input
+                type="number"
+                min={1}
+                max={maxCount}
+                value={inputValue}
+                onChange={handleInput}
+                onClick={() => setInputValue("")}
+                onBlur={handleInputBlur}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
+                className="text-block-26 w-full text-center outline-none"
+                aria-label="Количество"
+              />
             </div>
           </div>
           <div className="w-layout-hflex flex-block-42">
@@ -284,7 +260,7 @@ const BestPriceCard: React.FC<BestPriceCardProps> = ({
                     position: 'absolute',
                     top: '-8px',
                     right: '-8px',
-                    backgroundColor: '#16a34a',
+                    backgroundColor: 'var(--green)',
                     color: 'white',
                     borderRadius: '50%',
                     minWidth: '20px',

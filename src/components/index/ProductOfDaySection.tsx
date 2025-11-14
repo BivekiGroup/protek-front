@@ -45,7 +45,16 @@ const ProductOfDaySection: React.FC = () => {
   const activeProducts = React.useMemo(() => {
     if (!data?.dailyProducts) return [];
     return data.dailyProducts
-      .filter(item => item.isActive)
+      .filter(item => {
+        if (!item.isActive) return false;
+
+        // Проверяем цену товара
+        const price = item.product.retailPrice ?? item.product.wholesalePrice ?? 0;
+
+        // Показываем только если есть цена > 0
+        // Для товара дня можем не проверять наличие, так как это специальное предложение
+        return price > 0;
+      })
       .sort((a, b) => a.sortOrder - b.sortOrder);
   }, [data]);
 

@@ -68,8 +68,10 @@ const transformBackendItems = (backendItems: any[]): CartItem[] => {
 
 // Функция для подсчета статистики корзины
 const calculateSummary = (items: CartItem[]) => {
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
-  const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  // Учитываем только выбранные товары (selected === true)
+  const selectedItems = items.filter(item => item.selected)
+  const totalItems = selectedItems.reduce((sum, item) => sum + item.quantity, 0)
+  const totalPrice = selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
   const totalDiscount = 0 // TODO: Implement discount logic
   const deliveryPrice = 39
   const finalPrice = totalPrice + deliveryPrice - totalDiscount
@@ -116,13 +118,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Обновляем состояние корзины
         if (data.updateCartPrices.cart) {
           const updatedItems = transformBackendItems(data.updateCartPrices.cart.items)
-          const updatedSummary = calculateSummary(updatedItems)
 
-          setState(prev => ({
-            ...prev,
-            items: updatedItems,
-            summary: updatedSummary
-          }))
+          setState(prev => {
+            // Сохраняем состояние selected из предыдущих items
+            const itemsWithPreservedSelection = updatedItems.map(updatedItem => {
+              const existingItem = prev.items.find(prevItem => prevItem.id === updatedItem.id)
+              return {
+                ...updatedItem,
+                selected: existingItem ? existingItem.selected : true
+              }
+            })
+
+            const updatedSummary = calculateSummary(itemsWithPreservedSelection)
+
+            return {
+              ...prev,
+              items: itemsWithPreservedSelection,
+              summary: updatedSummary
+            }
+          })
 
           // Показываем модалку об изменении цен только если есть изменения и включены уведомления
           if (changes?.length > 0 && showNotification) {
@@ -162,14 +176,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (cartData?.getCart) {
       const backendItems = transformBackendItems(cartData.getCart.items)
-      const summary = calculateSummary(backendItems)
 
-      setState(prev => ({
-        ...prev,
-        items: backendItems,
-        summary,
-        isLoading: false
-      }))
+      setState(prev => {
+        // Сохраняем состояние selected из предыдущих items
+        const itemsWithPreservedSelection = backendItems.map(backendItem => {
+          const existingItem = prev.items.find(prevItem => prevItem.id === backendItem.id)
+          return {
+            ...backendItem,
+            selected: existingItem ? existingItem.selected : true
+          }
+        })
+
+        const summary = calculateSummary(itemsWithPreservedSelection)
+
+        return {
+          ...prev,
+          items: itemsWithPreservedSelection,
+          summary,
+          isLoading: false
+        }
+      })
 
       // Автоматически обновляем цены при первой загрузке корзины
       if (backendItems.length > 0) {
@@ -289,14 +315,30 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Update local state with backend response
         if (data.addToCart.cart) {
           const backendItems = transformBackendItems(data.addToCart.cart.items)
-          const summary = calculateSummary(backendItems)
-          
-          setState(prev => ({
-            ...prev,
-            items: backendItems,
-            summary,
-            isLoading: false
-          }))
+
+          // Сохраняем оригинальный порядок товаров и состояние selected
+          setState(prev => {
+            const orderedItems = prev.items.map(existingItem => {
+              const updatedItem = backendItems.find(backendItem => backendItem.id === existingItem.id)
+              // Сохраняем selected из existingItem
+              return updatedItem ? { ...updatedItem, selected: existingItem.selected } : existingItem
+            })
+
+            // Добавляем новые товары в конец списка
+            const newItems = backendItems.filter(backendItem =>
+              !prev.items.some(existingItem => existingItem.id === backendItem.id)
+            )
+
+            const finalItems = [...orderedItems, ...newItems]
+            const summary = calculateSummary(finalItems)
+
+            return {
+              ...prev,
+              items: finalItems,
+              summary,
+              isLoading: false
+            }
+          })
         }
 
         // Refetch to ensure data consistency
@@ -320,7 +362,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
-  const removeItem = async (id: string) => {
+  const removeItem = async (id: string, silent = false) => {
     try {
       setError('')
       setState(prev => ({ ...prev, isLoading: true }))
@@ -335,17 +377,31 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Update local state
         if (data.removeFromCart.cart) {
           const backendItems = transformBackendItems(data.removeFromCart.cart.items)
-          const summary = calculateSummary(backendItems)
-          
-          setState(prev => ({
-            ...prev,
-            items: backendItems,
-            summary,
-            isLoading: false
-          }))
+
+          // Сохраняем оригинальный порядок товаров и состояние selected (удаленный товар просто не попадет в orderedItems)
+          setState(prev => {
+            const orderedItems = prev.items
+              .map(existingItem => {
+                const updatedItem = backendItems.find(backendItem => backendItem.id === existingItem.id)
+                // Сохраняем selected из existingItem
+                return updatedItem ? { ...updatedItem, selected: existingItem.selected } : null
+              })
+              .filter(item => item !== null) as CartItem[]
+
+            const summary = calculateSummary(orderedItems)
+
+            return {
+              ...prev,
+              items: orderedItems,
+              summary,
+              isLoading: false
+            }
+          })
         }
 
-        toast.success(data.removeFromCart.message || 'Товар удален из корзины')
+        if (!silent) {
+          toast.success(data.removeFromCart.message || 'Товар удален из корзины')
+        }
         refetchCart()
       } else {
         const errorMessage = data?.removeFromCart?.error || 'Ошибка удаления товара'
@@ -411,14 +467,30 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Update local state
         if (data.updateCartItemQuantity.cart) {
           const backendItems = transformBackendItems(data.updateCartItemQuantity.cart.items)
-          const summary = calculateSummary(backendItems)
-          
-          setState(prev => ({
-            ...prev,
-            items: backendItems,
-            summary,
-            isLoading: false
-          }))
+
+          // Сохраняем оригинальный порядок товаров и состояние selected
+          setState(prev => {
+            const orderedItems = prev.items.map(existingItem => {
+              const updatedItem = backendItems.find(backendItem => backendItem.id === existingItem.id)
+              // Сохраняем selected из existingItem
+              return updatedItem ? { ...updatedItem, selected: existingItem.selected } : existingItem
+            })
+
+            // Добавляем новые товары, которых не было в старом списке (если backend добавил что-то)
+            const newItems = backendItems.filter(backendItem =>
+              !prev.items.some(existingItem => existingItem.id === backendItem.id)
+            )
+
+            const finalItems = [...orderedItems, ...newItems]
+            const summary = calculateSummary(finalItems)
+
+            return {
+              ...prev,
+              items: finalItems,
+              summary,
+              isLoading: false
+            }
+          })
         }
 
         toast.success(data.updateCartItemQuantity.message || 'Количество обновлено')
@@ -474,12 +546,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Local-only operations (not synced with backend)
   const toggleSelect = (id: string) => {
-    setState(prev => ({
-      ...prev,
-      items: prev.items.map(item =>
+    setState(prev => {
+      const updatedItems = prev.items.map(item =>
         item.id === id ? { ...item, selected: !item.selected } : item
       )
-    }))
+      return {
+        ...prev,
+        items: updatedItems,
+        summary: calculateSummary(updatedItems)
+      }
+    })
   }
 
   const toggleFavorite = (id: string) => {
@@ -510,9 +586,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const selectAll = () => {
     setState(prev => {
       const allSelected = prev.items.length > 0 && prev.items.every(item => item.selected);
+      const updatedItems = prev.items.map(item => ({ ...item, selected: !allSelected }))
       return {
         ...prev,
-        items: prev.items.map(item => ({ ...item, selected: !allSelected }))
+        items: updatedItems,
+        summary: calculateSummary(updatedItems)
       };
     });
   };
@@ -523,9 +601,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const removeSelected = async () => {
     const selectedItems = state.items.filter(item => item.selected)
-    for (const item of selectedItems) {
-      await removeItem(item.id)
-    }
+    if (selectedItems.length === 0) return
+
+    // Удаляем все выбранные товары одновременно с подавлением индивидуальных тостов
+    await Promise.all(selectedItems.map(item => removeItem(item.id, true)))
+
+    // Показываем один общий тост после удаления всех товаров
+    toast.success(`Удалено товаров: ${selectedItems.length}`)
   }
 
   const updateDelivery = (delivery: Partial<DeliveryInfo>) => {

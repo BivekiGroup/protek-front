@@ -1358,6 +1358,7 @@ export const SEARCH_PRODUCT_OFFERS = gql`
         productId
         price
         quantity
+        remainingStock
         warehouse
         deliveryDays
         available
@@ -1375,6 +1376,7 @@ export const SEARCH_PRODUCT_OFFERS = gql`
         deliveryTime
         deliveryTimeMax
         quantity
+        remainingStock
         warehouse
         supplier
         comment

@@ -144,7 +144,29 @@ const BestPriceSection: React.FC = () => {
   const bestPriceItems = useMemo(
     () =>
       bestPriceProducts
-        .filter((item) => item.isActive)
+        .filter((item) => {
+          if (!item.isActive) return false;
+
+          // Проверяем внутреннюю цену и наличие
+          const basePrice = item.product.retailPrice ?? item.product.wholesalePrice ?? null;
+          const hasStock = (item.product.stock ?? 0) > 0;
+          const externalOffer = item.product.firstExternalOffer;
+
+          // Если есть внутренняя цена И наличие - показываем
+          if (basePrice && basePrice > 0 && hasStock) {
+            return true;
+          }
+
+          // Если нет внутренней цены ИЛИ наличия, проверяем внешнее предложение
+          if (externalOffer) {
+            const hasExternalPrice = externalOffer.price > 0;
+            const hasExternalStock = externalOffer.quantity > 0;
+            return hasExternalPrice && hasExternalStock;
+          }
+
+          // Если ни внутреннего, ни внешнего предложения нет - не показываем
+          return false;
+        })
         .sort((a, b) => a.sortOrder - b.sortOrder)
         .slice(0, 8)
         .map((item) => {

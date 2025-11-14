@@ -17,13 +17,22 @@ interface UseCatalogPricesReturn {
 export const useCatalogPrices = (): UseCatalogPricesReturn => {
   const [priceCache, setPriceCache] = useState<Map<string, PriceData>>(new Map());
   const loadingRequestsRef = useRef<Set<string>>(new Set());
-  const { addItem } = useCart();
+  const { addItem, state: cartState } = useCart();
 
   const getOffersData = useCallback(async (articleNumber: string, brand: string) => {
     const graphqlUri = process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL || 'http://localhost:3000/api/graphql';
-    
-    console.log('🔍 useCatalogPrices: запрос цен для:', { articleNumber, brand, graphqlUri });
-    
+
+    // Prepare cart items for backend
+    const cartItems = cartState.items
+      .filter(item => item.article && item.brand)
+      .map(item => ({
+        productId: item.productId,
+        offerKey: item.offerKey,
+        article: item.article!,
+        brand: item.brand!,
+        quantity: item.quantity
+      }));
+
     try {
       const response = await fetch(graphqlUri, {
         method: 'POST',
@@ -32,8 +41,8 @@ export const useCatalogPrices = (): UseCatalogPricesReturn => {
         },
         body: JSON.stringify({
           query: `
-            query SearchProductOffers($articleNumber: String!, $brand: String!) {
-              searchProductOffers(articleNumber: $articleNumber, brand: $brand) {
+            query SearchProductOffers($articleNumber: String!, $brand: String!, $cartItems: [CartItemInput!]) {
+              searchProductOffers(articleNumber: $articleNumber, brand: $brand, cartItems: $cartItems) {
                 internalOffers {
                   id
                   productId
@@ -69,44 +78,36 @@ export const useCatalogPrices = (): UseCatalogPricesReturn => {
           `,
           variables: {
             articleNumber,
-            brand
+            brand,
+            cartItems
           }
         })
       });
 
-      console.log('📡 useCatalogPrices: HTTP статус ответа:', response.status);
-
       if (!response.ok) {
-        console.error('❌ useCatalogPrices: HTTP ошибка:', response.status, response.statusText);
         return { minPrice: null, cheapestOffer: null, hasOffers: false };
       }
 
       const data = await response.json();
-      console.log('📦 useCatalogPrices: получен ответ:', data);
-      
-      // Если есть ошибки GraphQL, логируем их
+
       if (data.errors) {
-        console.error('❌ useCatalogPrices: GraphQL ошибки:', data.errors);
         return { minPrice: null, cheapestOffer: null, hasOffers: false };
       }
-      
+
       const offers = data?.data?.searchProductOffers;
-      console.log('🔍 useCatalogPrices: извлеченные предложения:', offers);
-      
+
       if (!offers) {
-        console.log('⚠️ useCatalogPrices: предложения не найдены');
         return { minPrice: null, cheapestOffer: null, hasOffers: false };
       }
 
       const allOffers: any[] = [];
-      
+
       // Обрабатываем внутренние предложения
       if (offers.internalOffers) {
-        console.log('📦 useCatalogPrices: обрабатываем внутренние предложения:', offers.internalOffers.length);
         offers.internalOffers.forEach((offer: any) => {
           if (offer.price && offer.price > 0) {
-            allOffers.push({ 
-              ...offer, 
+            allOffers.push({
+              ...offer,
               type: 'internal',
               id: offer.id,
               supplierName: offer.supplier,
@@ -115,14 +116,13 @@ export const useCatalogPrices = (): UseCatalogPricesReturn => {
           }
         });
       }
-      
+
       // Обрабатываем внешние предложения
       if (offers.externalOffers) {
-        console.log('🌐 useCatalogPrices: обрабатываем внешние предложения:', offers.externalOffers.length);
         offers.externalOffers.forEach((offer: any) => {
           if (offer.price && offer.price > 0) {
-            allOffers.push({ 
-              ...offer, 
+            allOffers.push({
+              ...offer,
               type: 'external',
               id: offer.offerKey,
               supplierName: offer.supplier,
@@ -132,26 +132,17 @@ export const useCatalogPrices = (): UseCatalogPricesReturn => {
         });
       }
 
-      console.log('🎯 useCatalogPrices: итого найдено предложений:', allOffers.length);
-
       // Проверяем, есть ли вообще какие-то предложения (даже без цены)
-      const hasAnyOffers = (offers.internalOffers && offers.internalOffers.length > 0) || 
+      const hasAnyOffers = (offers.internalOffers && offers.internalOffers.length > 0) ||
                           (offers.externalOffers && offers.externalOffers.length > 0);
 
       if (allOffers.length === 0) {
-        console.log('⚠️ useCatalogPrices: нет валидных предложений с ценой > 0');
         return { minPrice: null, cheapestOffer: null, hasOffers: hasAnyOffers };
       }
 
       // Находим самое дешевое предложение
       const cheapestOffer = allOffers.reduce((cheapest, current) => {
         return current.price < cheapest.price ? current : cheapest;
-      });
-
-      console.log('💰 useCatalogPrices: самое дешевое предложение:', {
-        price: cheapestOffer.price,
-        supplier: cheapestOffer.supplierName,
-        type: cheapestOffer.type
       });
 
       return {
@@ -163,7 +154,7 @@ export const useCatalogPrices = (): UseCatalogPricesReturn => {
       console.error('❌ useCatalogPrices: ошибка получения предложений:', error);
       return { minPrice: null, cheapestOffer: null, hasOffers: false };
     }
-  }, []);
+  }, [cartState]);
 
   const getPriceData = useCallback((articleNumber: string, brand: string): PriceData => {
     if (!articleNumber || !brand) {

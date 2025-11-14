@@ -57,7 +57,16 @@ const NewArrivalsSection: React.FC = () => {
     return imageUrl && !isPlaceholder(imageUrl) ? imageUrl : "/images/no-photo.svg";
   };
 
-  const activeNewArrivals = data?.newArrivals?.slice(0, 6) || [];
+  const activeNewArrivals = (data?.newArrivals || [])
+    .filter((product: Product) => {
+      // Проверяем цену и наличие
+      const price = product.retailPrice ?? product.wholesalePrice ?? null;
+      const hasStock = (product.stock ?? 0) > 0;
+
+      // Показываем только если есть цена > 0 И наличие > 0
+      return price && price > 0 && hasStock;
+    })
+    .slice(0, 6);
 
   if (loading) {
     return (

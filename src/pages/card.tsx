@@ -3,7 +3,7 @@ import { getMetaByPath, createProductMeta } from "../lib/meta-config";
 import JsonLdScript from "@/components/JsonLdScript";
 import { generateProductSchema, convertAvailability, type SchemaOrgProduct } from "@/lib/schema";
 import { useRouter } from "next/router";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useQuery, useLazyQuery } from "@apollo/client";
 import MobileMenuBottomSection from "@/components/MobileMenuBottomSection";
 import CatalogSubscribe from "@/components/CatalogSubscribe";
@@ -21,6 +21,7 @@ import { SEARCH_PRODUCT_OFFERS, PARTS_INDEX_SEARCH_BY_ARTICLE, GET_ANALOG_OFFERS
 import { useArticleImage } from "@/hooks/useArticleImage";
 import { useRecommendedProducts } from "../hooks/useRecommendedProducts";
 import { emitAnalyticsView } from "@/lib/utils";
+import { useCart } from "@/contexts/CartContext";
 
 const INITIAL_OFFERS_COUNT = 4;
 
@@ -36,7 +37,8 @@ const pluralizeDays = (count: number): string => {
 export default function CardPage() {
   const router = useRouter();
   const { article, brand, q, artId } = router.query;
-  
+  const { state: cartState } = useCart();
+
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [brandQuery, setBrandQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("price"); // price, quantity, delivery
@@ -53,13 +55,37 @@ export default function CardPage() {
     setVisibleOffersCount(INITIAL_OFFERS_COUNT);
   }, [article, brand]);
 
+  // Подготавливаем данные корзины для отправки на backend ТОЛЬКО при первой загрузке
+  const initialCartSnapshotRef = useRef<{ productId?: string; offerKey?: string; article: string; brand: string; quantity: number }[] | null>(null);
+  const lastSnapshotSearchKey = useRef<string | null>(null);
+  const currentSnapshotKey = `${searchQuery || ''}__${brandQuery || ''}`;
+
+  // Update snapshot ONLY if search key changed (not when cart changes!)
+  if (initialCartSnapshotRef.current === null || lastSnapshotSearchKey.current !== currentSnapshotKey) {
+    initialCartSnapshotRef.current = cartState.items
+      .filter(item => item.article && item.brand)
+      .map(item => ({
+        productId: item.productId,
+        offerKey: item.offerKey,
+        article: item.article!,
+        brand: item.brand!,
+        quantity: item.quantity
+      }));
+    lastSnapshotSearchKey.current = currentSnapshotKey;
+  }
+
+  const initialCartItems = initialCartSnapshotRef.current;
+
   const { data, loading, error } = useQuery(SEARCH_PRODUCT_OFFERS, {
     variables: {
       articleNumber: searchQuery,
-      brand: brandQuery || ''
+      brand: brandQuery || '',
+      cartItems: initialCartItems // Используем снапшот, который НЕ меняется при добавлении в корзину
     },
     skip: !searchQuery,
-    errorPolicy: 'all'
+    errorPolicy: 'all',
+    fetchPolicy: 'network-only', // Всегда делаем запрос к серверу для актуальных данных
+    notifyOnNetworkStatusChange: true // Получаем обновления networkStatus
   });
 
   // Запрос для получения категорий
@@ -242,7 +268,8 @@ export default function CardPage() {
     // Внутренние предложения из базы данных
     if (result.internalOffers) {
       result.internalOffers.forEach((offer: any) => {
-        if (offer.price && offer.price > 0) {
+        // Фильтруем: показываем только если цена > 0 И наличие > 0
+        if (offer.price && offer.price > 0 && offer.quantity && offer.quantity > 0) {
           offers.push({
             ...offer,
             type: 'internal',

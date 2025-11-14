@@ -6,11 +6,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: 'standalone',
 
-  // Отключаем оверлей ошибок в режиме разработки для GraphQL ошибок
-  devIndicators: {
-    buildActivityPosition: 'bottom-right',
-  },
-  
   // Настройки для изображений
   images: {
     domains: [
@@ -43,6 +38,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  // Пустая конфигурация Turbopack для совместимости с Next.js 16
+  turbopack: {},
 
   webpack: (config) => {
     config.resolve.alias = {

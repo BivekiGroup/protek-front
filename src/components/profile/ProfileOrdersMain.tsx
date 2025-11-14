@@ -123,7 +123,7 @@ const formatDateTime = (dateString: string) =>
 
 const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
   const router = useRouter();
-  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
+  const { addToFavorites, removeFromFavorites, isFavorite, favorites } = useFavorites();
   const [activeTab, setActiveTab] = React.useState(0);
   const [search, setSearch] = React.useState('');
   const [clientId, setClientId] = React.useState<string | null>(null);
@@ -378,6 +378,158 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                           {formatDate(order.createdAt)}
                         </div>
                       </div>
+                      <div className="flex flex-wrap gap-3 max-md:w-full">
+                        {order.paymentMethod === 'invoice' && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                // Если есть готовый invoiceUrl, используем его напрямую
+                                if (order.invoiceUrl) {
+                                  console.log(
+                                    '🔍 Opening existing invoice URL:',
+                                    order.invoiceUrl
+                                  );
+                                  window.open(order.invoiceUrl, '_blank');
+                                  return;
+                                }
+
+                                const userData =
+                                  typeof window !== 'undefined'
+                                    ? window.localStorage.getItem('userData')
+                                    : null;
+                                console.log(
+                                  '🔍 userData from localStorage:',
+                                  userData ? 'exists' : 'null'
+                                );
+
+                                if (!userData) {
+                                  alert(
+                                    'Необходимо авторизоваться для скачивания счёта'
+                                  );
+                                  return;
+                                }
+
+                                const parsedData = JSON.parse(userData);
+
+                                // Создаем токен так же, как Apollo Client
+                                const token =
+                                  parsedData?.token || `client_${parsedData?.id}`;
+                                console.log(
+                                  '🔍 token created:',
+                                  token.substring(0, 20) + '...'
+                                );
+
+                                if (!token) {
+                                  alert(
+                                    'Токен авторизации не найден. Попробуйте войти заново.'
+                                  );
+                                  return;
+                                }
+
+                                // Иначе генерируем через API с токеном
+                                const url = `${process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL?.replace(
+                                  '/api/graphql',
+                                  ''
+                                )}/api/order-invoice/${order.id}`;
+                                console.log('🔍 Fetching invoice from:', url);
+
+                                const response = await fetch(url, {
+                                  headers: {
+                                    Authorization: `Bearer ${token}`,
+                                  },
+                                });
+
+                                console.log('🔍 Response status:', response.status);
+
+                                if (!response.ok) {
+                                  const errorData = await response.text();
+                                  console.error('🔍 Error response:', errorData);
+                                  throw new Error(
+                                    `Не удалось загрузить счёт: ${response.status}`
+                                  );
+                                }
+
+                                // Получаем blob из ответа
+                                const blob = await response.blob();
+                                console.log('🔍 Blob size:', blob.size);
+
+                                // Создаем временную ссылку для скачивания
+                                const downloadUrl =
+                                  window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = downloadUrl;
+                                a.download = `Счет_${order.orderNumber}.pdf`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                window.URL.revokeObjectURL(downloadUrl);
+
+                                console.log('✅ Invoice downloaded successfully');
+                              } catch (error) {
+                                console.error(
+                                  '❌ Ошибка при скачивании счёта:',
+                                  error
+                                );
+                                alert(
+                                  'Не удалось скачать счёт. Попробуйте позже или обратитесь в поддержку.'
+                                );
+                              }
+                            }}
+                            className="inline-flex items-center px-4 py-2 rounded font-medium transition-colors text-sm"
+                            style={{
+                              backgroundColor: '#f59e0b',
+                              color: '#ffffff',
+                              textDecoration: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#d97706';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = '#f59e0b';
+                            }}
+                          >
+                            <svg
+                              className="mr-2 h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              style={{ color: '#ffffff' }}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                              />
+                            </svg>
+                            <span style={{ color: '#ffffff' }}>
+                              Скачать счёт
+                            </span>
+                          </button>
+                        )}
+                        {canCancel && (
+                          <button
+                            onClick={() => openActionDialog('cancel', order)}
+                            className="px-4 py-2 bg-red-600 !text-white text-sm rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+                            disabled={isSubmitting || isProcessingThisOrder}
+                          >
+                            Отменить заказ
+                          </button>
+                        )}
+                        {(canRequestReturn || canUpdateReturn) && (
+                          <button
+                            onClick={() => openActionDialog('return', order)}
+                            className="px-4 py-2 bg-slate-200 text-gray-900 text-sm rounded hover:bg-slate-300 disabled:opacity-50 transition-colors"
+                            disabled={isSubmitting || isProcessingThisOrder}
+                          >
+                            {canUpdateReturn
+                              ? 'Изменить возврат'
+                              : 'Оформить возврат'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -453,8 +605,13 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                                 onClick={async (e) => {
                                   e.stopPropagation();
                                   if (isItemFavorite) {
-                                    // Найти и удалить из избранного
-                                    await removeFromFavorites(item.id);
+                                    // Найти ID записи в избранном по артикулу и бренду
+                                    const favoriteItem = favorites.find(
+                                      fav => fav.article === item.article && fav.brand === item.brand
+                                    );
+                                    if (favoriteItem) {
+                                      await removeFromFavorites(favoriteItem.id);
+                                    }
                                   } else {
                                     // Добавить в избранное
                                     await addToFavorites({
@@ -496,7 +653,17 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                     </div>
                   </div>
 
-                  <div className="flex justify-end mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex flex-wrap justify-between items-start gap-4 mt-4 pt-4 border-t border-gray-200">
+                    {order.deliveryAddress && (
+                      <div className="flex-1 min-w-[200px]">
+                        <div className="text-sm text-gray-500 mb-1">
+                          Адрес доставки:
+                        </div>
+                        <div className="text-sm text-gray-950">
+                          {order.deliveryAddress}
+                        </div>
+                      </div>
+                    )}
                     <div className="text-right space-y-1">
                       <div className="text-sm text-gray-500">
                         Сумма товаров:{' '}
@@ -513,28 +680,6 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                       </div>
                     </div>
                   </div>
-
-                  {order.deliveryAddress && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="text-sm text-gray-500 mb-1">
-                        Адрес доставки:
-                      </div>
-                      <div className="text-sm text-gray-950">
-                        {order.deliveryAddress}
-                      </div>
-                    </div>
-                  )}
-
-                  {order.comment && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="text-sm text-gray-500 mb-1">
-                        Комментарий:
-                      </div>
-                      <div className="text-sm text-gray-950 whitespace-pre-line">
-                        {order.comment}
-                      </div>
-                    </div>
-                  )}
 
                   {order.cancelReason && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
@@ -580,159 +725,6 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                       )}
                     </div>
                   )}
-
-                  <div className="flex flex-wrap gap-3 mt-6">
-                    {order.paymentMethod === 'invoice' && (
-                      <button
-                        onClick={async () => {
-                          try {
-                            // Если есть готовый invoiceUrl, используем его напрямую
-                            if (order.invoiceUrl) {
-                              console.log(
-                                '🔍 Opening existing invoice URL:',
-                                order.invoiceUrl
-                              );
-                              window.open(order.invoiceUrl, '_blank');
-                              return;
-                            }
-
-                            const userData =
-                              typeof window !== 'undefined'
-                                ? window.localStorage.getItem('userData')
-                                : null;
-                            console.log(
-                              '🔍 userData from localStorage:',
-                              userData ? 'exists' : 'null'
-                            );
-
-                            if (!userData) {
-                              alert(
-                                'Необходимо авторизоваться для скачивания счёта'
-                              );
-                              return;
-                            }
-
-                            const parsedData = JSON.parse(userData);
-
-                            // Создаем токен так же, как Apollo Client
-                            const token =
-                              parsedData?.token || `client_${parsedData?.id}`;
-                            console.log(
-                              '🔍 token created:',
-                              token.substring(0, 20) + '...'
-                            );
-
-                            if (!token) {
-                              alert(
-                                'Токен авторизации не найден. Попробуйте войти заново.'
-                              );
-                              return;
-                            }
-
-                            // Иначе генерируем через API с токеном
-                            const url = `${process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL?.replace(
-                              '/api/graphql',
-                              ''
-                            )}/api/order-invoice/${order.id}`;
-                            console.log('🔍 Fetching invoice from:', url);
-
-                            const response = await fetch(url, {
-                              headers: {
-                                Authorization: `Bearer ${token}`,
-                              },
-                            });
-
-                            console.log('🔍 Response status:', response.status);
-
-                            if (!response.ok) {
-                              const errorData = await response.text();
-                              console.error('🔍 Error response:', errorData);
-                              throw new Error(
-                                `Не удалось загрузить счёт: ${response.status}`
-                              );
-                            }
-
-                            // Получаем blob из ответа
-                            const blob = await response.blob();
-                            console.log('🔍 Blob size:', blob.size);
-
-                            // Создаем временную ссылку для скачивания
-                            const downloadUrl =
-                              window.URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = downloadUrl;
-                            a.download = `Счет_${order.orderNumber}.pdf`;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                            window.URL.revokeObjectURL(downloadUrl);
-
-                            console.log('✅ Invoice downloaded successfully');
-                          } catch (error) {
-                            console.error(
-                              '❌ Ошибка при скачивании счёта:',
-                              error
-                            );
-                            alert(
-                              'Не удалось скачать счёт. Попробуйте позже или обратитесь в поддержку.'
-                            );
-                          }
-                        }}
-                        className="inline-flex items-center px-4 py-2 rounded font-medium transition-colors"
-                        style={{
-                          backgroundColor: '#f59e0b',
-                          color: '#ffffff',
-                          textDecoration: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#d97706';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '#f59e0b';
-                        }}
-                      >
-                        <svg
-                          className="mr-2 h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          style={{ color: '#ffffff' }}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                        <span style={{ color: '#ffffff' }}>
-                          Скачать счёт на оплату
-                        </span>
-                      </button>
-                    )}
-                    {canCancel && (
-                      <button
-                        onClick={() => openActionDialog('cancel', order)}
-                        className="px-4 py-2 bg-red-600 !text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
-                        disabled={isSubmitting || isProcessingThisOrder}
-                      >
-                        Отменить заказ
-                      </button>
-                    )}
-                    {(canRequestReturn || canUpdateReturn) && (
-                      <button
-                        onClick={() => openActionDialog('return', order)}
-                        className="px-4 py-2 bg-slate-200 text-gray-900 rounded hover:bg-slate-300 disabled:opacity-50 transition-colors"
-                        disabled={isSubmitting || isProcessingThisOrder}
-                      >
-                        {canUpdateReturn
-                          ? 'Изменить заявку на возврат'
-                          : 'Оформить возврат'}
-                      </button>
-                    )}
-                  </div>
                 </div>
               );
             })}

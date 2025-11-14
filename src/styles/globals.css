@@ -406,12 +406,6 @@ button,
   transition: transform 0.1s ease;
 }
 
-/* Убеждаемся, что иконка корзины видна в сером состоянии */
-.button-icon.in-cart .image-11,
-.button-icon.in-cart svg {
-  filter: brightness(0.7) contrast(1.2);
-}
-
 /* Анимация вращения для кнопки обновления цен */
 @keyframes spin {
   from {

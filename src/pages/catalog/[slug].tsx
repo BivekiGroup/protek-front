@@ -243,7 +243,14 @@ export default function CategoryPage() {
 
   // Фильтрация и сортировка
   const products = useMemo(() => {
-    let filtered = [...rawProducts];
+    // Сначала фильтруем товары с нулевой ценой или нулевым наличием
+    let filtered = rawProducts.filter(p => {
+      const price = p.retailPrice ?? p.wholesalePrice ?? 0;
+      const hasStock = (p.stock ?? 0) > 0;
+
+      // Показываем только если есть цена > 0 И наличие > 0
+      return price > 0 && hasStock;
+    });
 
     // Фильтрация по поисковому запросу
     if (searchQuery.trim()) {
