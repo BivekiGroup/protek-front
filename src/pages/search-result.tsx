@@ -414,19 +414,29 @@ export default function SearchResult() {
 
   const allOffers = useMemo(() => {
     if (!result) return [];
-    
+
     const offers: any[] = [];
-    
+
     // Основной товар
-    result.internalOffers.forEach((o: any) => offers.push({ ...o, deliveryDuration: o.deliveryDays, type: 'internal', brand: result.brand, articleNumber: result.articleNumber, name: result.name }));
+    // Фильтруем внутренние офферы - не добавляем товары с нулевой ценой или наличием
+    result.internalOffers.forEach((o: any) => {
+      if (o.price && o.price > 0 && o.quantity && o.quantity > 0) {
+        offers.push({ ...o, deliveryDuration: o.deliveryDays, type: 'internal', brand: result.brand, articleNumber: result.articleNumber, name: result.name });
+      }
+    });
     result.externalOffers.forEach((o: any) => offers.push({ ...o, deliveryDuration: o.deliveryTime, type: 'external', articleNumber: o.code, name: o.name }));
 
     // Аналоги
     Object.values(loadedAnalogs).forEach((analog: any) => {
-      analog.internalOffers.forEach((o: any) => offers.push({ ...o, deliveryDuration: o.deliveryDays, type: 'internal', brand: analog.brand, articleNumber: analog.articleNumber, name: analog.name, isAnalog: true }));
+      // Фильтруем внутренние офферы аналогов - не добавляем товары с нулевой ценой или наличием
+      analog.internalOffers.forEach((o: any) => {
+        if (o.price && o.price > 0 && o.quantity && o.quantity > 0) {
+          offers.push({ ...o, deliveryDuration: o.deliveryDays, type: 'internal', brand: analog.brand, articleNumber: analog.articleNumber, name: analog.name, isAnalog: true });
+        }
+      });
       analog.externalOffers.forEach((o: any) => offers.push({ ...o, deliveryDuration: o.deliveryTime, type: 'external', brand: o.brand || analog.brand, articleNumber: o.code || analog.articleNumber, name: o.name, isAnalog: true }));
     });
-    
+
     return offers;
   }, [result, loadedAnalogs]);
 

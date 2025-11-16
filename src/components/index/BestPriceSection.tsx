@@ -216,6 +216,12 @@ const BestPriceSection: React.FC = () => {
             article: finalArticle,
             productId: item.product.id,
             outOfStock: !finalHasStock,
+            offerKey: useExternalOffer ? externalOffer.offerKey : undefined,
+            isExternal: !!useExternalOffer,
+            numericPrice: (hasDiscount ? discountedPrice : finalPrice) ?? undefined,
+            supplier: useExternalOffer ? externalOffer.supplier : undefined,
+            deliveryTime: useExternalOffer ? externalOffer.deliveryTime : undefined,
+            stock: useExternalOffer ? externalOffer.quantity : item.product.stock,
           };
         }),
     [bestPriceProducts]

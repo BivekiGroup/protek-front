@@ -191,6 +191,20 @@ const ProductItemCard = ({ isLast = false, offer, index }: ProductItemCardProps)
       e.preventDefault();
       e.stopPropagation();
     }
+
+    // DEBUG: Логируем данные предложения для диагностики
+    console.log('🛒 ProductItemCard - Adding to cart:', {
+      offerKey: offer.offerKey,
+      productId: offer.id,
+      article: offer.articleNumber,
+      brand: offer.brand,
+      price: offer.price,
+      type: offer.type,
+      supplier: offer.supplier,
+      warehouse: offer.warehouse,
+      fullOffer: offer
+    });
+
     // Убрана проверка авторизации - теперь неавторизованные пользователи могут добавлять в корзину
     setIsLocallyInCart(true);
     const remainingStock = getRemainingStock();

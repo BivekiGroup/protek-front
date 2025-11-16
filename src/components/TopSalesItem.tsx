@@ -17,6 +17,12 @@ interface TopSalesItemProps {
   isNew?: boolean;
   isInCart?: boolean;
   outOfStock?: boolean;
+  offerKey?: string;
+  isExternal?: boolean;
+  numericPrice?: number;
+  supplier?: string;
+  deliveryTime?: number;
+  stock?: number;
 }
 
 const TopSalesItem: React.FC<TopSalesItemProps> = ({
@@ -32,6 +38,12 @@ const TopSalesItem: React.FC<TopSalesItemProps> = ({
   isNew = false,
   isInCart: propIsInCart = false,
   outOfStock = false,
+  offerKey,
+  isExternal = false,
+  numericPrice,
+  supplier,
+  deliveryTime,
+  stock,
 }) => {
   const { addItem, isInCart: isItemInCart } = useCart();
   const { addToFavorites, removeFromFavorites, isFavorite, favorites } = useFavorites();
@@ -63,17 +75,23 @@ const TopSalesItem: React.FC<TopSalesItemProps> = ({
         toast.error('Недостаточно данных для добавления товара в корзину');
         return;
       }
-      const numericPrice = parsePrice(price);
+      const finalPrice = numericPrice !== undefined ? numericPrice : parsePrice(price);
+
       addItem({
+        productId: isExternal ? undefined : productId,
+        offerKey: isExternal ? offerKey : undefined,
         name: title,
         brand: brand,
         article: article,
         description: title,
-        price: numericPrice,
+        price: finalPrice,
         quantity: 1,
         currency: 'RUB',
         image: image,
-        isExternal: true
+        stock: stock,
+        supplier: supplier,
+        deliveryTime: deliveryTime ? String(deliveryTime) : undefined,
+        isExternal: isExternal
       });
       toast.success('Товар добавлен в корзину');
     } catch (error) {

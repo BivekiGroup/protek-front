@@ -254,9 +254,9 @@ const ProductList = ({
       } as React.CSSProperties}
     >
       {/* Product header section matching CoreProductCard exactly */}
-      <div className="w-layout-vflex product-list-search-s1" style={{ paddingTop: 0, marginTop: 0 } as React.CSSProperties}>
-        <div className="w-layout-vflex core-product-s1" style={{ paddingTop: 0, marginTop: 0 } as React.CSSProperties}>
-          <div className="w-layout-vflex flex-block-47" style={{ paddingTop: 0, marginTop: 0 } as React.CSSProperties}>
+      <div className="w-layout-vflex product-list-search-s1" style={{ paddingTop: 0, marginTop: 0, minWidth: 0, width: '100%' } as React.CSSProperties}>
+        <div className="w-layout-vflex core-product-s1" style={{ paddingTop: 0, marginTop: 0, minWidth: 0, width: '100%' } as React.CSSProperties}>
+          <div className="w-layout-vflex flex-block-47" style={{ paddingTop: 0, marginTop: 0, minWidth: 0, width: '100%', display: 'flex', flexDirection: 'row' } as React.CSSProperties}>
             <div className="div-block-19">
               <CustomTooltip text="Оригинальные предложения Protek — рекомендуем для быстрого заказа">
                 <img 
@@ -268,14 +268,14 @@ const ProductList = ({
                 />
               </CustomTooltip>
             </div>
-            <div className="w-layout-vflex flex-block-50">
-              <div className="core-product-header-line" style={{ display: 'flex', alignItems: 'center', flexDirection: 'row' } as React.CSSProperties}>
-                <h3 className="heading-10 name brand" style={{ marginTop: 0, marginBottom: 0, marginRight: 8, display: 'inline-block' } as React.CSSProperties}>{brand}</h3>
-                <h3 className="heading-10" style={{ marginTop: 0, marginBottom: 0, marginRight: 8, display: 'inline-block' } as React.CSSProperties}>{articleNumber}</h3>
+            <div className="w-layout-vflex flex-block-50" style={{ minWidth: 0, flex: 1 } as React.CSSProperties}>
+              <div className="core-product-header-line" style={{ display: 'flex', alignItems: 'center', flexDirection: 'row', minWidth: 0 } as React.CSSProperties}>
+                <h3 className="heading-10 name brand" style={{ marginTop: 0, marginBottom: 0, marginRight: 8, flexShrink: 0 } as React.CSSProperties}>{brand}</h3>
+                <h3 className="heading-10" style={{ marginTop: 0, marginBottom: 0, marginRight: 8, flexShrink: 0 } as React.CSSProperties}>{articleNumber}</h3>
                 <div
                   className="favorite-icon w-embed"
                   onClick={handleFavoriteClick}
-                  style={{ cursor: 'pointer', marginLeft: 8, color: isItemFavorite ? '#e53935' : undefined, display: 'inline-flex', alignItems: 'center', marginTop: 0, marginBottom: 0 } as React.CSSProperties}
+                  style={{ cursor: 'pointer', color: isItemFavorite ? '#e53935' : undefined, display: 'inline-flex', alignItems: 'center', flexShrink: 0, marginLeft: 'auto' } as React.CSSProperties}
                 >
                   <svg width="24" height="24" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -285,7 +285,20 @@ const ProductList = ({
                   </svg>
                 </div>
               </div>
-              <div className="text-block-21 mt-1">{name}</div>
+              <CustomTooltip text={name}>
+                <div
+                  className="text-block-21 mt-1"
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    maxWidth: '500px',
+                    cursor: 'help'
+                  } as React.CSSProperties}
+                >
+                  {name}
+                </div>
+              </CustomTooltip>
             </div>
           </div>
         </div>

@@ -238,16 +238,48 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // GraphQL-based cart operations
   const addItem = async (item: Omit<CartItem, 'id' | 'selected' | 'favorite'>) => {
     try {
+      console.log('🛒 CartContext - addItem called with:', {
+        offerKey: item.offerKey,
+        productId: item.productId,
+        article: item.article,
+        brand: item.brand,
+        price: item.price,
+        supplier: item.supplier
+      });
+
       const existingItem = state.items.find(existing => {
-        if (item.offerKey && existing.offerKey) return existing.offerKey === item.offerKey
-        if (item.productId && existing.productId) return existing.productId === item.productId
-        if (item.article && item.brand && existing.article && existing.brand) {
-          // Fallback проверка по артикулу и бренду (не должна использоваться если offerKey есть)
-          return existing.article === item.article &&
-                 existing.brand === item.brand
-        }
-        return false
+        // Строгое сравнение: offerKey должен совпадать ТОЛЬКО с offerKey
+        const matchByOfferKey = item.offerKey && existing.offerKey && existing.offerKey === item.offerKey;
+
+        // Строгое сравнение: productId должен совпадать ТОЛЬКО с productId
+        const matchByProductId = item.productId && existing.productId && existing.productId === item.productId;
+
+        console.log('🛒 CartContext - Checking against existing item:', {
+          existingOfferKey: existing.offerKey,
+          existingProductId: existing.productId,
+          existingArticle: existing.article,
+          existingBrand: existing.brand,
+          existingSupplier: existing.supplier,
+          itemOfferKey: item.offerKey,
+          itemProductId: item.productId,
+          matchByOfferKey,
+          matchByProductId,
+          willMatch: matchByOfferKey || matchByProductId
+        });
+
+        // Возвращаем true ТОЛЬКО если совпал offerKey или productId
+        // Больше НЕТ fallback по article+brand!
+        if (matchByOfferKey) return true;
+        if (matchByProductId) return true;
+
+        return false;
       })
+
+      if (existingItem) {
+        console.log('🛒 CartContext - Found existing item:', existingItem);
+      } else {
+        console.log('🛒 CartContext - No existing item found, will add as new');
+      }
 
       const existingQuantity = existingItem?.quantity ?? 0
       const stockSource = item.stock ?? existingItem?.stock
@@ -341,9 +373,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           })
         }
 
-        // Refetch to ensure data consistency
-        refetchCart()
-        
+        // НЕ вызываем refetchCart() чтобы не нарушить порядок товаров
+        // refetchCart()
+
         return { success: true }
       } else {
         const errorMessage = data?.addToCart?.error || 'Ошибка добавления товара'
@@ -402,7 +434,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!silent) {
           toast.success(data.removeFromCart.message || 'Товар удален из корзины')
         }
-        refetchCart()
+        // НЕ вызываем refetchCart() чтобы не нарушить порядок товаров
+        // refetchCart()
       } else {
         const errorMessage = data?.removeFromCart?.error || 'Ошибка удаления товара'
         setError(errorMessage)
@@ -494,7 +527,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         toast.success(data.updateCartItemQuantity.message || 'Количество обновлено')
-        refetchCart()
+        // НЕ вызываем refetchCart() чтобы не нарушить порядок товаров
+        // refetchCart()
       } else {
         const errorMessage = data?.updateCartItemQuantity?.error || 'Ошибка обновления количества'
         setError(errorMessage)
@@ -528,7 +562,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }))
 
         toast.success(data.clearCart.message || 'Корзина очищена')
-        refetchCart()
+        // НЕ вызываем refetchCart() чтобы не нарушить порядок товаров
+        // refetchCart()
       } else {
         const errorMessage = data?.clearCart?.error || 'Ошибка очистки корзины'
         setError(errorMessage)

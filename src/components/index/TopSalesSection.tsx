@@ -119,39 +119,7 @@ const TopSalesSection: React.FC = () => {
     .sort((a: TopSalesProductData, b: TopSalesProductData) => a.sortOrder - b.sortOrder)
     .slice(0, 6); // Ограничиваем до 6 товаров
 
-  // TODO: Remove these mock items after testing
-  const mockTopSalesItems = [
-    {
-      id: "mock-top-1",
-      productId: "mock-product-top-1",
-      isActive: true,
-      sortOrder: 999,
-      product: {
-        id: "mock-product-top-1",
-        name: "Колодки тормозные передние FERODO FDB1562",
-        article: "FDB1562",
-        brand: "Ferodo",
-        retailPrice: 4250,
-        images: []
-      }
-    },
-    {
-      id: "mock-top-2",
-      productId: "mock-product-top-2",
-      isActive: true,
-      sortOrder: 1000,
-      product: {
-        id: "mock-product-top-2",
-        name: "Фильтр масляный MANN W 712/75",
-        article: "W712/75",
-        brand: "Mann-Filter",
-        retailPrice: 890,
-        images: []
-      }
-    }
-  ];
-
-  const activeTopSalesProducts = [...realTopSalesProducts, ...mockTopSalesItems].slice(0, 6);
+  const activeTopSalesProducts = realTopSalesProducts;
 
   if (activeTopSalesProducts.length === 0) {
     return (
@@ -210,7 +178,7 @@ const TopSalesSection: React.FC = () => {
               }
 
               const price = finalPrice
-                ? `от ${finalPrice.toLocaleString('ru-RU')} ₽`
+                ? `от ${Math.round(finalPrice).toLocaleString('ru-RU')} ₽`
                 : 'По запросу';
 
               const imageUrl = product.images?.[0]?.url;
@@ -241,6 +209,12 @@ const TopSalesSection: React.FC = () => {
                   productId={product.id}
                   isInCart={isInCart}
                   outOfStock={!finalHasStock}
+                  offerKey={useExternalOffer ? externalOffer.offerKey : undefined}
+                  isExternal={!!useExternalOffer}
+                  numericPrice={finalPrice}
+                  supplier={useExternalOffer ? externalOffer.supplier : undefined}
+                  deliveryTime={useExternalOffer ? externalOffer.deliveryTime : undefined}
+                  stock={useExternalOffer ? externalOffer.quantity : product.stock}
                 />
               );
             })}

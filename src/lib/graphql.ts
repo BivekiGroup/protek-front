@@ -2007,6 +2007,22 @@ export const GET_NEW_ARRIVALS = gql`
         name
         slug
       }
+      firstExternalOffer {
+        offerKey
+        brand
+        code
+        name
+        price
+        currency
+        deliveryTime
+        deliveryTimeMax
+        quantity
+        warehouse
+        warehouseName
+        supplier
+        canPurchase
+        isInCart
+      }
     }
   }
 `;

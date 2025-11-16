@@ -36,21 +36,52 @@ const BrandSelectionSection: React.FC = () => {
     { name: "Mazda" }
   ];
 
+  // Список популярных брендов для отображения
+  const popularBrandNames = [
+    "Audi",
+    "BMW",
+    "Mercedes-Benz",
+    "Volkswagen",
+    "Toyota",
+    "Honda",
+    "Nissan",
+    "Mazda",
+    "Ford",
+    "Chevrolet",
+    "Hyundai",
+    "Kia",
+    "Renault",
+    "Peugeot",
+    "Citroen",
+    "Skoda",
+    "Opel",
+    "Volvo",
+    "Mitsubishi",
+    "Lexus"
+  ];
+
+  let allBrands: Brand[] = staticBrands;
   let brands: Brand[] = staticBrands;
+
   if (data?.laximoBrands && data.laximoBrands.length > 0) {
-    brands = data.laximoBrands.map(brand => ({
+    allBrands = data.laximoBrands.map(brand => ({
       name: brand.name,
       code: brand.code
     }));
+
+    // Фильтруем только популярные бренды для отображения в сетке
+    brands = allBrands.filter(brand =>
+      popularBrandNames.includes(brand.name)
+    );
   } else if (error) {
     console.warn('Laximo API недоступен, используются статические данные:', error.message);
   }
 
-  // Combobox фильтрация
+  // Combobox фильтрация - используем ВСЕ бренды, а не только популярные
   const filteredBrands = useMemo(() => {
-    if (!brandQuery) return brands;
-    return brands.filter(b => b.name.toLowerCase().includes(brandQuery.toLowerCase()));
-  }, [brands, brandQuery]);
+    if (!brandQuery) return allBrands;
+    return allBrands.filter(b => b.name.toLowerCase().includes(brandQuery.toLowerCase()));
+  }, [allBrands, brandQuery]);
 
   const navigateWithAuthCheck = (path: string) => {
     const hasToken = typeof window !== 'undefined' && Boolean(localStorage.getItem('authToken'));
@@ -73,7 +104,7 @@ const BrandSelectionSection: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedBrand) {
-      const found = brands.find(b => b.code === selectedBrand.code || b.name === selectedBrand.name);
+      const found = allBrands.find(b => b.code === selectedBrand.code || b.name === selectedBrand.name);
       if (found && found.code) {
         navigateWithAuthCheck(`/brands?selected=${found.code}`);
         return;

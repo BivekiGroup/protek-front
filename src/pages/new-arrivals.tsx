@@ -30,6 +30,22 @@ interface NewArrivalProduct {
     alt?: string;
     order?: number;
   }>;
+  firstExternalOffer?: {
+    offerKey: string;
+    brand: string;
+    code: string;
+    name: string;
+    price: number;
+    currency: string;
+    deliveryTime: number;
+    deliveryTimeMax: number;
+    quantity: number;
+    warehouse: string;
+    warehouseName?: string;
+    supplier: string;
+    canPurchase: boolean;
+    isInCart: boolean;
+  };
 }
 
 const PAGE_SIZE = 24;
@@ -94,6 +110,16 @@ export default function NewArrivalsPage() {
   // Фильтрация и сортировка
   const products = useMemo(() => {
     let filtered = [...rawProducts];
+
+    // Скрываем товары без цены/наличия и без внешних предложений
+    filtered = filtered.filter(p => {
+      const hasInternalPrice = !!(p.retailPrice ?? p.wholesalePrice);
+      const hasStock = (p.stock ?? 0) > 0;
+      const hasExternalOffer = !!p.firstExternalOffer;
+
+      // Показываем только если есть (цена И наличие) ИЛИ внешнее предложение
+      return (hasInternalPrice && hasStock) || hasExternalOffer;
+    });
 
     // Фильтрация по поисковому запросу
     if (searchQuery.trim()) {
@@ -208,23 +234,43 @@ export default function NewArrivalsPage() {
     e.stopPropagation();
 
     try {
-      if (!product.article || !product.brand) {
+      const hasInternalPrice = !!(product.retailPrice ?? product.wholesalePrice);
+      const hasStock = (product.stock ?? 0) > 0;
+      const externalOffer = product.firstExternalOffer;
+
+      // Если нет внутренней цены или наличия, используем внешнее предложение
+      const useExternalOffer = (!hasInternalPrice || !hasStock) && externalOffer;
+
+      let finalArticle = product.article;
+      let finalBrand = product.brand;
+      let finalPrice = product.retailPrice ?? product.wholesalePrice ?? 0;
+
+      if (useExternalOffer) {
+        finalArticle = externalOffer.code;
+        finalBrand = externalOffer.brand;
+        finalPrice = externalOffer.price;
+      }
+
+      if (!finalArticle || !finalBrand) {
         toast.error('Недостаточно данных для добавления товара в корзину');
         return;
       }
 
-      const price = product.retailPrice ?? product.wholesalePrice ?? 0;
-
       addItem({
+        productId: useExternalOffer ? undefined : product.id,
+        offerKey: useExternalOffer ? externalOffer.offerKey : undefined,
         name: product.name,
-        brand: product.brand,
-        article: product.article,
+        brand: finalBrand,
+        article: finalArticle,
         description: product.name,
-        price: price,
+        price: finalPrice,
         quantity: 1,
         currency: 'RUB',
         image: getPrimaryImage(product),
-        isExternal: true
+        stock: useExternalOffer ? externalOffer.quantity : product.stock,
+        supplier: useExternalOffer ? externalOffer.supplier : undefined,
+        deliveryTime: useExternalOffer ? String(externalOffer.deliveryTime) : undefined,
+        isExternal: !!useExternalOffer
       });
 
       toast.success('Товар добавлен в корзину');
@@ -288,25 +334,40 @@ export default function NewArrivalsPage() {
                   </div>
                 ) : products.length ? (
                   products.map((product: NewArrivalProduct) => {
-                    const primaryPrice = product.retailPrice ?? product.wholesalePrice ?? null;
-                    // Проверяем реальное наличие из поля stock (из БД)
+                    const hasInternalPrice = !!(product.retailPrice ?? product.wholesalePrice);
                     const hasStock = (product.stock ?? 0) > 0;
+                    const externalOffer = product.firstExternalOffer;
+
+                    // Если нет внутренней цены или наличия, используем внешнее предложение
+                    const useExternalOffer = (!hasInternalPrice || !hasStock) && externalOffer;
+
+                    let finalPrice = product.retailPrice ?? product.wholesalePrice ?? null;
+                    let finalHasStock = hasStock;
+                    let finalArticle = product.article;
+                    let finalBrand = product.brand || "Неизвестный бренд";
+
+                    if (useExternalOffer) {
+                      finalPrice = externalOffer.price;
+                      finalHasStock = externalOffer.quantity > 0;
+                      finalArticle = externalOffer.code;
+                      finalBrand = externalOffer.brand;
+                    }
 
                     return (
                       <CatalogProductCard
                         key={product.id}
                         image={getPrimaryImage(product)}
                         discount="Новинка"
-                        price={formatPrice(primaryPrice)}
+                        price={formatPrice(finalPrice)}
                         oldPrice=""
                         title={product.name}
-                        brand={product.brand || "Неизвестный бренд"}
-                        articleNumber={product.article}
-                        brandName={product.brand}
+                        brand={finalBrand}
+                        articleNumber={finalArticle}
+                        brandName={finalBrand}
                         artId={product.id}
                         productId={product.id}
-                        onAddToCart={hasStock ? handleAddToCart(product) : undefined}
-                        outOfStock={!hasStock}
+                        onAddToCart={finalHasStock ? handleAddToCart(product) : undefined}
+                        outOfStock={!finalHasStock}
                       />
                     );
                   })

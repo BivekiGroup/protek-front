@@ -338,7 +338,7 @@ function PaymentSuccessContent() {
                           console.log('🔍 userData from localStorage:', userData ? 'exists' : 'null');
 
                           if (!userData) {
-                            alert('Необходимо авторизоваться для скачивания счёта');
+                            toast.error('Необходимо авторизоваться для скачивания счёта');
                             return;
                           }
 
@@ -349,9 +349,14 @@ function PaymentSuccessContent() {
                           console.log('🔍 token created:', token.substring(0, 20) + '...');
 
                           if (!token) {
-                            alert('Токен авторизации не найден. Попробуйте войти заново.');
+                            toast.error('Токен авторизации не найден. Попробуйте войти заново.');
                             return;
                           }
+
+                          // Показываем уведомление о начале генерации
+                          const loadingToast = toast.loading('Генерируем счет на оплату...', {
+                            duration: 30000, // 30 секунд на случай долгой генерации
+                          });
 
                           const url = `${process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL?.replace('/api/graphql', '')}/api/order-invoice/${orderId}`;
                           console.log('🔍 Fetching invoice from:', url);
@@ -367,6 +372,7 @@ function PaymentSuccessContent() {
                           if (!response.ok) {
                             const errorData = await response.text();
                             console.error('🔍 Error response:', errorData);
+                            toast.dismiss(loadingToast);
                             throw new Error(`Не удалось загрузить счёт: ${response.status}`);
                           }
 
@@ -385,9 +391,13 @@ function PaymentSuccessContent() {
                           window.URL.revokeObjectURL(downloadUrl);
 
                           console.log('✅ Invoice downloaded successfully');
+
+                          // Убираем loading toast и показываем успех
+                          toast.dismiss(loadingToast);
+                          toast.success('Счет успешно сгенерирован и скачан!');
                         } catch (error) {
                           console.error('❌ Ошибка при скачивании счёта:', error);
-                          alert('Не удалось скачать счёт. Попробуйте позже или обратитесь в поддержку.');
+                          toast.error('Не удалось скачать счёт. Попробуйте позже или обратитесь в поддержку.');
                         }
                       }}
                       style={{

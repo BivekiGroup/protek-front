@@ -14,11 +14,6 @@ import { GET_PRODUCTS_BY_CATEGORY, GET_CATEGORIES } from "@/lib/graphql";
 import { getMetaByPath } from "@/lib/meta-config";
 import { useCart } from "@/contexts/CartContext";
 import toast from "react-hot-toast";
-import {
-  Package, Wrench, Zap, Droplet, Settings,
-  Battery, Sparkles, Tag, Cog, Gauge, Circle, CircleDot,
-  Square, Filter, GitBranch, Radio, Puzzle, Box
-} from 'lucide-react';
 
 interface CategoryProduct {
   id: string;
@@ -41,6 +36,22 @@ interface CategoryProduct {
     name: string;
     slug: string;
   }>;
+  firstExternalOffer?: {
+    offerKey: string;
+    brand: string;
+    code: string;
+    name: string;
+    price: number;
+    currency: string;
+    deliveryTime: number;
+    deliveryTimeMax: number;
+    quantity: number;
+    warehouse: string;
+    warehouseName?: string;
+    supplier: string;
+    canPurchase: boolean;
+    isInCart: boolean;
+  };
 }
 
 interface Category {
@@ -91,66 +102,6 @@ const SORT_OPTIONS = [
   { key: "newest", label: "Новинки" },
 ];
 
-// Расширенная система иконок для категорий
-const getCategoryIcon = (name: string) => {
-  const lowerName = name.toLowerCase();
-
-  // Масла и жидкости
-  if (lowerName.includes('масл') || lowerName.includes('жидкост')) return Droplet;
-
-  // Электрика
-  if (lowerName.includes('электр') || lowerName.includes('провод') || lowerName.includes('свеч')) return Zap;
-
-  // Инструменты
-  if (lowerName.includes('инструмент') || lowerName.includes('техник') || lowerName.includes('оборудован')) return Wrench;
-
-  // АКБ и батареи
-  if (lowerName.includes('акб') || lowerName.includes('батаре') || lowerName.includes('аккумулятор')) return Battery;
-
-  // Химия
-  if (lowerName.includes('химия') || lowerName.includes('очист') || lowerName.includes('мойк')) return Sparkles;
-
-  // Аксессуары
-  if (lowerName.includes('аксессуар') || lowerName.includes('украш')) return Tag;
-
-  // Двигатель
-  if (lowerName.includes('двигател') || lowerName.includes('мотор') || lowerName.includes('поршн')) return Cog;
-
-  // Тормозная система
-  if (lowerName.includes('тормоз') || lowerName.includes('колодк')) return CircleDot;
-
-  // Подвеска
-  if (lowerName.includes('подвеск') || lowerName.includes('амортизатор') || lowerName.includes('стойк')) return GitBranch;
-
-  // Фильтры
-  if (lowerName.includes('фильтр')) return Filter;
-
-  // Шины и диски
-  if (lowerName.includes('шин') || lowerName.includes('покрышк')) return Radio;
-  if (lowerName.includes('диск')) return Circle;
-
-  // Кузов
-  if (lowerName.includes('кузов') || lowerName.includes('бампер') || lowerName.includes('крыл')) return Square;
-
-  // Трансмиссия
-  if (lowerName.includes('трансмисс') || lowerName.includes('кпп') || lowerName.includes('сцепл')) return Settings;
-
-  // Салон
-  if (lowerName.includes('салон') || lowerName.includes('сидень')) return Box;
-
-  // Система охлаждения
-  if (lowerName.includes('охлажд') || lowerName.includes('радиатор')) return Gauge;
-
-  // Запчасти и детали
-  if (lowerName.includes('деталь') || lowerName.includes('запчаст') || lowerName.includes('комплект')) return Puzzle;
-
-  // ТО
-  if (lowerName.includes(' то') || lowerName.includes('обслуж')) return Settings;
-
-  // По умолчанию
-  return Package;
-};
-
 export default function CategoryPage() {
   const router = useRouter();
   const { slug } = router.query;
@@ -166,10 +117,29 @@ export default function CategoryPage() {
   // Получаем категории для хлебных крошек
   const { data: categoriesData } = useQuery<{ categories: Category[] }>(GET_CATEGORIES);
 
-  // Получаем товары категории
+  // Находим текущую категорию ДО запроса товаров
+  const currentCategory = useMemo(() => {
+    if (!categoriesData?.categories || !slug) return null;
+    const findCategoryBySlug = (categories: Category[], targetSlug: string): Category | null => {
+      for (const cat of categories) {
+        if (cat.slug === targetSlug) return cat;
+        if (cat.children && cat.children.length > 0) {
+          const found = findCategoryBySlug(cat.children, targetSlug);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    return findCategoryBySlug(categoriesData.categories, slug as string);
+  }, [categoriesData, slug]);
+
+  // Проверяем, есть ли у категории подкатегории
+  const hasSubcategories = currentCategory?.children && currentCategory.children.length > 0;
+
+  // Получаем товары категории ТОЛЬКО если нет подкатегорий
   const { data, loading, previousData, error } = useQuery(GET_PRODUCTS_BY_CATEGORY, {
     variables: { categorySlug: slug, limit },
-    skip: !slug,
+    skip: !slug || hasSubcategories, // Пропускаем запрос, если есть подкатегории
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
@@ -183,23 +153,6 @@ export default function CategoryPage() {
   }
 
   const rawProducts: CategoryProduct[] = (data?.productsByCategory ?? previousData?.productsByCategory ?? []) as CategoryProduct[];
-
-  // Находим текущую категорию для заголовка
-  const findCategoryBySlug = (categories: Category[], targetSlug: string): Category | null => {
-    for (const cat of categories) {
-      if (cat.slug === targetSlug) return cat;
-      if (cat.children && cat.children.length > 0) {
-        const found = findCategoryBySlug(cat.children, targetSlug);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-
-  const currentCategory = useMemo(() => {
-    if (!categoriesData?.categories || !slug) return null;
-    return findCategoryBySlug(categoriesData.categories, slug as string);
-  }, [categoriesData, slug]);
 
   // Функция для построения пути категории (иерархия от корня до текущей)
   const getCategoryPath = (category: Category | null, categories: Category[]): Category[] => {
@@ -243,13 +196,16 @@ export default function CategoryPage() {
 
   // Фильтрация и сортировка
   const products = useMemo(() => {
-    // Сначала фильтруем товары с нулевой ценой или нулевым наличием
-    let filtered = rawProducts.filter(p => {
-      const price = p.retailPrice ?? p.wholesalePrice ?? 0;
-      const hasStock = (p.stock ?? 0) > 0;
+    let filtered = [...rawProducts];
 
-      // Показываем только если есть цена > 0 И наличие > 0
-      return price > 0 && hasStock;
+    // Скрываем товары без цены/наличия и без внешних предложений
+    filtered = filtered.filter(p => {
+      const hasInternalPrice = !!(p.retailPrice ?? p.wholesalePrice);
+      const hasStock = (p.stock ?? 0) > 0;
+      const hasExternalOffer = !!p.firstExternalOffer;
+
+      // Показываем только если есть (цена И наличие) ИЛИ внешнее предложение
+      return (hasInternalPrice && hasStock) || hasExternalOffer;
     });
 
     // Фильтрация по поисковому запросу
@@ -365,23 +321,43 @@ export default function CategoryPage() {
     e.stopPropagation();
 
     try {
-      if (!product.article || !product.brand) {
+      const hasInternalPrice = !!(product.retailPrice ?? product.wholesalePrice);
+      const hasStock = (product.stock ?? 0) > 0;
+      const externalOffer = product.firstExternalOffer;
+
+      // Если нет внутренней цены или наличия, используем внешнее предложение
+      const useExternalOffer = (!hasInternalPrice || !hasStock) && externalOffer;
+
+      let finalArticle = product.article;
+      let finalBrand = product.brand;
+      let finalPrice = product.retailPrice ?? product.wholesalePrice ?? 0;
+
+      if (useExternalOffer) {
+        finalArticle = externalOffer.code;
+        finalBrand = externalOffer.brand;
+        finalPrice = externalOffer.price;
+      }
+
+      if (!finalArticle || !finalBrand) {
         toast.error('Недостаточно данных для добавления товара в корзину');
         return;
       }
 
-      const price = product.retailPrice ?? product.wholesalePrice ?? 0;
-
       addItem({
+        productId: useExternalOffer ? undefined : product.id,
+        offerKey: useExternalOffer ? externalOffer.offerKey : undefined,
         name: product.name,
-        brand: product.brand,
-        article: product.article,
+        brand: finalBrand,
+        article: finalArticle,
         description: product.name,
-        price: price,
+        price: finalPrice,
         quantity: 1,
         currency: 'RUB',
         image: getPrimaryImage(product),
-        isExternal: true
+        stock: useExternalOffer ? externalOffer.quantity : product.stock,
+        supplier: useExternalOffer ? externalOffer.supplier : undefined,
+        deliveryTime: useExternalOffer ? String(externalOffer.deliveryTime) : undefined,
+        isExternal: !!useExternalOffer
       });
 
       toast.success('Товар добавлен в корзину');
@@ -410,9 +386,6 @@ export default function CategoryPage() {
     return crumbs;
   }, [categoryPath]);
 
-  // Проверяем, есть ли у категории подкатегории
-  const hasSubcategories = currentCategory?.children && currentCategory.children.length > 0;
-
   return (
     <>
       <MetaTags
@@ -430,61 +403,23 @@ export default function CategoryPage() {
 
       {/* Если есть подкатегории - показываем их */}
       {hasSubcategories ? (
-        <section style={{ padding: '40px 0', background: '#F9FAFB', minHeight: 'calc(100vh - 200px)' }}>
-          <div style={{ maxWidth: '1580px', margin: '0 auto', padding: '0 20px' }}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <section className="main">
+          <div className="w-layout-blockcontainer container w-container">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
               {currentCategory.children.map((subcategory: Category) => {
-                const Icon = getCategoryIcon(subcategory.name);
-                const hasChildren = subcategory.children && subcategory.children.length > 0;
-                const productCount = subcategory._count?.products || 0;
-
                 return (
                   <a
                     key={subcategory.id}
                     href={`/catalog/${subcategory.slug}`}
-                    className="group relative bg-white rounded-xl p-4 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 hover:border-[#EC1C24]/30 overflow-hidden"
+                    className="group relative bg-white rounded-lg p-4 hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-100 hover:border-[#EC1C24] overflow-hidden h-[85px] flex items-center justify-center"
                   >
-                    {/* Градиентный фон при ховере */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#EC1C24]/0 to-[#EC1C24]/0 group-hover:from-[#EC1C24]/5 group-hover:to-transparent transition-all duration-300 rounded-xl"></div>
-
-                    {/* Декоративные элементы */}
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#EC1C24]/5 to-transparent rounded-full blur-2xl group-hover:from-[#EC1C24]/10 transition-all duration-300 -mr-12 -mt-12"></div>
-
-                    <div className="relative z-10">
-                      {/* Иконка категории */}
-                      <div className="mb-3 inline-flex items-center justify-center w-11 h-11 rounded-lg bg-gradient-to-br from-[#EC1C24]/10 to-[#EC1C24]/5 group-hover:from-[#EC1C24]/20 group-hover:to-[#EC1C24]/10 transition-all duration-300">
-                        <Icon className="w-5 h-5 text-[#EC1C24]" strokeWidth={2} />
-                      </div>
-
-                      {/* Название категории */}
-                      <h3 className="font-onest font-semibold text-base text-[#041124] mb-1.5 group-hover:text-[#EC1C24] transition-colors">
-                        {subcategory.name}
-                      </h3>
-
-                      {/* Счетчик товаров */}
-                      <div className="flex items-center justify-between">
-                        {productCount > 0 && (
-                          <span className="font-onest text-xs text-gray-500">
-                            {productCount} {productCount === 1 ? 'товар' : productCount < 5 ? 'товара' : 'товаров'}
-                          </span>
-                        )}
-
-                        {/* Индикатор подкатегорий или перехода */}
-                        <div className="flex items-center gap-1 ml-auto">
-                          {hasChildren && (
-                            <span className="font-onest text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
-                              {subcategory.children.length} {subcategory.children.length === 1 ? 'подкат.' : 'подкат.'}
-                            </span>
-                          )}
-                          <svg className="w-4 h-4 text-gray-400 group-hover:text-[#EC1C24] group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
+                    {/* Название категории */}
+                    <h3 className="font-onest font-medium text-sm text-[#041124] group-hover:text-[#EC1C24] transition-colors text-center leading-snug">
+                      {subcategory.name}
+                    </h3>
 
                     {/* Индикатор активности */}
-                    <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-[#EC1C24] to-[#FF3838] group-hover:w-full transition-all duration-300 rounded-b-xl"></div>
+                    <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-[#EC1C24] group-hover:w-full transition-all duration-300"></div>
                   </a>
                 );
               })}
@@ -497,8 +432,8 @@ export default function CategoryPage() {
           <div className="w-layout-blockcontainer container w-container">
             {/* Layout с фильтрами слева и товарами справа */}
             <div className="flex gap-6 items-start">
-            {/* Фильтры слева */}
-            {filters.length > 0 && (
+            {/* Фильтры слева - скрываем во время начальной загрузки */}
+            {!isInitialLoading && filters.length > 0 && (
               <div className="w-[280px] flex-shrink-0 relative z-10">
                 <Filters
                   filters={filters}
@@ -513,14 +448,16 @@ export default function CategoryPage() {
 
             {/* Товары справа */}
             <div className="flex-1 min-w-0">
-              {/* Сортировка */}
-              <div className="mb-10">
-                <CatalogSortTabs
-                  active={activeSortIndex}
-                  onChange={setActiveSortIndex}
-                  options={SORT_OPTIONS.map(o => o.label)}
-                />
-              </div>
+              {/* Сортировка - скрываем во время начальной загрузки */}
+              {!isInitialLoading && (
+                <div className="mb-10">
+                  <CatalogSortTabs
+                    active={activeSortIndex}
+                    onChange={setActiveSortIndex}
+                    options={SORT_OPTIONS.map(o => o.label)}
+                  />
+                </div>
+              )}
 
               {/* Сетка товаров */}
               <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(200px,1fr))] mb-8">
@@ -530,25 +467,40 @@ export default function CategoryPage() {
                   </div>
                 ) : products.length ? (
                   products.map((product: CategoryProduct) => {
-                    const primaryPrice = product.retailPrice ?? product.wholesalePrice ?? null;
-                    // Проверяем реальное наличие из поля stock (из БД)
+                    const hasInternalPrice = !!(product.retailPrice ?? product.wholesalePrice);
                     const hasStock = (product.stock ?? 0) > 0;
+                    const externalOffer = product.firstExternalOffer;
+
+                    // Если нет внутренней цены или наличия, используем внешнее предложение
+                    const useExternalOffer = (!hasInternalPrice || !hasStock) && externalOffer;
+
+                    let finalPrice = product.retailPrice ?? product.wholesalePrice ?? null;
+                    let finalHasStock = hasStock;
+                    let finalArticle = product.article;
+                    let finalBrand = product.brand || "Неизвестный бренд";
+
+                    if (useExternalOffer) {
+                      finalPrice = externalOffer.price;
+                      finalHasStock = externalOffer.quantity > 0;
+                      finalArticle = externalOffer.code;
+                      finalBrand = externalOffer.brand;
+                    }
 
                     return (
                       <CatalogProductCard
                         key={product.id}
                         image={getPrimaryImage(product)}
                         discount=""
-                        price={formatPrice(primaryPrice)}
+                        price={formatPrice(finalPrice)}
                         oldPrice=""
                         title={product.name}
-                        brand={product.brand || "Неизвестный бренд"}
-                        articleNumber={product.article}
-                        brandName={product.brand}
+                        brand={finalBrand}
+                        articleNumber={finalArticle}
+                        brandName={finalBrand}
                         artId={product.id}
                         productId={product.id}
-                        onAddToCart={hasStock ? handleAddToCart(product) : undefined}
-                        outOfStock={!hasStock}
+                        onAddToCart={finalHasStock ? handleAddToCart(product) : undefined}
+                        outOfStock={!finalHasStock}
                       />
                     );
                   })

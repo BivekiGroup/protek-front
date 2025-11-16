@@ -34,6 +34,22 @@ interface TopSalesProductData {
       alt?: string;
       order?: number;
     }>;
+    firstExternalOffer?: {
+      offerKey: string;
+      brand: string;
+      code: string;
+      name: string;
+      price: number;
+      currency: string;
+      deliveryTime: number;
+      deliveryTimeMax: number;
+      quantity: number;
+      warehouse: string;
+      warehouseName?: string;
+      supplier: string;
+      canPurchase: boolean;
+      isInCart: boolean;
+    };
   };
 }
 
@@ -97,6 +113,16 @@ export default function TopSalesPage() {
   // Фильтрация и сортировка
   const products = useMemo(() => {
     let filtered = [...activeProducts];
+
+    // Скрываем товары без цены/наличия и без внешних предложений
+    filtered = filtered.filter(item => {
+      const hasInternalPrice = !!(item.product.retailPrice ?? item.product.wholesalePrice);
+      const hasStock = (item.product.stock ?? 0) > 0;
+      const hasExternalOffer = !!item.product.firstExternalOffer;
+
+      // Показываем только если есть (цена И наличие) ИЛИ внешнее предложение
+      return (hasInternalPrice && hasStock) || hasExternalOffer;
+    });
 
     // Фильтрация по поисковому запросу
     if (searchQuery.trim()) {
@@ -202,23 +228,43 @@ export default function TopSalesPage() {
     e.stopPropagation();
 
     try {
-      if (!item.product.article || !item.product.brand) {
+      const hasInternalPrice = !!(item.product.retailPrice ?? item.product.wholesalePrice);
+      const hasStock = (item.product.stock ?? 0) > 0;
+      const externalOffer = item.product.firstExternalOffer;
+
+      // Если нет внутренней цены или наличия, используем внешнее предложение
+      const useExternalOffer = (!hasInternalPrice || !hasStock) && externalOffer;
+
+      let finalArticle = item.product.article;
+      let finalBrand = item.product.brand;
+      let finalPrice = item.product.retailPrice ?? item.product.wholesalePrice ?? 0;
+
+      if (useExternalOffer) {
+        finalArticle = externalOffer.code;
+        finalBrand = externalOffer.brand;
+        finalPrice = externalOffer.price;
+      }
+
+      if (!finalArticle || !finalBrand) {
         toast.error('Недостаточно данных для добавления товара в корзину');
         return;
       }
 
-      const price = item.product.retailPrice ?? item.product.wholesalePrice ?? 0;
-
       addItem({
+        productId: useExternalOffer ? undefined : item.product.id,
+        offerKey: useExternalOffer ? externalOffer.offerKey : undefined,
         name: item.product.name,
-        brand: item.product.brand,
-        article: item.product.article,
+        brand: finalBrand,
+        article: finalArticle,
         description: item.product.name,
-        price: price,
+        price: finalPrice,
         quantity: 1,
         currency: 'RUB',
         image: getPrimaryImage(item.product),
-        isExternal: true
+        stock: useExternalOffer ? externalOffer.quantity : item.product.stock,
+        supplier: useExternalOffer ? externalOffer.supplier : undefined,
+        deliveryTime: useExternalOffer ? String(externalOffer.deliveryTime) : undefined,
+        isExternal: !!useExternalOffer
       });
 
       toast.success('Товар добавлен в корзину');
@@ -282,25 +328,40 @@ export default function TopSalesPage() {
                   </div>
                 ) : products.length ? (
                   products.map((item: TopSalesProductData) => {
-                    const price = item.product.retailPrice ?? item.product.wholesalePrice ?? null;
-                    // Проверяем реальное наличие из поля stock (из БД)
+                    const hasInternalPrice = !!(item.product.retailPrice ?? item.product.wholesalePrice);
                     const hasStock = (item.product.stock ?? 0) > 0;
+                    const externalOffer = item.product.firstExternalOffer;
+
+                    // Если нет внутренней цены или наличия, используем внешнее предложение
+                    const useExternalOffer = (!hasInternalPrice || !hasStock) && externalOffer;
+
+                    let finalPrice = item.product.retailPrice ?? item.product.wholesalePrice ?? null;
+                    let finalHasStock = hasStock;
+                    let finalArticle = item.product.article;
+                    let finalBrand = item.product.brand || "Неизвестный бренд";
+
+                    if (useExternalOffer) {
+                      finalPrice = externalOffer.price;
+                      finalHasStock = externalOffer.quantity > 0;
+                      finalArticle = externalOffer.code;
+                      finalBrand = externalOffer.brand;
+                    }
 
                     return (
                       <CatalogProductCard
                         key={item.id}
                         image={getPrimaryImage(item.product)}
                         discount="Хит продаж"
-                        price={formatPrice(price)}
+                        price={formatPrice(finalPrice)}
                         oldPrice=""
                         title={item.product.name}
-                        brand={item.product.brand || "Неизвестный бренд"}
-                        articleNumber={item.product.article}
-                        brandName={item.product.brand}
+                        brand={finalBrand}
+                        articleNumber={finalArticle}
+                        brandName={finalBrand}
                         artId={item.product.id}
                         productId={item.product.id}
-                        onAddToCart={hasStock ? handleAddToCart(item) : undefined}
-                        outOfStock={!hasStock}
+                        onAddToCart={finalHasStock ? handleAddToCart(item) : undefined}
+                        outOfStock={!finalHasStock}
                       />
                     );
                   })

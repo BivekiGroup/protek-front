@@ -403,7 +403,7 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                                 );
 
                                 if (!userData) {
-                                  alert(
+                                  toast.error(
                                     'Необходимо авторизоваться для скачивания счёта'
                                   );
                                   return;
@@ -420,11 +420,16 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                                 );
 
                                 if (!token) {
-                                  alert(
+                                  toast.error(
                                     'Токен авторизации не найден. Попробуйте войти заново.'
                                   );
                                   return;
                                 }
+
+                                // Показываем уведомление о начале генерации
+                                const loadingToast = toast.loading('Генерируем счет на оплату...', {
+                                  duration: 30000, // 30 секунд на случай долгой генерации
+                                });
 
                                 // Иначе генерируем через API с токеном
                                 const url = `${process.env.NEXT_PUBLIC_CMS_GRAPHQL_URL?.replace(
@@ -444,6 +449,7 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                                 if (!response.ok) {
                                   const errorData = await response.text();
                                   console.error('🔍 Error response:', errorData);
+                                  toast.dismiss(loadingToast);
                                   throw new Error(
                                     `Не удалось загрузить счёт: ${response.status}`
                                   );
@@ -465,12 +471,16 @@ const ProfileOrdersMain: React.FC<ProfileOrdersMainProps> = () => {
                                 window.URL.revokeObjectURL(downloadUrl);
 
                                 console.log('✅ Invoice downloaded successfully');
+
+                                // Убираем loading toast и показываем успех
+                                toast.dismiss(loadingToast);
+                                toast.success('Счет успешно сгенерирован и скачан!');
                               } catch (error) {
                                 console.error(
                                   '❌ Ошибка при скачивании счёта:',
                                   error
                                 );
-                                alert(
+                                toast.error(
                                   'Не удалось скачать счёт. Попробуйте позже или обратитесь в поддержку.'
                                 );
                               }

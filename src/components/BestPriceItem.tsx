@@ -16,6 +16,12 @@ interface BestPriceItemProps {
   isInCart?: boolean;
   isNew?: boolean;
   outOfStock?: boolean;
+  offerKey?: string;
+  isExternal?: boolean;
+  numericPrice?: number;
+  supplier?: string;
+  deliveryTime?: number;
+  stock?: number;
 }
 
 const BestPriceItem: React.FC<BestPriceItemProps> = ({
@@ -31,6 +37,12 @@ const BestPriceItem: React.FC<BestPriceItemProps> = ({
   isInCart = false,
   isNew = false,
   outOfStock = false,
+  offerKey,
+  isExternal = false,
+  numericPrice,
+  supplier,
+  deliveryTime,
+  stock,
 }) => {
   const { addItem, isInCart: isItemInCart } = useCart();
   const { addToFavorites, removeFromFavorites, isFavorite, favorites } = useFavorites();
@@ -60,26 +72,28 @@ const BestPriceItem: React.FC<BestPriceItemProps> = ({
     }
 
     try {
-      const numericPrice = parsePrice(newPrice);
+      const finalPrice = numericPrice !== undefined ? numericPrice : parsePrice(newPrice);
 
-      if (numericPrice <= 0) {
+      if (finalPrice <= 0) {
         toast.error("Цена товара не найдена");
         return;
       }
 
       const result = await addItem({
-        productId,
+        productId: isExternal ? undefined : productId,
+        offerKey: isExternal ? offerKey : undefined,
         name: title,
         description: `${brand} - ${title}`,
         brand,
         article,
-        price: numericPrice,
+        price: finalPrice,
         currency: "RUB",
         quantity: 1,
         image,
-        supplier: "Protek",
-        deliveryTime: "1 день",
-        isExternal: false,
+        stock: stock,
+        supplier: supplier || "Protek",
+        deliveryTime: deliveryTime ? String(deliveryTime) : "1 день",
+        isExternal: isExternal,
       });
 
       if (result.success) {

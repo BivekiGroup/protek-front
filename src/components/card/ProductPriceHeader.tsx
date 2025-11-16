@@ -32,50 +32,9 @@ const ProductPriceHeader = ({ offers, brand, articleNumber, name }: ProductPrice
     }))
   });
 
-  // Если нет внутренних офферов - показываем сообщение "нет на нашем складе"
+  // Если нет внутренних офферов - не показываем блок вообще
   if (databaseOffers.length === 0) {
-    return (
-      <div
-        style={{
-          backgroundColor: '#FFF9E6',
-          borderRadius: '12px',
-          padding: '20px 40px',
-          margin: '0 0 16px 0',
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          width: '100%',
-          border: '1px solid #FFC107'
-        } as React.CSSProperties}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#F59E0B"/>
-          </svg>
-          <div>
-            <h3 style={{
-              fontFamily: 'Onest',
-              fontWeight: 600,
-              fontSize: '18px',
-              color: '#92400E',
-              margin: 0
-            }}>
-              Товара нет на нашем складе
-            </h3>
-            <p style={{
-              fontFamily: 'Onest',
-              fontWeight: 400,
-              fontSize: '14px',
-              color: '#78350F',
-              margin: '4px 0 0 0'
-            }}>
-              Вы можете посмотреть предложения от других поставщиков в таблице ниже
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   // Используем ТОЛЬКО внутренние офферы
