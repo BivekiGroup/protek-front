@@ -659,67 +659,106 @@ export default function CheckoutNewPage() {
               <div style={{
                 background: '#fff',
                 borderRadius: '10px',
-                padding: '12px 16px',
+                padding: '12px',
                 border: '1px solid #E5E7EB',
                 marginTop: '6px',
               }}>
                 <h3 style={{
-                  margin: '0 0 10px 0',
+                  margin: 0,
+                  marginBottom: '8px',
                   fontSize: '13px',
                   fontWeight: 600,
                   color: '#111827',
-                  fontFamily: 'Onest, sans-serif',
                 }}>
                   Товары в заказе
                 </h3>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   {selectedItems.map((item, idx) => (
-                    <div key={item.id} style={{
-                      display: 'flex',
-                      gap: '10px',
-                      paddingBottom: idx < selectedItems.length - 1 ? '10px' : '0',
-                      borderBottom: idx < selectedItems.length - 1 ? '1px solid #F3F4F6' : 'none',
-                    }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      key={item.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        paddingBottom: '4px',
+                        borderBottom: idx < selectedItems.length - 1 ? '1px solid #F3F4F6' : 'none',
+                      }}
+                    >
+                      {/* Информация о товаре - фиксированная структура */}
+                      <div style={{
+                        flex: 1,
+                        minWidth: 0,
+                        maxWidth: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        marginRight: '10px',
+                        overflow: 'hidden',
+                      }}>
+                        {/* Бренд/Артикул - фиксированная ширина */}
                         <div style={{
-                          fontSize: '12px',
-                          fontWeight: 500,
-                          color: '#111827',
-                          marginBottom: '3px',
-                          fontFamily: 'Onest, sans-serif',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
+                          width: '140px',
+                          minWidth: '140px',
+                          maxWidth: '140px',
+                          flexShrink: 0,
+                          marginRight: '10px',
                         }}>
-                          {item.name}
+                          {(item.brand || item.article) && (
+                            <span style={{
+                              fontSize: '11px',
+                              color: '#6B7280',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              display: 'block',
+                            }}>
+                              {item.brand && <span>{item.brand}</span>}
+                              {item.brand && item.article && <span style={{ margin: '0 4px' }}>•</span>}
+                              {item.article && <span>{item.article}</span>}
+                            </span>
+                          )}
                         </div>
-                        {(item.brand || item.article) && (
-                          <div style={{
-                            fontSize: '11px',
-                            color: '#6B7280',
-                            marginBottom: '3px',
-                            fontFamily: 'Onest, sans-serif',
+
+                        {/* Название товара - flex с ограничением */}
+                        <div style={{
+                          flex: 1,
+                          minWidth: 0,
+                          maxWidth: '100%',
+                          marginRight: '10px',
+                          overflow: 'hidden',
+                        }}>
+                          <span style={{
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#111827',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            display: 'block',
                           }}>
-                            {item.brand && <span>{item.brand}</span>}
-                            {item.brand && item.article && <span> • </span>}
-                            {item.article && <span>Арт: {item.article}</span>}
-                          </div>
-                        )}
+                            {item.name}
+                          </span>
+                        </div>
+
+                        {/* Количество */}
                         <div style={{
                           fontSize: '11px',
                           color: '#6B7280',
-                          fontFamily: 'Onest, sans-serif',
+                          whiteSpace: 'nowrap',
+                          minWidth: '50px',
+                          marginRight: '10px',
                         }}>
-                          {item.quantity} шт × {formatPrice(item.price)}
+                          {item.quantity} шт
                         </div>
                       </div>
+
+                      {/* Цена */}
                       <div style={{
                         fontSize: '13px',
                         fontWeight: 600,
                         color: '#111827',
-                        fontFamily: 'Onest, sans-serif',
                         whiteSpace: 'nowrap',
+                        minWidth: '80px',
+                        textAlign: 'right',
                       }}>
                         {formatPrice(item.price * item.quantity)}
                       </div>

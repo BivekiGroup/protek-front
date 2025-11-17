@@ -113,11 +113,10 @@ const CartSummaryNew: React.FC<CartSummaryNewProps> = ({ step, setStep }) => {
       toast.error("Введите промокод");
       return;
     }
+
     // Здесь должна быть логика проверки промокода на сервере
-    // Для примера просто применяем скидку 10%
-    setPromoApplied(true);
-    setPromoDiscount(summary.totalPrice * 0.1);
-    toast.success("Промокод применен!");
+    // Для примера всегда показываем ошибку "Промокод не найден"
+    toast.error("Промокод не найден");
   };
 
   const totalDiscount = summary.totalDiscount + promoDiscount;
