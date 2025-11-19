@@ -365,216 +365,339 @@ const CartSummary: React.FC<CartSummaryProps> = ({ step, setStep }) => {
   };
 
   if (!isAuthenticated) {
+    const vat = summary.totalPrice * 0.2; // НДС 20%
+
     return (
-      <div className="w-layout-vflex cart-ditail">
-        <div className="cart-detail-info">
-          <div
-            className="w-layout-vflex flex-block-58"
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        padding: '24px 30px',
+        gap: '20px',
+        width: '340px',
+        background: '#FFFFFF',
+        borderRadius: '16px',
+      }}>
+        {/* Черный блок с авторизацией */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          padding: '20px',
+          gap: '14px',
+          isolation: 'isolate',
+          width: '280px',
+          height: '224px',
+          background: '#000000',
+          borderRadius: '10px',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Blur эффект */}
+          <div style={{
+            position: 'absolute',
+            width: '194px',
+            height: '194px',
+            left: '163px',
+            top: '-32px',
+            background: 'rgba(236, 28, 36, 0.6)',
+            filter: 'blur(50px)',
+            zIndex: 0
+          }} />
+
+          {/* Только для юрлиц */}
+          <div style={{
+            width: '240px',
+            height: '18px',
+            fontFamily: 'Onest',
+            fontStyle: 'normal',
+            fontWeight: 600,
+            fontSize: '14px',
+            lineHeight: '18px',
+            textTransform: 'uppercase',
+            color: '#B7CAE2',
+            zIndex: 1
+          }}>
+            Только для юрлиц
+          </div>
+
+          {/* Заголовок */}
+          <div style={{
+            width: '240px',
+            height: '52px',
+            fontFamily: 'Onest',
+            fontStyle: 'normal',
+            fontWeight: 700,
+            fontSize: '20px',
+            lineHeight: '26px',
+            color: '#FFFFFF',
+            zIndex: 2
+          }}>
+            Авторизируйте для оформления заказа
+          </div>
+
+          {/* Подзаголовок */}
+          <div style={{
+            width: '240px',
+            height: '30px',
+            fontFamily: 'Onest',
+            fontStyle: 'normal',
+            fontWeight: 400,
+            fontSize: '12px',
+            lineHeight: '15px',
+            color: '#FFFFFF',
+            zIndex: 3
+          }}>
+            Заказы доступны только зарегистрированным пользователям
+          </div>
+
+          {/* Кнопка Войти */}
+          <button
+            type="button"
+            onClick={() => openAuthPrompt({ targetPath: '/cart' })}
             style={{
-              position: 'relative',
-              overflow: 'hidden',
-              borderRadius: '10px',
-              padding: '20px',
-              background: '#000000',
-              color: '#fff',
               display: 'flex',
-              flexDirection: 'column',
-              gap: '14px'
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '12px 20px',
+              gap: '8px',
+              width: '106px',
+              height: '42px',
+              background: '#EC1C24',
+              borderRadius: '12px',
+              border: 'none',
+              cursor: 'pointer',
+              zIndex: 4
             }}
           >
-            <div
-              aria-hidden
-              style={{
-                position: 'absolute',
-                top: '-32px',
-                left: '163px',
-                width: '194px',
-                height: '194px',
-                background: 'rgba(236, 28, 36, 0.6)',
-                filter: 'blur(100px)',
-                borderRadius: '50%',
-                pointerEvents: 'none'
-              }}
-            />
-            <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <span style={{ 
-                fontSize: '14px', 
-                letterSpacing: '0.12em', 
-                textTransform: 'uppercase', 
-                color: '#B7CAE2', 
-                fontWeight: 600,
-                fontFamily: 'Onest, sans-serif',
-                lineHeight: 1.275
-              }}>
-                Только для юрлиц
-              </span>
-              <h3 style={{ 
-                margin: 0, 
-                fontSize: '20px', 
-                lineHeight: 1.275, 
-                fontWeight: 700,
-                fontFamily: 'Onest, sans-serif',
-                height: '52px',
-                color: '#FFFFFF'
-              }}>
-                Авторизируйте для оформления заказа
-              </h3>
-              <p style={{ 
-                margin: 0, 
-                fontSize: '12px', 
-                lineHeight: 1.275, 
-                color: '#FFFFFF',
-                fontWeight: 400,
-                fontFamily: 'Onest, sans-serif',
-                height: '30px'
-              }}>
-                Заказы доступны только зарегистрированным пользователям
-              </p>
-              <button
-                type="button"
-                onClick={() => openAuthPrompt({ targetPath: '/cart' })}
-                style={{
-                  background: '#EC1C24',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '12px 20px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  alignSelf: 'flex-start',
-                  fontFamily: 'Onest, sans-serif',
-                  lineHeight: 1.3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6.66797 11.3327L10.0013 7.99935L6.66797 4.66602" stroke="white" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M10 8H2" stroke="white" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M10 2H12.6667C13.0203 2 13.3594 2.14048 13.6095 2.39052C13.8595 2.64057 14 2.97971 14 3.33333V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H10" stroke="white" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Войти
-              </button>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M6.66797 11.3327L10.0013 7.99935L6.66797 4.66602" stroke="white" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M10 8H2" stroke="white" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M10 2H12.6667C13.0203 2 13.3594 2.14048 13.6095 2.39052C13.8595 2.64057 14 2.97971 14 3.33333V12.6667C14 13.0203 13.8595 13.3594 13.6095 13.6095C13.3594 13.8595 13.0203 14 12.6667 14H10" stroke="white" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span style={{
+              fontFamily: 'Onest',
+              fontStyle: 'normal',
+              fontWeight: 600,
+              fontSize: '14px',
+              lineHeight: '130%',
+              textAlign: 'center',
+              color: '#FFFFFF'
+            }}>
+              Войти
+            </span>
+          </button>
+        </div>
+
+        {/* Линия */}
+        <div style={{
+          width: '280px',
+          height: '0px',
+          border: '1px solid #E9E9E9'
+        }} />
+
+        {/* Информация о товарах */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          padding: '0px',
+          gap: '12px',
+          width: '280px',
+          height: '90px'
+        }}>
+          {/* Товары */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '0px',
+            gap: '8px',
+            width: '280px',
+            height: '22px'
+          }}>
+            <div style={{
+              margin: '0 auto',
+              fontFamily: 'Onest',
+              fontStyle: 'normal',
+              fontWeight: 400,
+              fontSize: '14px',
+              lineHeight: '18px',
+              color: '#8893A2'
+            }}>
+              Товары, {summary.totalItems} шт.
+            </div>
+            <div style={{
+              margin: '0 auto',
+              fontFamily: 'Onest',
+              fontStyle: 'normal',
+              fontWeight: 600,
+              fontSize: '16px',
+              lineHeight: '140%',
+              color: '#000814'
+            }}>
+              {Math.round(summary.totalPrice).toLocaleString('ru-RU')} ₽
             </div>
           </div>
 
-          <div className="px-line"></div>
-
-          <div className="w-layout-vflex flex-block-60">
-            <div className="w-layout-hflex flex-block-59">
-              <div style={{ 
-                color: '#8893A1', 
-                fontSize: '14px', 
-                fontWeight: 400, 
-                fontFamily: 'Onest, sans-serif',
-                lineHeight: 1.275
-              }}>
-                Товары, {summary.totalItems} шт.
-              </div>
-              <div style={{ 
-                color: '#000814', 
-                fontSize: '16px', 
-                fontWeight: 600, 
-                fontFamily: 'Onest, sans-serif',
-                lineHeight: 1.4
-              }}>
-                {formatPrice(summary.totalPrice)}
-              </div>
+          {/* НДС */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '0px',
+            gap: '8px',
+            width: '280px',
+            height: '22px'
+          }}>
+            <div style={{
+              margin: '0 auto',
+              fontFamily: 'Onest',
+              fontStyle: 'normal',
+              fontWeight: 400,
+              fontSize: '14px',
+              lineHeight: '18px',
+              color: '#8893A2'
+            }}>
+              Включая НДС (20%)
             </div>
-            <div className="w-layout-hflex flex-block-59">
-              <div style={{ 
-                color: '#8893A1', 
-                fontSize: '14px', 
-                fontWeight: 400, 
-                fontFamily: 'Onest, sans-serif',
-                lineHeight: 1.275
-              }}>
-                Доставка
-              </div>
-              <div style={{ 
-                color: '#000000ff', 
-                fontSize: '16px', 
-                fontWeight: 600, 
-                fontFamily: 'Onest, sans-serif',
-                lineHeight: 1.4
-              }}>
-                Включена в стоимость
-              </div>
+            <div style={{
+              margin: '0 auto',
+              fontFamily: 'Onest',
+              fontStyle: 'normal',
+              fontWeight: 600,
+              fontSize: '16px',
+              lineHeight: '140%',
+              color: '#000814'
+            }}>
+              {Math.round(vat).toLocaleString('ru-RU')} ₽
             </div>
           </div>
 
-          <div className="px-line"></div>
+          {/* Доставка */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '0px',
+            gap: '8px',
+            width: '280px',
+            height: '22px'
+          }}>
+            <div style={{
+              margin: '0 auto',
+              fontFamily: 'Onest',
+              fontStyle: 'normal',
+              fontWeight: 400,
+              fontSize: '14px',
+              lineHeight: '18px',
+              color: '#8893A2'
+            }}>
+              Доставка
+            </div>
+            <div style={{
+              margin: '0 auto',
+              fontFamily: 'Onest',
+              fontStyle: 'normal',
+              fontWeight: 600,
+              fontSize: '16px',
+              lineHeight: '140%',
+              color: '#4DB45E'
+            }}>
+              Бесплатно
+            </div>
+          </div>
+        </div>
 
-          <div className="w-layout-hflex flex-block-59" style={{ alignItems: 'center', gap: '24px' }}>
-            <div style={{ 
-              color: '#000814', 
-              fontSize: '16px', 
-              fontWeight: 400, 
-              fontFamily: 'Onest, sans-serif',
-              lineHeight: 1.4
+        {/* Линия */}
+        <div style={{
+          width: '280px',
+          height: '0px',
+          border: '1px solid #E9E9E9'
+        }} />
+
+        {/* Итого */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          padding: '0px',
+          gap: '8px',
+          width: '280px',
+          height: '22px'
+        }}>
+          <div style={{
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '0px',
+            gap: '24px',
+            width: '280px',
+            height: '22px'
+          }}>
+            <div style={{
+              margin: '0 auto',
+              fontFamily: 'Onest',
+              fontStyle: 'normal',
+              fontWeight: 400,
+              fontSize: '16px',
+              lineHeight: '140%',
+              color: '#000814'
             }}>
               Итого
             </div>
-            <h4 style={{ 
-              margin: 0,
-              color: '#000814', 
-              fontSize: '18px', 
-              fontWeight: 600, 
-              fontFamily: 'Onest, sans-serif',
-              lineHeight: 1.2
-            }}>
-              {formatPrice(summary.totalPrice || 0)}
-            </h4>
-          </div>
-
-          <button
-            type="button"
-            disabled
-            style={{
-              background: '#CBD5E3',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '14px 40px',
-              fontSize: '16px',
+            <div style={{
+              margin: '0 auto',
+              fontFamily: 'Onest',
+              fontStyle: 'normal',
               fontWeight: 600,
-              fontFamily: 'Onest, sans-serif',
-              lineHeight: 1.2,
-              cursor: 'not-allowed',
-              width: '100%',
-              textAlign: 'center',
-           
-            }}
-          >
-            Оформить заказ
-          </button>
-
-          <div className="w-layout-hflex privacy-consent" style={{ cursor: 'pointer' }} onClick={() => setConsent((v) => !v)}>
-            <div
-              className={"div-block-7" + (consent ? " active" : "")}
-              style={{ marginRight: 8, cursor: 'pointer' }}
-            >
-              {consent && (
-                <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
-                  <path d="M2 5.5L6 9L12 2" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              )}
-            </div>
-            <div style={{ 
-              fontSize: '12px', 
-              color: '#8893A1', 
-              fontWeight: 400, 
-              fontFamily: 'Onest, sans-serif',
-              lineHeight: 1.4,
-              paddingTop: '2px'
+              fontSize: '18px',
+              lineHeight: '120%',
+              color: '#000814'
             }}>
-              Соглашаюсь с правилами пользования торговой площадкой и возврата
+              {Math.round(summary.totalPrice).toLocaleString('ru-RU')} ₽
             </div>
           </div>
-
         </div>
+
+        {/* Кнопка Перейти к оформлению */}
+        <button
+          type="button"
+          disabled
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '14px 40px',
+            gap: '10px',
+            width: '280px',
+            height: '47px',
+            background: '#CBD5E3',
+            borderRadius: '12px',
+            border: 'none',
+            cursor: 'not-allowed'
+          }}
+        >
+          <span style={{
+            fontFamily: 'Onest',
+            fontStyle: 'normal',
+            fontWeight: 600,
+            fontSize: '16px',
+            lineHeight: '120%',
+            textAlign: 'center',
+            color: '#FFFFFF'
+          }}>
+            Перейти к оформлению
+          </span>
+        </button>
       </div>
     );
   }

@@ -13,6 +13,8 @@ const CartListNew: React.FC<CartListNewProps> = ({ isSummaryStep = false }) => {
   const { addToFavorites, removeFromFavorites, isFavorite, favorites } = useFavorites();
   const { items } = state;
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [sortField, setSortField] = useState<'delivery' | 'price' | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const allSelected = items.length > 0 && items.every((item) => item.selected);
   const selectedCount = items.filter(item => item.selected).length;
@@ -78,8 +80,37 @@ const CartListNew: React.FC<CartListNewProps> = ({ isSummaryStep = false }) => {
     updateQuantity(id, count);
   };
 
+  const handleSort = (field: 'delivery' | 'price') => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
   // На втором шаге показываем только выбранные товары
-  const displayItems = isSummaryStep ? items.filter(item => item.selected) : items;
+  let displayItems = isSummaryStep ? items.filter(item => item.selected) : items;
+
+  // Применяем сортировку
+  if (sortField && !isSummaryStep) {
+    displayItems = [...displayItems].sort((a, b) => {
+      if (sortField === 'delivery') {
+        const aDelivery = a.deliveryTime || 'Доставка в течение 3-5 дней';
+        const bDelivery = b.deliveryTime || 'Доставка в течение 3-5 дней';
+        const aMatch = aDelivery.match(/(\d+)/);
+        const bMatch = bDelivery.match(/(\d+)/);
+        const aNum = aMatch ? parseInt(aMatch[1]) : 999;
+        const bNum = bMatch ? parseInt(bMatch[1]) : 999;
+        return sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
+      } else if (sortField === 'price') {
+        const aPrice = a.price * a.quantity;
+        const bPrice = b.price * b.quantity;
+        return sortDirection === 'asc' ? aPrice - bPrice : bPrice - aPrice;
+      }
+      return 0;
+    });
+  }
 
   // Автоматически очищаем ошибки через 5 секунд
   useEffect(() => {
@@ -248,109 +279,333 @@ const CartListNew: React.FC<CartListNewProps> = ({ isSummaryStep = false }) => {
         </div>
       ) : (
         <>
-          {/* Заголовок с чекбоксом "Выбрать всё" */}
           {!isSummaryStep && (
             <div style={{
-              background: '#fff',
-              borderRadius: '16px',
-              padding: '16px 20px',
-              marginBottom: '12px',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              border: '1px solid #E5E7EB',
+              flexDirection: 'column',
+              padding: '8px 8px 20px',
+              gap: '6px',
+              background: '#FFFFFF',
+              borderRadius: '12px',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div
-                  onClick={handleSelectAll}
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    border: `2px solid ${allSelected ? '#EC1C24' : '#D1D5DB'}`,
-                    borderRadius: '6px',
-                    background: allSelected ? '#EC1C24' : '#fff',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  {allSelected && (
-                    <svg width="12" height="9" viewBox="0 0 12 9" fill="none">
-                      <path
-                        d="M1 4.5L4 7.5L11 1"
-                        stroke="#fff"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </div>
-                <span style={{
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  color: '#111827',
-                  cursor: 'pointer',
-                  fontFamily: 'Onest, sans-serif',
-                }}
-                onClick={handleSelectAll}
-                >
-                  Выбрать всё
-                </span>
-                {selectedCount > 0 && (
-                  <span style={{
-                    fontSize: '14px',
-                    color: '#6B7280',
-                    fontFamily: 'Onest, sans-serif',
-                  }}>
-                    ({selectedCount} из {items.length})
+              {/* Шапка с Выделить всё / Удалить всё */}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 16px',
+                gap: '10px',
+                background: '#FFFFFF',
+                borderRadius: '6px',
+              }}>
+                {/* Левая часть - Выделить всё */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div
+                    onClick={handleSelectAll}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      padding: '4px',
+                      gap: '10px',
+                      width: '32px',
+                      height: '32px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{
+                      position: 'relative',
+                      width: '24px',
+                      height: '24px',
+                    }}>
+                      <div style={{
+                        boxSizing: 'border-box',
+                        position: 'absolute',
+                        height: '24px',
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        border: `1px solid ${allSelected ? '#EC1C24' : '#D0D0D0'}`,
+                        borderRadius: '4px',
+                        background: allSelected ? '#EC1C24' : '#FFFFFF',
+                        transition: 'all 0.2s',
+                      }}></div>
+                      {allSelected && (
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          style={{
+                            position: 'absolute',
+                            left: '4px',
+                            top: '4px',
+                          }}
+                        >
+                          <path
+                            d="M2 8L6 12L14 4"
+                            stroke="#FFFFFF"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span
+                    onClick={handleSelectAll}
+                    style={{
+                      fontFamily: 'Onest',
+                      fontStyle: 'normal',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      lineHeight: '20px',
+                      color: '#1C1C1E',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Выделить всё
                   </span>
-                )}
-              </div>
+                </div>
 
-              {selectedCount > 0 && (
+                {/* Правая часть - Удалить всё */}
                 <button
                   onClick={handleRemoveSelected}
+                  disabled={selectedCount === 0}
                   style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#9CA3AF',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    padding: '6px 12px',
-                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: selectedCount === 0 ? 'not-allowed' : 'pointer',
+                    opacity: selectedCount === 0 ? 0.4 : 1,
                     transition: 'all 0.2s',
-                    fontFamily: 'Onest, sans-serif',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#FEE2E2';
-                    e.currentTarget.style.color = '#DC2626';
+                    if (selectedCount > 0) {
+                      const svg = e.currentTarget.querySelector('svg path');
+                      const span = e.currentTarget.querySelector('span');
+                      if (svg) svg.setAttribute('fill', '#EC1C24');
+                      if (span) span.style.color = '#EC1C24';
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'none';
-                    e.currentTarget.style.color = '#9CA3AF';
+                    const svg = e.currentTarget.querySelector('svg path');
+                    const span = e.currentTarget.querySelector('span');
+                    if (svg) svg.setAttribute('fill', '#9D9FA1');
+                    if (span) span.style.color = '#9D9FA1';
                   }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path
-                      d="M4.5 14C4.11875 14 3.78708 13.8667 3.505 13.6C3.22292 13.3333 3.08139 13.0111 3.08125 12.6333V3.33333H2.5V2H5.5V1.5H10.5V2H13.5V3.33333H12.9167V12.6333C12.9167 13.0111 12.7754 13.3335 12.4929 13.6007C12.2104 13.8678 11.8785 14.0007 11.4972 14H4.5ZM5.5 11.1667H6.83333V4.66667H5.5V11.1667ZM9.16667 11.1667H10.5V4.66667H9.16667V11.1667Z"
-                      fill="currentColor"
-                    />
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M5.625 17.5C5.14583 17.5 4.73667 17.3292 4.3975 16.9875C4.05833 16.6458 3.88854 16.2361 3.88833 15.7583V5H2.91667V3.54167H7.08333V2.70833H12.9167V3.54167H17.0833V5H16.1117V15.7583C16.1117 16.2361 15.9419 16.6461 15.6023 16.9883C15.2628 17.3306 14.8531 17.5007 14.3733 17.5H5.625ZM7.08333 14.5833H8.54167V6.875H7.08333V14.5833ZM11.4583 14.5833H12.9167V6.875H11.4583V14.5833Z" fill="#9D9FA1"/>
                   </svg>
-                  Удалить выбранные
+                  <span style={{
+                    fontFamily: 'Onest',
+                    fontStyle: 'normal',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    lineHeight: '20px',
+                    color: '#9D9FA1',
+                    transition: 'color 0.2s',
+                  }}>
+                    Удалить всё
+                  </span>
                 </button>
-              )}
+              </div>
+
+              {/* Заголовок таблицы */}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: '10px 8px',
+                gap: '20px',
+                background: '#F5F8FB',
+                borderRadius: '6px',
+              }}>
+                {/* Чекбокс placeholder */}
+                <div style={{ width: '32px', minWidth: '32px', flexShrink: 0 }}></div>
+
+                {/* Frame 565 placeholder для контента */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '30px',
+                  flex: 1,
+                }}>
+                  {/* Артикул */}
+                  <div style={{
+                    minWidth: '160px',
+                    maxWidth: '160px',
+                    fontFamily: 'Onest',
+                    fontStyle: 'normal',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    lineHeight: '20px',
+                    color: '#9D9FA1',
+                    flexShrink: 0,
+                  }}>
+                    Артикул
+                  </div>
+
+                  {/* Наименование */}
+                  <div style={{
+                    minWidth: 0,
+                    fontFamily: 'Onest',
+                    fontStyle: 'normal',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    lineHeight: '20px',
+                    color: '#9D9FA1',
+                    flex: 1,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    Наименование
+                  </div>
+
+                  {/* Frame для Доставка + Кол-во + Цена */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '20px',
+                    minWidth: '360px',
+                    maxWidth: '360px',
+                    flexShrink: 0,
+                  }}>
+                    {/* Доставка */}
+                    <div
+                      onClick={() => handleSort('delivery')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        minWidth: '120px',
+                        maxWidth: '120px',
+                        fontFamily: 'Onest',
+                        fontStyle: 'normal',
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        lineHeight: '20px',
+                        color: sortField === 'delivery' ? '#EC1C24' : '#9D9FA1',
+                        cursor: 'pointer',
+                        transition: 'color 0.2s',
+                        flexShrink: 0,
+                      }}
+                    >
+                      Доставка
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        style={{
+                          transform: sortField === 'delivery' && sortDirection === 'desc' ? 'rotate(180deg)' : 'none',
+                          transition: 'transform 0.2s',
+                        }}
+                      >
+                        <path d="M6 8.5L3 5.5L9 5.5L6 8.5Z" fill={sortField === 'delivery' ? '#EC1C24' : '#9D9FA1'}/>
+                      </svg>
+                    </div>
+
+                    {/* Кол-во */}
+                    <div style={{
+                      minWidth: '100px',
+                      maxWidth: '100px',
+                      fontFamily: 'Onest',
+                      fontStyle: 'normal',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      lineHeight: '20px',
+                      color: '#9D9FA1',
+                      textAlign: 'center',
+                      flexShrink: 0,
+                    }}>
+                      Кол-во
+                    </div>
+
+                    {/* Цена */}
+                    <div
+                      onClick={() => handleSort('price')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        minWidth: '100px',
+                        maxWidth: '100px',
+                        fontFamily: 'Onest',
+                        fontStyle: 'normal',
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        lineHeight: '20px',
+                        color: sortField === 'price' ? '#EC1C24' : '#9D9FA1',
+                        cursor: 'pointer',
+                        transition: 'color 0.2s',
+                        flexShrink: 0,
+                      }}
+                    >
+                      Цена
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        style={{
+                          transform: sortField === 'price' && sortDirection === 'desc' ? 'rotate(180deg)' : 'none',
+                          transition: 'transform 0.2s',
+                        }}
+                      >
+                        <path d="M6 8.5L3 5.5L9 5.5L6 8.5Z" fill={sortField === 'price' ? '#EC1C24' : '#9D9FA1'}/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Действия placeholder */}
+                <div style={{ minWidth: '66px', maxWidth: '66px', flexShrink: 0 }}></div>
+              </div>
+
+              {/* Список товаров */}
+              {displayItems.map((item, idx) => {
+                const isInFavorites = isFavorite(item.productId, item.offerKey, item.article, item.brand);
+                return (
+                  <CartItemNew
+                    key={item.id}
+                    id={item.id}
+                    name={item.name}
+                    description={item.description}
+                    brand={item.brand}
+                    article={item.article}
+                    imageUrl={item.image}
+                    delivery={item.deliveryTime || 'Доставка в течение 3-5 дней'}
+                    deliveryDate={item.deliveryDate || ''}
+                    price={item.price * item.quantity}
+                    originalPrice={item.originalPrice ? item.originalPrice * item.quantity : undefined}
+                    pricePerItem={item.price}
+                    count={item.quantity}
+                    comment={item.comment || ''}
+                    selected={item.selected}
+                    favorite={isInFavorites}
+                    onSelect={() => handleSelect(item.id)}
+                    onFavorite={() => handleFavorite(item.id)}
+                    onComment={(comment) => handleComment(item.id, comment)}
+                    onCountChange={(count) => handleCountChange(item.id, count)}
+                    onRemove={() => handleRemove(item.id)}
+                    isSummaryStep={isSummaryStep}
+                    itemNumber={idx + 1}
+                  />
+                );
+              })}
             </div>
           )}
 
-          {/* Список товаров */}
-          {displayItems.map((item, idx) => {
+          {/* Summary step */}
+          {isSummaryStep && displayItems.map((item, idx) => {
             const isInFavorites = isFavorite(item.productId, item.offerKey, item.article, item.brand);
             return (
               <CartItemNew

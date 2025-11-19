@@ -137,7 +137,7 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
   partsIndexPowered = false,
   hasStock = true
 }) => {
-  const { addItem, state: cartState } = useCart();
+  const { addItem, updateQuantity, removeItem, state: cartState } = useCart();
   const { addToFavorites, removeFromFavorites, isFavorite, favorites } = useFavorites();
   const [visibleOffersCount, setVisibleOffersCount] = useState(INITIAL_OFFERS_LIMIT);
   const [sortBy, setSortBy] = useState<SortKey>('price'); // Локальная сортировка для каждого товара
@@ -277,6 +277,26 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
     });
 
     return existingItem?.quantity ?? 0;
+  };
+
+  const getCartItemId = (offer: CoreProductCardOffer): string | null => {
+    const existingItem = cartState.items.find(item => {
+      // Проверяем по offerKey (для внешних и уникальных офферов)
+      if (offer.offerKey && item.offerKey) {
+        return item.offerKey === offer.offerKey;
+      }
+
+      // Для внутренних офферов проверяем по productId + price
+      if (offer.productId && item.productId) {
+        const offerPrice = parsePrice(offer.price);
+        const priceMatches = Math.abs(item.price - offerPrice) < 0.01;
+        return item.productId === offer.productId && priceMatches;
+      }
+
+      return false;
+    });
+
+    return existingItem?.id ?? null;
   };
 
   const getRemainingStock = (offer: CoreProductCardOffer): number | undefined => {
@@ -673,89 +693,230 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
         </div>
         <div className="core-offers-table__cell core-offers-table__cell--actions">
           <div className="w-layout-hflex add-to-cart-block-s1">
-            <div className="w-layout-hflex flex-block-82">
-              <div className="input-pcs input-pcs--standalone">
-                <input
-                  type="number"
-                  min={1}
-                  max={maxCount && maxCount > 0 ? maxCount : undefined}
-                  value={inputValues[idx] || ""}
-                  onChange={e => handleInputChange(idx, e.target.value)}
-                  onClick={() => setInputValues(prev => ({ ...prev, [idx]: "" }))}
-                  onBlur={() => handleInputBlur(idx)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                    }
-                  }}
-                  className="text-block-26 w-full text-center outline-none"
-                  aria-label="Количество"
-                />
-              </div>
-              <div style={{ position: 'relative', display: 'inline-block' }}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.nativeEvent?.stopImmediatePropagation?.();
-                    handleAddToCart(offer, idx, e);
-                    return false;
-                  }}
-                  className={`button-icon w-inline-block ${inCart || isLocallyInCart ? 'in-cart' : ''}`}
-                  style={{
-                    cursor: addDisabled ? 'not-allowed' : 'pointer',
-                    opacity: addDisabled ? 0.5 : 1
-                  }}
-                  aria-label={buttonAriaLabel}
-                  title={buttonTitle}
-                  disabled={addDisabled}
-                >
-                  <div className="div-block-26">
-                    <img
-                      loading="lazy"
-                      src="/images/cart_icon.svg"
-                      alt={addDisabled ? 'Недоступно' : (inCart || isLocallyInCart ? 'В корзине' : 'В корзину')}
-                      className="image-11"
-                      style={{
-                        filter: inCart || isLocallyInCart ? 'brightness(0.7)' : undefined
-                      }}
-                    />
-                  </div>
-                </button>
-                {(() => {
-                  const existingQty = getExistingCartQuantity(offer);
-                  if (existingQty > 0) {
-                    return (
-                      <div
+            {(() => {
+              const existingQty = getExistingCartQuantity(offer);
+              const isInCart = existingQty > 0;
+
+              if (isInCart) {
+                // Показываем контрол с минусом, числом и плюсом по дизайну из Figma
+                const cartItemId = getCartItemId(offer);
+                if (!cartItemId) return null;
+
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {/* counter_pcs */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '2px',
+                      gap: '2px',
+                      width: '100px',
+                      height: '30px',
+                      background: '#E6EDF6',
+                      borderRadius: '5px'
+                    }}>
+                      {/* Кнопка минус */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          e.nativeEvent?.stopImmediatePropagation?.();
+                          const newQty = Math.max(1, existingQty - 1);
+                          updateQuantity(cartItemId, newQty);
+                        }}
                         style={{
-                          position: 'absolute',
-                          top: '-8px',
-                          right: '-8px',
-                          backgroundColor: '#16a34a',
-                          color: 'white',
-                          borderRadius: '50%',
-                          minWidth: '20px',
-                          height: '20px',
-                          fontSize: '11px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontWeight: 'bold',
-                          zIndex: 1,
-                          padding: '0 4px',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                          padding: '6px',
+                          width: '26px',
+                          height: '26px',
+                          background: '#FFFFFF',
+                          borderRadius: '4px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          flexShrink: 0
                         }}
-                        title={`В корзине: ${existingQty} шт.`}
                       >
-                        {existingQty}
+                        <div style={{ width: '8px', height: '1px', background: '#000814' }} />
+                      </button>
+
+                      {/* Инпут */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '40px',
+                        height: '26px',
+                        borderRadius: '4px',
+                        flexShrink: 0
+                      }}>
+                        <input
+                          type="number"
+                          min={1}
+                          max={maxCount && maxCount > 0 ? maxCount : undefined}
+                          value={existingQty}
+                          onChange={e => {
+                            const newQty = parseInt(e.target.value) || 1;
+                            updateQuantity(cartItemId, newQty);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                            }
+                          }}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            border: 'none',
+                            background: 'transparent',
+                            textAlign: 'center',
+                            fontFamily: 'Onest',
+                            fontWeight: 600,
+                            fontSize: '14px',
+                            lineHeight: '140%',
+                            color: '#000000',
+                            outline: 'none'
+                          }}
+                          aria-label="Количество"
+                        />
                       </div>
-                    );
-                  }
-                  return null;
-                })()}
-              </div>
-            </div>
+
+                      {/* Кнопка плюс */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          e.nativeEvent?.stopImmediatePropagation?.();
+                          const newQty = existingQty + 1;
+                          updateQuantity(cartItemId, newQty);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '6px',
+                          width: '26px',
+                          height: '26px',
+                          background: '#FFFFFF',
+                          borderRadius: '4px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          flexShrink: 0
+                        }}
+                      >
+                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                          <path d="M4 0V8M0 4H8" stroke="#000814" strokeWidth="1"/>
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Кнопка удаления */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.nativeEvent?.stopImmediatePropagation?.();
+                        removeItem(cartItemId);
+                      }}
+                      onMouseEnter={(e) => {
+                        const img = e.currentTarget.querySelector('img');
+                        if (img) img.style.filter = 'invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%)';
+                      }}
+                      onMouseLeave={(e) => {
+                        const img = e.currentTarget.querySelector('img');
+                        if (img) img.style.filter = 'invert(82%) sepia(0%) saturate(0%) hue-rotate(169deg) brightness(94%) contrast(88%)';
+                      }}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        border: 'none',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                        padding: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s'
+                      }}
+                      title="Удалить из корзины"
+                    >
+                      <img
+                        loading="lazy"
+                        src="/images/delete.svg"
+                        alt="Удалить"
+                        style={{
+                          width: '14px',
+                          height: '16px',
+                          filter: 'invert(82%) sepia(0%) saturate(0%) hue-rotate(169deg) brightness(94%) contrast(88%)',
+                          transition: 'filter 0.2s'
+                        }}
+                      />
+                    </button>
+                  </div>
+                );
+              }
+
+              // Показываем обычный инпут и кнопку корзины
+              return (
+                <div className="w-layout-hflex flex-block-82">
+                  <div className="input-pcs input-pcs--standalone">
+                    <input
+                      type="number"
+                      min={1}
+                      max={maxCount && maxCount > 0 ? maxCount : undefined}
+                      value={inputValues[idx] || ""}
+                      onChange={e => handleInputChange(idx, e.target.value)}
+                      onClick={() => setInputValues(prev => ({ ...prev, [idx]: "" }))}
+                      onBlur={() => handleInputBlur(idx)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
+                      className="text-block-26 w-full text-center outline-none"
+                      aria-label="Количество"
+                    />
+                  </div>
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.nativeEvent?.stopImmediatePropagation?.();
+                        handleAddToCart(offer, idx, e);
+                        return false;
+                      }}
+                      className={`button-icon w-inline-block ${inCart || isLocallyInCart ? 'in-cart' : ''}`}
+                      style={{
+                        cursor: addDisabled ? 'not-allowed' : 'pointer',
+                        opacity: addDisabled ? 0.5 : 1
+                      }}
+                      aria-label={buttonAriaLabel}
+                      title={buttonTitle}
+                      disabled={addDisabled}
+                    >
+                      <div className="div-block-26">
+                        <img
+                          loading="lazy"
+                          src="/images/cart_icon.svg"
+                          alt={addDisabled ? 'Недоступно' : (inCart || isLocallyInCart ? 'В корзине' : 'В корзину')}
+                          className="image-11"
+                          style={{
+                            filter: inCart || isLocallyInCart ? 'brightness(0.7)' : undefined
+                          }}
+                        />
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>
