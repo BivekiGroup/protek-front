@@ -446,7 +446,7 @@ const CartListNew: React.FC<CartListNewProps> = ({ isSummaryStep = false }) => {
                     fontWeight: 600,
                     fontSize: '14px',
                     lineHeight: '20px',
-                    color: '#9D9FA1',
+                    color: '#0D336C',
                     flexShrink: 0,
                   }}>
                     Артикул
@@ -460,7 +460,7 @@ const CartListNew: React.FC<CartListNewProps> = ({ isSummaryStep = false }) => {
                     fontWeight: 600,
                     fontSize: '14px',
                     lineHeight: '20px',
-                    color: '#9D9FA1',
+                    color: '#0D336C',
                     flex: 1,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -492,7 +492,7 @@ const CartListNew: React.FC<CartListNewProps> = ({ isSummaryStep = false }) => {
                         fontWeight: 600,
                         fontSize: '14px',
                         lineHeight: '20px',
-                        color: sortField === 'delivery' ? '#EC1C24' : '#9D9FA1',
+                        color: sortField === 'delivery' ? '#EC1C24' : '#0D336C',
                         cursor: 'pointer',
                         transition: 'color 0.2s',
                         flexShrink: 0,
@@ -509,7 +509,7 @@ const CartListNew: React.FC<CartListNewProps> = ({ isSummaryStep = false }) => {
                           transition: 'transform 0.2s',
                         }}
                       >
-                        <path d="M6 8.5L3 5.5L9 5.5L6 8.5Z" fill={sortField === 'delivery' ? '#EC1C24' : '#9D9FA1'}/>
+                        <path d="M6 8.5L3 5.5L9 5.5L6 8.5Z" fill={sortField === 'delivery' ? '#EC1C24' : '#0D336C'}/>
                       </svg>
                     </div>
 
@@ -522,7 +522,7 @@ const CartListNew: React.FC<CartListNewProps> = ({ isSummaryStep = false }) => {
                       fontWeight: 600,
                       fontSize: '14px',
                       lineHeight: '20px',
-                      color: '#9D9FA1',
+                      color: '#0D336C',
                       textAlign: 'center',
                       flexShrink: 0,
                     }}>
@@ -543,7 +543,7 @@ const CartListNew: React.FC<CartListNewProps> = ({ isSummaryStep = false }) => {
                         fontWeight: 600,
                         fontSize: '14px',
                         lineHeight: '20px',
-                        color: sortField === 'price' ? '#EC1C24' : '#9D9FA1',
+                        color: sortField === 'price' ? '#EC1C24' : '#0D336C',
                         cursor: 'pointer',
                         transition: 'color 0.2s',
                         flexShrink: 0,
@@ -560,7 +560,7 @@ const CartListNew: React.FC<CartListNewProps> = ({ isSummaryStep = false }) => {
                           transition: 'transform 0.2s',
                         }}
                       >
-                        <path d="M6 8.5L3 5.5L9 5.5L6 8.5Z" fill={sortField === 'price' ? '#EC1C24' : '#9D9FA1'}/>
+                        <path d="M6 8.5L3 5.5L9 5.5L6 8.5Z" fill={sortField === 'price' ? '#EC1C24' : '#0D336C'}/>
                       </svg>
                     </div>
                   </div>

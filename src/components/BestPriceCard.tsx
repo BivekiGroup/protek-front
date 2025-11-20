@@ -209,7 +209,7 @@ const BestPriceCard: React.FC<BestPriceCardProps> = ({
 
   return (
     <div className="w-layout-vflex flex-block-44">
-      <h3 className="heading-8-copy line-clamp-2 md:line-clamp-1 min-h-[2.5em] md:min-h-0">{bestOfferType}</h3>
+      <h3 className="heading-8-copy line-clamp-2 md:line-clamp-1" style={{ minHeight: '2.5em' }}>{bestOfferType}</h3>
       <div className="w-layout-vflex flex-block-40">
         <div className="w-layout-hflex flex-block-45">
           <div className="w-layout-hflex flex-block-39 flex flex-col">
@@ -220,7 +220,7 @@ const BestPriceCard: React.FC<BestPriceCardProps> = ({
         <div className="heading-9-copy">{price}</div>
       </div>
       <div className="w-layout-vflex flex-block-37">
-        <div className="w-layout-hflex flex-block-43">
+        <div className="w-layout-hflex flex-block-43" style={{ minHeight: '36px' }}>
           {existingCartQuantity > 0 ? (
             // Показываем срок/наличие слева и контрол справа
             <>

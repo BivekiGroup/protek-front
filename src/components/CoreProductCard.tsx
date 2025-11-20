@@ -691,8 +691,8 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
         <div className="core-offers-table__cell core-offers-table__cell--price">
           <span className="core-offers-table__price-value">{priceDisplay}</span>
         </div>
-        <div className="core-offers-table__cell core-offers-table__cell--actions">
-          <div className="w-layout-hflex add-to-cart-block-s1">
+        <div className="core-offers-table__cell core-offers-table__cell--actions" style={{ minHeight: '36px' }}>
+          <div className="w-layout-hflex add-to-cart-block-s1" style={{ minHeight: '36px' }}>
             {(() => {
               const existingQty = getExistingCartQuantity(offer);
               const isInCart = existingQty > 0;

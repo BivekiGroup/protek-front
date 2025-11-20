@@ -449,12 +449,14 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
               const path = e.currentTarget.querySelector('path');
               if (path) {
                 path.setAttribute('fill', '#EC1C24');
+                path.setAttribute('stroke', '#EC1C24');
               }
             }}
             onMouseLeave={(e) => {
               const path = e.currentTarget.querySelector('path');
               if (path) {
                 path.setAttribute('fill', favorite ? '#EC1C24' : 'transparent');
+                path.setAttribute('stroke', favorite ? '#EC1C24' : '#D0D0D0');
               }
             }}
             title="В избранное"
@@ -463,7 +465,7 @@ const CartItemNew: React.FC<CartItemNewProps> = ({
               <path
                 d="M9 15.75L7.9425 14.805C4.32 11.475 1.8 9.2325 1.8 6.525C1.8 4.3575 3.5325 2.625 5.7 2.625C6.876 2.625 8.001 3.153 8.775 3.9555C9.549 3.153 10.674 2.625 11.85 2.625C14.0175 2.625 15.75 4.3575 15.75 6.525C15.75 9.2325 13.23 11.475 9.6075 14.805L9 15.75Z"
                 fill={favorite ? '#EC1C24' : 'transparent'}
-                stroke="#EC1C24"
+                stroke={favorite ? '#EC1C24' : '#D0D0D0'}
                 strokeWidth="1.5"
               />
             </svg>
