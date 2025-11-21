@@ -1103,6 +1103,34 @@ export default function CheckoutNewPage() {
                 </div>
               ))}
             </div>
+
+            <button
+              onClick={() => router.push('/profile-req')}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                marginTop: '12px',
+                border: '2px solid #EC1C24',
+                borderRadius: '8px',
+                background: '#fff',
+                color: '#EC1C24',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: 'Onest, sans-serif',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#EC1C24';
+                e.currentTarget.style.color = '#fff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#fff';
+                e.currentTarget.style.color = '#EC1C24';
+              }}
+            >
+              + Добавить юридическое лицо
+            </button>
           </div>
         </div>
       )}
@@ -1179,6 +1207,34 @@ export default function CheckoutNewPage() {
                 </div>
               ))}
             </div>
+
+            <button
+              onClick={() => router.push('/profile-addresses')}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                marginTop: '12px',
+                border: '2px solid #EC1C24',
+                borderRadius: '8px',
+                background: '#fff',
+                color: '#EC1C24',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: 'Onest, sans-serif',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#EC1C24';
+                e.currentTarget.style.color = '#fff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#fff';
+                e.currentTarget.style.color = '#EC1C24';
+              }}
+            >
+              + Добавить адрес доставки
+            </button>
           </div>
         </div>
       )}

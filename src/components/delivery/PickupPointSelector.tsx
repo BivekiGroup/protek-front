@@ -241,77 +241,50 @@ const PickupPointSelector: React.FC<PickupPointSelectorProps> = ({
           </p>
         )}
         <div className="relative">
-          <button
-            onClick={() => {
-              setShowCitySelector(!showCitySelector);
+          <input
+            type="text"
+            value={showCitySelector ? citySearchTerm : (cityName || '')}
+            onChange={(e) => {
+              setCitySearchTerm(e.target.value);
               if (!showCitySelector) {
-                setIsOpen(false); // Закрываем дропдаун ПВЗ
+                setShowCitySelector(true);
+                setIsOpen(false);
               }
             }}
-            className={`w-full gap-2.5 px-6 py-3 text-base leading-6 bg-white rounded border-2 h-[50px] outline-none flex items-center justify-between transition-all ${
-              cityName
-                ? 'border-green-400 hover:border-green-500'
-                : 'border-red-400 hover:border-red-500'
-            }`}
-          >
-            <span className={cityName ? 'text-gray-900 font-medium' : 'text-gray-600'}>
-              {cityName || '⚠️ Выберите город'}
-            </span>
-            <svg 
-              width="16" 
-              height="16" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2"
-              className={`transition-transform ${showCitySelector ? 'rotate-180' : ''}`}
-            >
-              <path d="M6 9l6 6 6-6"/>
-            </svg>
-          </button>
+            onFocus={() => {
+              setShowCitySelector(true);
+              setIsOpen(false); // Закрываем дропдаун ПВЗ
+            }}
+            placeholder="Выберите город"
+            className="w-full gap-2.5 px-6 py-4 text-lg leading-6 bg-white rounded border border-solid border-stone-300 h-[55px] text-neutral-500 outline-none pr-20"
+          />
 
           {/* Дропдаун с городами */}
           {showCitySelector && (
-            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden">
-              {/* Поле поиска города */}
-              <div className="p-2 border-b border-gray-200 bg-gray-50">
-                <input
-                  type="text"
-                  value={citySearchTerm}
-                  onChange={(e) => setCitySearchTerm(e.target.value)}
-                  placeholder="Поиск города..."
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400"
-                  autoFocus
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-
-              {/* Список городов */}
-              <div className="max-h-48 overflow-y-auto">
-                {filteredCities.length > 0 ? (
-                  filteredCities.map((city) => (
-                    <div
-                      key={city}
-                      onClick={() => {
-                        setCityName(city);
-                        setShowCitySelector(false);
-                        setCitySearchTerm(''); // Очищаем поиск
-                        setLocation(null); // Сбрасываем геолокацию при выборе города
-                        onCityChange?.(city); // Уведомляем родительский компонент
-                      }}
-                      className={`px-4 py-2 cursor-pointer hover:bg-gray-50 transition-colors ${
-                        cityName === city ? 'bg-red-50 text-red-600 font-medium' : 'text-gray-700'
-                      }`}
-                    >
-                      {city}
-                    </div>
-                  ))
-                ) : (
-                  <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                    Город не найден
+            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+              {filteredCities.length > 0 ? (
+                filteredCities.map((city) => (
+                  <div
+                    key={city}
+                    onClick={() => {
+                      setCityName(city);
+                      setShowCitySelector(false);
+                      setCitySearchTerm(''); // Очищаем поиск
+                      setLocation(null); // Сбрасываем геолокацию при выборе города
+                      onCityChange?.(city); // Уведомляем родительский компонент
+                    }}
+                    className={`px-4 py-2 cursor-pointer hover:bg-gray-50 transition-colors ${
+                      cityName === city ? 'bg-red-50 text-red-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    {city}
                   </div>
-                )}
-              </div>
+                ))
+              ) : (
+                <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                  Город не найден
+                </div>
+              )}
             </div>
           )}
         </div>

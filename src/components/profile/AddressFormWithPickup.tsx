@@ -480,19 +480,6 @@ const AddressFormWithPickup = ({
       </div>
       {deliveryType === 'COURIER' ? (
         <div className="flex flex-col gap-4 w-full">
-          {/* Название адреса */}
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">Название адреса *</label>
-            <div className="gap-2.5 self-stretch px-6 py-3.5 mt-1.5 w-full bg-white rounded border border-solid border-stone-300 min-h-[46px] max-md:px-5">
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Например: Дом, Офис, Дача"
-                className="w-full bg-transparent outline-none text-gray-600"
-              />
-            </div>
-          </div>
           {/* Адрес с автокомплитом */}
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">Адрес доставки *</label>
@@ -558,6 +545,19 @@ const AddressFormWithPickup = ({
                   className="w-full bg-transparent outline-none text-gray-600"
                 />
               </div>
+            </div>
+          </div>
+          {/* Название адреса */}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">Название адреса *</label>
+            <div className="gap-2.5 self-stretch px-6 py-3.5 mt-1.5 w-full bg-white rounded border border-solid border-stone-300 min-h-[46px] max-md:px-5">
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Например: Дом, Офис, Дача"
+                className="w-full bg-transparent outline-none text-gray-600"
+              />
             </div>
           </div>
           {/* Контактный телефон */}
