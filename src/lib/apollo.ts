@@ -15,6 +15,25 @@ const httpLink = createHttpLink({
 const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
   // Не выводим ошибки в консоль, чтобы не показывать красный оверлей Next.js
   // Все ошибки обрабатываются в компонентах через toast.error()
+
+  // Логируем сетевые ошибки в консоль для отладки (без throw)
+  if (networkError) {
+    console.warn(`[Apollo Network Error]: ${networkError.message}`, {
+      operation: operation.operationName,
+      variables: operation.variables
+    });
+  }
+
+  // Логируем GraphQL ошибки
+  if (graphQLErrors) {
+    graphQLErrors.forEach(({ message, locations, path }) => {
+      console.warn(`[Apollo GraphQL Error]: ${message}`, {
+        operation: operation.operationName,
+        path,
+        locations
+      });
+    });
+  }
 })
 
 const activityLink = new ApolloLink((operation, forward) => {

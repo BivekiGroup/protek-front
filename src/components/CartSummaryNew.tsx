@@ -136,6 +136,114 @@ const CartSummaryNew: React.FC<CartSummaryNewProps> = ({ step, setStep }) => {
         border: '1px solid #E5E7EB',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
       }}>
+        {/* Черный блок авторизации для неавторизованных */}
+        {!isAuthenticated && (
+          <div style={{
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            padding: '20px',
+            gap: '14px',
+            isolation: 'isolate',
+            width: '100%',
+            minHeight: '224px',
+            background: '#000000',
+            borderRadius: '10px',
+            marginBottom: '20px',
+            overflow: 'hidden',
+          }}>
+            {/* Красное размытое пятно */}
+            <div style={{
+              position: 'absolute',
+              width: '194px',
+              height: '194px',
+              right: '-31px',
+              top: '-32px',
+              background: 'rgba(236, 28, 36, 0.6)',
+              filter: 'blur(50px)',
+              zIndex: 0,
+            }} />
+
+            {/* Текст "Только для юрлиц" */}
+            <div style={{
+              fontFamily: 'Onest, sans-serif',
+              fontWeight: 600,
+              fontSize: '14px',
+              lineHeight: '18px',
+              textTransform: 'uppercase',
+              color: '#B7CAE2',
+              zIndex: 1,
+              alignSelf: 'stretch',
+            }}>
+              Только для юрлиц
+            </div>
+
+            {/* Заголовок */}
+            <div style={{
+              fontFamily: 'Onest, sans-serif',
+              fontWeight: 700,
+              fontSize: '20px',
+              lineHeight: '26px',
+              color: '#FFFFFF',
+              zIndex: 2,
+              alignSelf: 'stretch',
+            }}>
+              Авторизуйте для оформления заказа
+            </div>
+
+            {/* Описание */}
+            <div style={{
+              fontFamily: 'Onest, sans-serif',
+              fontWeight: 400,
+              fontSize: '12px',
+              lineHeight: '15px',
+              color: '#FFFFFF',
+              zIndex: 3,
+              alignSelf: 'stretch',
+            }}>
+              Заказы доступны только зарегистрированным пользователям
+            </div>
+
+            {/* Кнопка Войти */}
+            <button
+              onClick={() => openAuthPrompt({ targetPath: '/cart' })}
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '12px 20px',
+                gap: '8px',
+                background: '#EC1C24',
+                borderRadius: '12px',
+                border: 'none',
+                cursor: 'pointer',
+                zIndex: 4,
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#D01920';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#EC1C24';
+              }}
+            >
+              <span style={{
+                fontFamily: 'Onest, sans-serif',
+                fontWeight: 600,
+                fontSize: '14px',
+                lineHeight: '130%',
+                textAlign: 'center',
+                color: '#FFFFFF',
+              }}>
+                Войти
+              </span>
+            </button>
+          </div>
+        )}
+
         {/* Промокод */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{
@@ -394,28 +502,22 @@ const CartSummaryNew: React.FC<CartSummaryNewProps> = ({ step, setStep }) => {
         {/* Кнопка оформления */}
         {!isAuthenticated ? (
           <button
-            onClick={() => openAuthPrompt({ targetPath: '/cart' })}
+            disabled={true}
             style={{
               width: '100%',
               padding: '14px',
               border: 'none',
               borderRadius: '12px',
-              background: '#EC1C24',
+              background: '#D1D5DB',
               color: '#fff',
               fontSize: '16px',
               fontWeight: 600,
-              cursor: 'pointer',
+              cursor: 'not-allowed',
               transition: 'all 0.2s',
               fontFamily: 'Onest, sans-serif',
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#D01920';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#EC1C24';
-            }}
           >
-            Войти для оформления
+            Перейти к оформлению
           </button>
         ) : (
           <button
