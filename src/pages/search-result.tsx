@@ -270,12 +270,15 @@ const transformOffersForCard = (offers: any[], hasStock: boolean = true) => {
   return offers.map((offer) => {
     const isExternal = offer.type === 'external';
     const deliveryDays = isExternal ? offer.deliveryTime : offer.deliveryDays;
+    const isSupplierOffer = offer.isSupplierOffer === true;
 
     // Создаем уникальный ключ для каждого предложения
     // Комбинируем тип, id/offerKey, поставщика, склад, цену и срок доставки
     const uniqueKey = isExternal
       ? `ext-${offer.offerKey || offer.id}-${offer.supplier}-${offer.warehouse}-${offer.price}-${deliveryDays}`
-      : `int-${offer.productId || offer.id}`;
+      : isSupplierOffer
+        ? `sup-${offer.id}-${offer.supplierCode || offer.supplier}`
+        : `int-${offer.productId || offer.id}`;
 
     return {
       id: offer.id,
@@ -284,13 +287,15 @@ const transformOffersForCard = (offers: any[], hasStock: boolean = true) => {
       pcs: `${offer.quantity} шт.`,
       quantity: offer.quantity, // Добавляем чистое число для использования в max и валидации
       days: formatDeliveryDuration(deliveryDays),
-      recommended: !isExternal,
+      recommended: !isExternal && !isSupplierOffer,
       price: `${new Intl.NumberFormat('ru-RU', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       }).format(offer.price || 0)} ₽`,
       count: "1",
       isExternal,
+      isSupplierOffer, // Флаг предложения от поставщика
+      supplierCode: offer.supplierCode || null, // Код поставщика (PR10, PR123 и т.д.)
       currency: offer.currency || "RUB",
       warehouse: offer.stock || offer.warehouse,
       supplier: offer.supplier,

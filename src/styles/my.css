@@ -1,4 +1,4 @@
-/* my.css — кастомные стили для проекта. Добавьте сюда свои стили. */ 
+/* my.css — кастомные стили для проекта. Добавьте сюда свои стили. */
 /* Fix slider handle offsets overriding Webflow defaults for dynamic width */
 .start.end { margin-left: 0 !important; }
 .track.fill { margin-left: 0 !important; width: auto !important; background-color: var(--_button---primary) !important; }
@@ -77,7 +77,7 @@
 
 .div-block-28{
   margin-top: 0 !important;
-} 
+}
 
 .w-nav-overlay {
   display: none !important;
@@ -90,13 +90,13 @@
 }
 
 .flex-block-39-copy {
-  
+
   max-width: 300px;
   min-width: 0;
 }
 
 .flex-block-40 {
-  
+
   padding-top: 10px;
 }
 
@@ -478,7 +478,7 @@ input.input-receiver {
 input.input-receiver:focus {
   outline: none;
   box-shadow: none;
-} 
+}
 
 .flex-block-122 {
   width: 100% !important;
@@ -501,7 +501,37 @@ input.input-receiver:focus {
 }
 
 .core-offers-table__row--own {
-  border-radius: 10px !important;
+  background-color: #f0fdf4 !important;
+  border-left: 3px solid #10b981;
+}
+
+.core-offers-table__row--own:hover {
+  background-color: #dcfce7 !important;
+}
+
+/* Предложения поставщиков - зеленый фон */
+.core-offers-table__row--supplier {
+  background-color: #f0fdf4 !important;
+  border-left: 3px solid #10b981;
+}
+
+.core-offers-table__row--supplier:hover {
+  background-color: #dcfce7 !important;
+}
+
+/* Бейдж "НАШ СКЛАД" */
+.supplier-badge {
+  display: inline-block;
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+@keyframes pulse-green {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 /* Разрешаем тултипам выходить за пределы контейнеров */
@@ -532,12 +562,12 @@ input.input-receiver:focus {
   width: 200px;
   object-fit: contain;
   display: block;
-} 
+}
 
 .image-5-copy {
  width: 97px !important;
  height: 97px !important;
-} 
+}
 .flex-block-111 {
   width: 172px !important;
 }
@@ -563,14 +593,14 @@ input.input-receiver:focus {
 .show-more-btn:disabled {
   background-color: #9CA3AF;
   cursor: not-allowed;
-} 
+}
 
 .div-block-3 {
   justify-content: flex-start !important;
   align-items: flex-start !important;
   text-align: left !important;
   width: 100% !important;
-} 
+}
 
 .text-block-7 {
   border-radius: var(--_round---small-8);
@@ -594,7 +624,7 @@ input.input-receiver:focus {
 .sort-item.active {
   color: #111;
   font-weight: 700;
-} 
+}
 
 
 .core-product-card, .cart-list, .flex-block-48, .product-list-cart{
@@ -624,7 +654,7 @@ input.input-receiver:focus {
 .heading-10 {
   width: auto !important;
   min-width: 0 !important;
-  
+
   white-space: nowrap; /* если хотите, чтобы текст не переносился */
 }
 
@@ -645,7 +675,7 @@ input.input-receiver:focus {
 }
 .knotin img {
   max-width: 100%;
-  object-fit: contain; 
+  object-fit: contain;
 } */
 
 
@@ -750,7 +780,7 @@ input#VinSearchInput {
 
 .dropdown-toggle-3.active {
   border-left: 2px solid var(--red);
-  
+
 }
 
 
@@ -826,7 +856,7 @@ a.link-block-2.w-inline-block  {
 .subscribe{
   padding-top: 10px !important;
   padding-bottom: 10px !important;
-  
+
 }
 
 .text-block-14, .div-block-9{
@@ -889,7 +919,7 @@ a.link-block-2.w-inline-block  {
 }
 
 .flex-block-14-copy-copy{
-  
+
   margin-bottom: 20px !important;
 }
 
@@ -939,15 +969,15 @@ a.link-block-2.w-inline-block  {
 
 
 .flex-block-108 , .flex-block-108-copy, .w-layout-hflex.flex-block-121, .core-product-search{
-  overflow-x: scroll; 
+  overflow-x: scroll;
   overflow-y: hidden;
 
-  
+
 }
 
 .flex-block-108 , .flex-block-108-copy, .w-layout-hflex.flex-block-121, .core-product-search, .carousel-scroll-top {
   overflow-x: scroll;
-   
+
   overflow-y: hidden;
   scrollbar-width: none; /* Firefox */
 }
@@ -1632,7 +1662,7 @@ a.link-block-2.w-inline-block  {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
-  
+
   .news-grid .news {
     width: 100% !important;
     max-width: none !important;
@@ -1644,7 +1674,7 @@ a.link-block-2.w-inline-block  {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .news-grid .news {
     width: 100% !important;
     max-width: none !important;
@@ -1705,7 +1735,7 @@ a.link-block-2.w-inline-block  {
 }
 .show-more-search {
   padding: 6px 20px;
- 
+
 }
 
 
@@ -1765,7 +1795,7 @@ a.link-block-2.w-inline-block  {
   flex: 0 auto;
   align-self: auto;
   height: 60px;
-  
+
   overflow: hidden;
 }
 
@@ -1800,7 +1830,7 @@ a.link-block-2.w-inline-block  {
   padding-bottom: 24px;
   padding-top: 12px;
   overflow: visible;
-  
+
 }
 
 /* Improve Best Price horizontal scroll behavior */
@@ -1866,7 +1896,7 @@ a.link-block-2.w-inline-block  {
   gap: 15px;
 }
 
-.pcs-search-s1, 
+.pcs-search-s1,
 .sort-item.first {
   width: 100px;
 }
@@ -1963,14 +1993,14 @@ a.link-block-2.w-inline-block  {
   .flex-block-108 {
     flex-flow: column;
     justify-content: space-between;
-    
+
   }
 
-} 
+}
 @media screen and (max-width: 991px) {
   .flex-block-118 {
     flex-direction: column !important;
-    align-items: stretch; 
+    align-items: stretch;
   }
   .flex-block-119 {
     width: 100%;
@@ -2136,7 +2166,7 @@ a.link-block-2.w-inline-block  {
   }
   .nameitembp {
     height: 36px;
-    
+
     font-size: 12px;
     line-height: 18px;
     overflow: hidden;
@@ -2163,7 +2193,7 @@ a.link-block-2.w-inline-block  {
 
   .nameitembp {
     height: 36px;
-    
+
 
   }
 }
@@ -2199,7 +2229,7 @@ a.link-block-2.w-inline-block  {
   .carousel-arrow {
     display: none !important;
   }
-  
+
   /* Улучшаем touch-скролл на мобильных для carousel-scroll-top */
   .carousel-scroll-top {
     -webkit-overflow-scrolling: touch;
@@ -2236,7 +2266,7 @@ a.link-block-2.w-inline-block  {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}   
+}
 
 .text-field-3.w-input {
   min-width: 300px;
@@ -2345,7 +2375,7 @@ a.link-block-2.w-inline-block  {
   .flex-block-6-copy {
     flex-direction: column !important;
   }
-  .brandsortb, .flex-block-124 { 
+  .brandsortb, .flex-block-124 {
     max-width: 100% !important;
   }
   .code-embed-15.w-embed, .topnav.w-nav {

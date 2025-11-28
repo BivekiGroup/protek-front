@@ -1364,6 +1364,8 @@ export const SEARCH_PRODUCT_OFFERS = gql`
         available
         rating
         supplier
+        supplierCode
+        isSupplierOffer
         isInCart
       }
       externalOffers {
@@ -1417,11 +1419,14 @@ export const GET_ANALOG_OFFERS = gql`
         productId
         price
         quantity
+        remainingStock
         warehouse
         deliveryDays
         available
         rating
         supplier
+        supplierCode
+        isSupplierOffer
       }
       externalOffers {
         offerKey
@@ -1433,6 +1438,7 @@ export const GET_ANALOG_OFFERS = gql`
         deliveryTime
         deliveryTimeMax
         quantity
+        remainingStock
         warehouse
         warehouseName
         rejects

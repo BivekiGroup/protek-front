@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
-import Link from "next/link";
-import { ChevronsUpDown, ChevronUp, ChevronDown } from "./icons";
-import { BadgeCheck } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { isDeliveryDate } from "@/lib/utils";
+import Link from "next/link";
+import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import toast from "react-hot-toast";
 import CartIcon from "./CartIcon";
-import { isDeliveryDate } from "@/lib/utils";
+import { ChevronDown, ChevronsUpDown, ChevronUp } from "./icons";
 
 // Custom Tooltip Component with Portal for better z-index handling
 const CustomTooltip = ({ children, text }: { children: React.ReactNode; text: string }) => {
@@ -108,7 +107,10 @@ interface CoreProductCardOffer {
   articleNumber?: string;
   productName?: string;
   region?: string;
+  isSupplierOffer?: boolean;  // Новое поле для предложений поставщиков
+  supplierCode?: string;       // Новое поле для кода поставщика
 }
+
 
 interface CoreProductCardProps {
   brand: string;
@@ -124,13 +126,13 @@ interface CoreProductCardProps {
   hasStock?: boolean;
 }
 
-const CoreProductCard: React.FC<CoreProductCardProps> = ({ 
-  brand, 
-  article, 
-  name, 
-  image, 
-  offers, 
-  showMoreText, 
+const CoreProductCard: React.FC<CoreProductCardProps> = ({
+  brand,
+  article,
+  name,
+  image,
+  offers,
+  showMoreText,
   isAnalog = false,
   isLoadingOffers = false,
   onLoadOffers,
@@ -250,9 +252,9 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
 
   // Проверяем, есть ли товар в избранном
   const isItemFavorite = isFavorite(
-    offers[0]?.productId, 
-    offers[0]?.offerKey, 
-    article, 
+    offers[0]?.productId,
+    offers[0]?.offerKey,
+    article,
     brand
   );
 
@@ -355,7 +357,7 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
       ? Math.max(availableStock - existingQuantity, 0)
       : undefined;
     const inCart = offer.isInCart || false; // Use backend flag
-    
+
     const numericPrice = parsePrice(offer.price);
 
     if (typeof remainingStock === 'number') {
@@ -399,10 +401,10 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
 
     if (result.success) {
       // Показываем тоастер с разным текстом в зависимости от того, был ли товар уже в корзине
-      const toastMessage = inCart 
+      const toastMessage = inCart
         ? `Количество увеличено (+${quantity} шт.)`
         : 'Товар добавлен в корзину!';
-      
+
       toast.success(
         <div>
           <div className="font-semibold" style={{ color: '#fff' }}>{toastMessage}</div>
@@ -436,7 +438,7 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
         if (item.article === article && item.brand === brand) return true;
         return false;
       });
-      
+
       if (favoriteItem) {
         removeFromFavorites(favoriteItem.id);
       }
@@ -444,7 +446,7 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
       // Добавляем в избранное
       const bestOffer = offers[0]; // Берем первое предложение как лучшее
       const numericPrice = bestOffer ? parsePrice(bestOffer.price) : 0;
-      
+
       addToFavorites({
         productId: bestOffer?.productId,
         offerKey: bestOffer?.offerKey,
@@ -465,8 +467,8 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
           <div className="w-layout-vflex flex-block-47">
                 <div className="div-block-19">
                   <CustomTooltip text="Оригинальные предложения Protek — выделены зеленым фоном. Рекомендуем для быстрого заказа">
-                    <img 
-                      src="/images/icons/filter-icon.svg" 
+                    <img
+                      src="/images/icons/filter-icon.svg"
                       alt="Оригинальные предложения Protek — выделены зеленым фоном"
                       width="32"
                       height="32"
@@ -666,9 +668,11 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
       'core-offers-table__row',
       'core-offers-table__row--data',
       offer.recommended ? 'core-offers-table__row--own' : '',
+      offer.isSupplierOffer ? 'core-offers-table__row--supplier' : '',  // Новый класс для предложений поставщиков
       isLast ? 'core-offers-table__row--last' : ''
     ].filter(Boolean).join(' ');
     const rowKey = offer.offerKey || offer.productId || `${brandDisplay}-${articleDisplay}-${idx}`;
+
 
     return (
       <div className={rowClasses} key={rowKey}>
@@ -679,6 +683,21 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
               data-fullname={showTooltip ? nameDisplay : undefined}
             >
               <span className="core-offers-table__product-name-text">{nameDisplay}</span>
+              {offer.isSupplierOffer && (
+                <span className="supplier-badge" style={{
+                  backgroundColor: '#10b981',
+                  color: 'white',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  marginLeft: '8px',
+                  display: 'inline-block',
+                  verticalAlign: 'middle'
+                }}>
+                  НАШ СКЛАД
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -934,8 +953,8 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
               <div className="w-layout-vflex flex-block-47">
                 <div className="div-block-19">
                   <CustomTooltip text="Оригинальные предложения Protek — выделены зеленым фоном. Рекомендуем для быстрого заказа">
-                    <img 
-                      src="/images/icons/filter-icon.svg" 
+                    <img
+                      src="/images/icons/filter-icon.svg"
                       alt="Оригинальные предложения Protek — выделены зеленым фоном"
                       width="32"
                       height="32"
@@ -1077,4 +1096,4 @@ const CoreProductCard: React.FC<CoreProductCardProps> = ({
   );
 };
 
-export default CoreProductCard; 
+export default CoreProductCard;
